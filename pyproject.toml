@@ -3,7 +3,7 @@ name = "callingCardsTools"
 version = "0.0.0"
 description = "A collection of objects and functions to work with calling cards sequencing tools"
 authors = ["chase mateusiak <chase.mateusiak@gmail.com>"]
-exclude = ['Dockerfile']
+exclude = ['Dockerfile', *temp_*]
 
 [tool.poetry.dependencies]
 # note: this is required for scipy
