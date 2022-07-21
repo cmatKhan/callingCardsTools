@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "callingCardsTools"
+version = "0.0.0"
+description = "A collection of objects and functions to work with calling cards sequencing tools"
+authors = ["chase mateusiak <chase.mateusiak@gmail.com>"]
+exclude = ['Dockerfile']
+
+[tool.poetry.dependencies]
+# note: this is required for scipy
+python = ">=3.8,<3.11"
+pandas = "^1.4.3"
+numpy = "^1.23.1"
+pysam = "^0.19.1"
+Cython = "^0.29.30"
+pybedtools = "^0.9.0"
+bx-python = "^0.8.13"
+biopython = "^1.79"
+scipy = "^1.8.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+ipykernel = "^6.15.1"
+autopep8 = "^1.6.0"
+flake8 = "^4.0.1"
+docutils = "^0.19"
+
+[tool.poetry.scripts]
+hello_world = "callingcardstools:hello_world"
+macs_peak_caller = "callingcardstools.bin:macs_peak_caller.main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
