@@ -1,6 +1,15 @@
 import scipy.stats as scistat
 
 def compute_cumulative_poisson(exp_hops_region,bg_hops_region,total_exp_hops,total_bg_hops,pseudocounts):
+    """_summary_
+
+    Args:
+        exp_hops_region (_type_): _description_
+        bg_hops_region (_type_): _description_
+        total_exp_hops (_type_): _description_
+        total_bg_hops (_type_): _description_
+        pseudocounts (_type_): _description_
+    """
     #usage
     #scistat.poisson.cdf(x,mu)
     #scales sample with more hops down to sample with less hops

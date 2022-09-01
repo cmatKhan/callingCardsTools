@@ -2,8 +2,7 @@
 import os
 
 # imports from local repo
-from callingcardstools import macs_style as ms
-from callingcardstools import utils
+from . import annotate
 # third party
 import numpy as np
 import pandas as pd
@@ -13,6 +12,19 @@ def call_peaks_and_annotate(expframe, bgframe, TTAAframe, outputfile,
                             annotation_file, peak_pvalue_cutoff=1e-4, 
 							window_size = 1000, step_size = 500, 
 							pseudocounts = 0.2):
+	"""_summary_
+
+	Args:
+		expframe (_type_): _description_
+		bgframe (_type_): _description_
+		TTAAframe (_type_): _description_
+		outputfile (_type_): _description_
+		annotation_file (_type_): _description_
+		peak_pvalue_cutoff (_type_, optional): _description_. Defaults to 1e-4.
+		window_size (int, optional): _description_. Defaults to 1000.
+		step_size (int, optional): _description_. Defaults to 500.
+		pseudocounts (float, optional): _description_. Defaults to 0.2.
+	"""
 
 	# This function is the wrapper that calls the various subfunctions
 
@@ -43,12 +55,15 @@ def call_peaks_and_annotate(expframe, bgframe, TTAAframe, outputfile,
 
     # add feature names, etc to peaks_frame
 	peaks_frame = \
-		ms.annotate.annotate_peaks_frame(peaks_frame, annotation_file)
+		annotate.annotate_peaks_frame(peaks_frame, annotation_file)
 
     # row filter and sort based on poisson_pvalue
-	peaks_frame = \
-		peaks_frame[peaks_frame["poisson_pvalue"] <= peak_pvalue_cutoff]
-	peaks_frame = peaks_frame.sort_values(["poisson_pvalue"])
+	try:
+		peaks_frame = \
+			peaks_frame[peaks_frame["poisson_pvalue"] <= peak_pvalue_cutoff]
+		peaks_frame = peaks_frame.sort_values(["poisson_pvalue"])
+	except KeyError as e:
+		print('error at line 50: %s' %e)
 
 	peaksbed_frame = create_peaksbed_frame(peaks_frame)
 
@@ -74,7 +89,7 @@ def create_peaksbed_frame(peaks_frame):
 		_type_: _description_
 	"""
 
-	peaksbed_frame = ms.annotate.make_peaksbed(peaks_frame)
+	peaksbed_frame = annotate.make_peaksbed(peaks_frame)
 	peaksbed_frame.columns = ['Chr','Start','End','Col4']
 
 	peaksbed_frame_with_description = pd.merge(peaksbed_frame,
@@ -120,26 +135,41 @@ def create_peaksbed_frame(peaks_frame):
 def find_peaks(experiment_frame,background_frame,TTAA_frame,
 	pvalue_cutoff = 1e-3,window_size = 1000, step_size = 500,
 	pseudocounts = 0.2):
+	"""_summary_
 
-	"""This function is passed an experiment frame, a background frame, 
-	and an TTAA_frame,all in ccf format:
-	(Chr, Start, Stop, Reads, Strand, Barcode)
+	Args:
+		experiment_frame (_type_): _description_
+		background_frame (_type_): _description_
+		TTAA_frame (_type_): _description_
+		pvalue_cutoff (_type_, optional): _description_. Defaults to 1e-3.
+		window_size (int, optional): _description_. Defaults to 1000.
+		step_size (int, optional): _description_. Defaults to 500.
+		pseudocounts (float, optional): _description_. Defaults to 0.2.
 
-	It then builds interval trees containing all of the background and 
-	experiment hops and all of the TTAAs.  Next, it scans through the 
-	genome with a window of window_size and step size of step_size and 
-	looks for regions that have signficantly more experiment hops than
-	background hops (poisson w/ pvalue_cutoff). It merges consecutively 
-	enriched windows and computes the center of the peak.  Next 
-	it computes lambda, the number of insertions per TTAA expected from the
-	background distribution by taking the max of lambda_bg, lamda_1, lamda_5,
-	lambda_10.  It then computes a p-value based on the expected number of hops 
-	= lamda * number of TTAAs in peak * number of hops in peak.  Finally, it 
-	returns a frame that has 
-	[Chr,Start,End,Center,experiment_hops,
-	fraction_experiment,Background Hops,Fraction Background,poisson_pvalue]
-
+	Returns:
+		_type_: _description_
 	"""
+	
+
+	# This function is passed an experiment frame, a background frame, 
+	# and an TTAA_frame,all in ccf format:
+	# (Chr, Start, Stop, Reads, Strand, Barcode)
+
+	# It then builds interval trees containing all of the background and 
+	# experiment hops and all of the TTAAs.  Next, it scans through the 
+	# genome with a window of window_size and step size of step_size and 
+	# looks for regions that have signficantly more experiment hops than
+	# background hops (poisson w/ pvalue_cutoff). It merges consecutively 
+	# enriched windows and computes the center of the peak.  Next 
+	# it computes lambda, the number of insertions per TTAA expected from the
+	# background distribution by taking the max of lambda_bg, lamda_1, lamda_5,
+	# lambda_10.  It then computes a p-value based on the expected number of hops 
+	# = lamda * number of TTAAs in peak * number of hops in peak.  Finally, it 
+	# returns a frame that has 
+	# [Chr,Start,End,Center,experiment_hops,
+	# fraction_experiment,Background Hops,Fraction Background,poisson_pvalue]
+
+	
 	peaks_frame = pd.DataFrame(
 		columns = ["Chr","Start","End","Center","experiment_hops",
 		"fraction_experiment","tph_experiment","Background Hops",

@@ -12,13 +12,24 @@ def call_peaks_and_annotate(expfile,  outputfile, TTAA_file, annotation_file,
                                lam_win_size       = 100000, 
                                step_size          = 500, 
                                pseudocounts       = 0.2):
-
     """This function is the wrapper that calls the various subfunctions
     TTAA_file = '/scratch/ref/rmlab/calling_card_ref/mouse/TTAA_mm10.txt'
     
     annotation_file = '/scratch/ref/rmlab/calling_card_ref/mouse/refGene.mm10.Sorted.bed'
 
     
+
+    Args:
+        expfile (_type_): _description_
+        outputfile (_type_): _description_
+        TTAA_file (_type_): _description_
+        annotation_file (_type_): _description_
+        pvalue_cutoff (_type_, optional): _description_. Defaults to 1e-4.
+        peak_pvalue_cutoff (_type_, optional): _description_. Defaults to 1e-3.
+        window_size (int, optional): _description_. Defaults to 1000.
+        lam_win_size (int, optional): _description_. Defaults to 100000.
+        step_size (int, optional): _description_. Defaults to 500.
+        pseudocounts (float, optional): _description_. Defaults to 0.2.
     """
 
     expframe = pd.read_csv(expfile,delimiter="\t",header=None)

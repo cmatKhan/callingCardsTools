@@ -14,92 +14,106 @@ __all__ = ['Algorithm', 'BayesianBlocks', 'OptimalPartitioning', 'PELT', 'FPOP']
 
 
 def blockify(t, x=None, sigma=None, algorithm='bayesian_blocks', **kwargs):
-    """Compute optimal segmentation of data with Scargle's Bayesian Blocks
+    """_summary_
 
-    This is a flexible implementation of the Bayesian Blocks algorithm
-    described in Scargle 2012 [1]_.
+    Args:
+        t (_type_): _description_
+        x (_type_, optional): _description_. Defaults to None.
+        sigma (_type_, optional): _description_. Defaults to None.
+        algorithm (str, optional): _description_. Defaults to 'bayesian_blocks'.
 
-    Parameters
-    ----------
-    t : array_like
-        data times (one dimensional, length N)
-    x : array_like (optional)
-        data values
-    sigma : array_like or float (optional)
-        data errors
-    algorithm : str or object
-        the algorithm function to use for the model.
-        If a string, the following options are supported:
+    Raises:
+        ValueError: _description_
 
-        - 'events' : binned or unbinned event data.  Arguments are ``gamma``,
-          which gives the slope of the prior on the number of bins, or
-          ``ncp_prior``, which is :math:`-\ln({\tt gamma})`.
-        - 'regular_events' : non-overlapping events measured at multiples of a
-          fundamental tick rate, ``dt``, which must be specified as an
-          additional argument.  Extra arguments are ``p0``, which gives the
-          false alarm probability to compute the prior, or ``gamma``, which
-          gives the slope of the prior on the number of bins, or ``ncp_prior``,
-          which is :math:`-\ln({\tt gamma})`.
-        - 'measures' : algorithm for a measured sequence with Gaussian errors.
-          Extra arguments are ``p0``, which gives the false alarm probability
-          to compute the prior, or ``gamma``, which gives the slope of the
-          prior on the number of bins, or ``ncp_prior``, which is
-          :math:`-\ln({\tt gamma})`.
-
-        In all three cases, if more than one of ``p0``, ``gamma``, and
-        ``ncp_prior`` is chosen, ``ncp_prior`` takes precedence over ``gamma``
-        which takes precedence over ``p0``.
-
-        Alternatively, the algorithm parameter can be an instance of
-        :class:`Algorithm` or a subclass thereof.
-
-    **kwargs :
-        any additional keyword arguments will be passed to the specified
-        :class:`Algorithm` derived class.
-
-    Returns
-    -------
-    edges : ndarray
-        array containing the (N+1) edges defining the N bins
-
-    Examples
-    --------
-    Event data:
-
-    >>> t = np.random.normal(size=100)
-    >>> edges = bayesian_blocks(t, algorithm='events', p0=0.01)
-
-    Event data with repeats:
-
-    >>> t = np.random.normal(size=100)
-    >>> t[80:] = t[:20]
-    >>> edges = bayesian_blocks(t, algorithm='events', p0=0.01)
-
-    Regular event data:
-
-    >>> dt = 0.05
-    >>> t = dt * np.arange(1000)
-    >>> x = np.zeros(len(t))
-    >>> x[np.random.randint(0, len(t), len(t) // 10)] = 1
-    >>> edges = bayesian_blocks(t, x, algorithm='regular_events', dt=dt)
-
-    Measured point data with errors:
-
-    >>> t = 100 * np.random.random(100)
-    >>> x = np.exp(-0.5 * (t - 50) ** 2)
-    >>> sigma = 0.1
-    >>> x_obs = np.random.normal(x, sigma)
-    >>> edges = bayesian_blocks(t, x_obs, sigma, algorithm='measures')
-
-    References
-    ----------
-    .. [1] Scargle, J et al. (2012)
-       http://adsabs.harvard.edu/abs/2012arXiv1207.5578S
-
-    See Also
-    --------
-    astropy.stats.histogram : compute a histogram using bayesian blocks
+    Returns:
+        _type_: _description_
     """
+    # Compute optimal segmentation of data with Scargle's Bayesian Blocks
+
+    # This is a flexible implementation of the Bayesian Blocks algorithm
+    # described in Scargle 2012 [1]_.
+
+    # Parameters
+    # ----------
+    # t : array_like
+    #     data times (one dimensional, length N)
+    # x : array_like (optional)
+    #     data values
+    # sigma : array_like or float (optional)
+    #     data errors
+    # algorithm : str or object
+    #     the algorithm function to use for the model.
+    #     If a string, the following options are supported:
+
+    #     - 'events' : binned or unbinned event data.  Arguments are ``gamma``,
+    #       which gives the slope of the prior on the number of bins, or
+    #       ``ncp_prior``, which is :math:`-\ln({\tt gamma})`.
+    #     - 'regular_events' : non-overlapping events measured at multiples of a
+    #       fundamental tick rate, ``dt``, which must be specified as an
+    #       additional argument.  Extra arguments are ``p0``, which gives the
+    #       false alarm probability to compute the prior, or ``gamma``, which
+    #       gives the slope of the prior on the number of bins, or ``ncp_prior``,
+    #       which is :math:`-\ln({\tt gamma})`.
+    #     - 'measures' : algorithm for a measured sequence with Gaussian errors.
+    #       Extra arguments are ``p0``, which gives the false alarm probability
+    #       to compute the prior, or ``gamma``, which gives the slope of the
+    #       prior on the number of bins, or ``ncp_prior``, which is
+    #       :math:`-\ln({\tt gamma})`.
+
+    #     In all three cases, if more than one of ``p0``, ``gamma``, and
+    #     ``ncp_prior`` is chosen, ``ncp_prior`` takes precedence over ``gamma``
+    #     which takes precedence over ``p0``.
+
+    #     Alternatively, the algorithm parameter can be an instance of
+    #     :class:`Algorithm` or a subclass thereof.
+
+    # **kwargs :
+    #     any additional keyword arguments will be passed to the specified
+    #     :class:`Algorithm` derived class.
+
+    # Returns
+    # -------
+    # edges : ndarray
+    #     array containing the (N+1) edges defining the N bins
+
+    # Examples
+    # --------
+    # Event data:
+
+    # >>> t = np.random.normal(size=100)
+    # >>> edges = bayesian_blocks(t, algorithm='events', p0=0.01)
+
+    # Event data with repeats:
+
+    # >>> t = np.random.normal(size=100)
+    # >>> t[80:] = t[:20]
+    # >>> edges = bayesian_blocks(t, algorithm='events', p0=0.01)
+
+    # Regular event data:
+
+    # >>> dt = 0.05
+    # >>> t = dt * np.arange(1000)
+    # >>> x = np.zeros(len(t))
+    # >>> x[np.random.randint(0, len(t), len(t) // 10)] = 1
+    # >>> edges = bayesian_blocks(t, x, algorithm='regular_events', dt=dt)
+
+    # Measured point data with errors:
+
+    # >>> t = 100 * np.random.random(100)
+    # >>> x = np.exp(-0.5 * (t - 50) ** 2)
+    # >>> sigma = 0.1
+    # >>> x_obs = np.random.normal(x, sigma)
+    # >>> edges = bayesian_blocks(t, x_obs, sigma, algorithm='measures')
+
+    # References
+    # ----------
+    # .. [1] Scargle, J et al. (2012)
+    #    http://adsabs.harvard.edu/abs/2012arXiv1207.5578S
+
+    # See Also
+    # --------
+    # astropy.stats.histogram : compute a histogram using bayesian blocks
+    
     ALGORITHM_DICT = {'bayesian_blocks': BayesianBlocks,
                       'OP': OptimalPartitioning,
                       'PELT': PELT,

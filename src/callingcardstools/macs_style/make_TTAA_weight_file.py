@@ -22,6 +22,12 @@ import pandas as pd
 
 
 def make_TTAA_weight_file(inputfile,outputfile):
+	"""_summary_
+
+	Args:
+		inputfile (_type_): _description_
+		outputfile (_type_): _description_
+	"""
 
 	#open files
 
@@ -75,10 +81,3 @@ if __name__ == '__main__':
     parser.add_argument('-o','--output',help='output filename (full path)',required=True)
     args = parser.parse_args()
     make_TTAA_weight_file(args.genome,args.output)
-
-
-	
-
-	
-
-

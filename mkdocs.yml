@@ -1,0 +1,15 @@
+site_name: callingCardsTools Documentation
+
+theme:
+  name: material
+
+plugins:
+- search
+- autorefs
+- mkdocstrings
+
+nav:
+  - "Create Calling Cards Pipeline Assets":
+    - "Chromosome Name Map": create_assets/create_chr_map.md
+  - "Macs Style":
+    - "Annotate": macs_style/annotate.md

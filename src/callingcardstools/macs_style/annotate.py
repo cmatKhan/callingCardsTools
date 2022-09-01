@@ -1,6 +1,4 @@
-"""
-annotate.py
-This module annotates peaks frames.
+"""This module annotates peaks frames.
 """ 
 
 import pandas as pd
@@ -8,7 +6,11 @@ import pybedtools.bedtool as bt
 import random
 
 def peaks_frame_to_bed(peaks_frame, bedfilename):
-    """
+    """bladdity blah
+
+    Args:
+        peaks_frame (DataFrame): _description_
+        bedfilename (Str): _description_
     """
     bed_frame = peaks_frame[["Chr","Start","End"]].copy()
     #start coords of bed files are 0 indexed while ends are 1 indexed
@@ -67,15 +69,24 @@ def annotate_peaks_frame(peaks_frame, refGene_filename):
     temp_annotated_peaks.loc[:,"Start"] = temp_annotated_peaks["Start"] + 1 
     index_list = [(x,y,z) for x,y,z in zip(temp_annotated_peaks["Chr"],
                   temp_annotated_peaks["Start"],temp_annotated_peaks["End"])]
-
-    temp_annotated_peaks.index = pd.MultiIndex.from_tuples(index_list)
     
+    try:
+        temp_annotated_peaks.index = pd.MultiIndex.from_tuples(index_list)
+    except TypeError as e:
+        print('Error at line 72: %s' %e)
+
     index_list = [(x,y,z) for x,y,z in zip(peaks_frame["Chr"], 
                   peaks_frame["Start"],peaks_frame["End"])]
 
-    peaks_frame.index = pd.MultiIndex.from_tuples(index_list)
+    try:
+        peaks_frame.index = pd.MultiIndex.from_tuples(index_list)
+    except TypeError as e:
+        print('Error at line 80: %s' %e)
 
-    peaks_frame = peaks_frame.sortlevel(0,axis=1)
+    try:
+        peaks_frame = peaks_frame.sortlevel(0,axis=1)
+    except AttributeError as e:
+        print('Error at line 85: %s' %e)
 
     if "Background Hops" in peaks_frame.columns:
         temp_list = ["Chr","Start","End","Center","Experiment Hops",
