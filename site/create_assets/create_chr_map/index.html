@@ -218,9 +218,61 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Chromosome Name Map
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         Chromosome Name Map
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#load-dependencies" class="md-nav__link">
+    load dependencies
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#save-paths-and-the-regex-used-to-clean-the-seqnames-from-the-fasta" class="md-nav__link">
+    save paths and the regex used to clean the seqnames from the fasta
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-list-of-the-primary-22-autosomes-xy-and-mitochondria-for-each-source" class="md-nav__link">
+    create a list of the primary 22 autosomes, XY and mitochondria for each source
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-frame-which-allows-mapping-between-sources" class="md-nav__link">
+    Create a frame which allows mapping between sources
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -250,14 +302,14 @@
       
       
         <label class="md-nav__link" for="__nav_2">
-          Macs Style
+          Bam Parsers
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Macs Style" data-md-level="1">
+      <nav class="md-nav" aria-label="Bam Parsers" data-md-level="1">
         <label class="md-nav__title" for="__nav_2">
           <span class="md-nav__icon md-icon"></span>
-          Macs Style
+          Bam Parsers
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -267,8 +319,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../../macs_style/annotate/" class="md-nav__link">
-        Annotate
+      <a href="../../bam_parser/BarcodeParser/" class="md-nav__link">
+        BarcodeParser
       </a>
     </li>
   
@@ -301,6 +353,42 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#load-dependencies" class="md-nav__link">
+    load dependencies
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#save-paths-and-the-regex-used-to-clean-the-seqnames-from-the-fasta" class="md-nav__link">
+    save paths and the regex used to clean the seqnames from the fasta
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-list-of-the-primary-22-autosomes-xy-and-mitochondria-for-each-source" class="md-nav__link">
+    create a list of the primary 22 autosomes, XY and mitochondria for each source
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-frame-which-allows-mapping-between-sources" class="md-nav__link">
+    Create a frame which allows mapping between sources
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -317,41 +405,63 @@
 <p>The goal is to create a frame which maps the various genome assembly 
 chromosome names to one another, for instance, from UCSC to ensembl. I prefer 
 to do this in R.</p>
-<pre><code class="language-r">library(rtracklayer)
+<h2 id="load-dependencies">load dependencies</h2>
+<pre><code>library(rtracklayer)
 library(tidyverse)
 </code></pre>
-<pre><code class="language-r">genomes = list(
-  ensembl = unlist(map(str_split(
-    names(rtracklayer::import(
-        &quot;~/Downloads/homo_sapien/ensembl_genome.fa&quot;, 
-        format = &quot;fasta&quot;))[1:25], &quot; &quot;), ~.[[1]][[1]])),
-  ucsc = names(rtracklayer::import(
-      &quot;~/Downloads/homo_sapien/ucsc_genome.fa&quot;, 
-      format = &quot;fasta&quot;)
-      )[1:25],
-  refseq = names(rtracklayer::import(
-    &quot;~/Downloads/homo_sapien/refseq_genome.fa&quot;, 
-    format = &quot;fasta&quot;)) 
-  %&gt;% .[
-    str_detect(., 
-               &quot;GRCh38.p14 Primary Assembly$|mitochondrion, complete genome$&quot;)
-    ],
-  genbank = names(rtracklayer::import(
-    &quot;~/Downloads/homo_sapien/genbank_genome.fa&quot;, 
-    format = &quot;fasta&quot;)) 
-  %&gt;% .[
-    str_detect(., 
-               &quot;[\\d,X,Y], GRCh38 reference primary assembly$|mitochondrion, complete genome$&quot;)
-    ]
+<h2 id="save-paths-and-the-regex-used-to-clean-the-seqnames-from-the-fasta">save paths and the regex used to clean the seqnames from the fasta</h2>
+<p>These were downloaded from their respective sites on 20220812</p>
+<pre><code>genome_paths = list(
+  ensembl = &quot;~/Downloads/homo_sapien/ensembl_genome.fa&quot;,
+  ucsc = &quot;~/Downloads/homo_sapien/ucsc_genome.fa&quot;,
+  refseq = &quot;~/Downloads/homo_sapien/refseq_genome.fa&quot;,
+  genbank = &quot;~/Downloads/homo_sapien/genbank_genome.fa&quot;
+)
+
+These regex patterns were determined by looking at the names in the fasta file
+
+extract_seqnames_regex = list(
+  refseq = &quot;GRCh38.p14 Primary Assembly$|mitochondrion, complete genome$&quot;,
+  genbank = &quot;[\\d,X,Y], GRCh38 reference primary assembly$|mitochondrion, complete genome$&quot;
 )
 </code></pre>
-<pre><code class="language-r">genomes_df_list = list(
-  ensembl = tibble(ensembl = genomes$ensembl, seq = genomes$ensembl),
-  ucsc    = tibble(ucsc = genomes$ucsc, seq = str_remove(genomes$ucsc, &quot;chr&quot;)),
-  gencode = tibble(gencode = genomes$ucsc, seq = str_remove(genomes$ucsc, &quot;chr&quot;)),
-  gencode = tibble(ucsc = genomes$ucsc, seq = str_remove(genomes$ucsc, &quot;chr&quot;)),
-  refseq  = tibble(refseq = unlist(map(str_split(genomes$refseq, &quot; &quot;), ~.[[1]][[1]])), seq = str_remove_all(genomes$refseq, &quot;NC_\\d+.\\d+ Homo sapiens chromosome |NC_\\d+.\\d+ Homo sapiens|, GRCh38.p14 Primary Assembly|, complete genome&quot;)),
-  genbank  = tibble(genbank = unlist(map(str_split(genomes$genbank, &quot; &quot;), ~.[[1]][[1]])), seq = str_remove_all(genomes$genbank, &quot;CM\\d+.\\d+ Homo sapiens chromosome |J\\d+.\\d+ Homo sapiens|, GRCh38 reference primary assembly|, complete genome&quot;))
+<h2 id="create-a-list-of-the-primary-22-autosomes-xy-and-mitochondria-for-each-source">create a list of the primary 22 autosomes, XY and mitochondria for each source</h2>
+<pre><code>genomes = list(
+  ensembl = unlist(map(str_split(
+    names(rtracklayer::import(genome_paths$ensembl, 
+                              format = &quot;fasta&quot;))[1:25], &quot; &quot;), ~.[[1]][[1]])),
+  ucsc = names(rtracklayer::import(genome_paths$ucsc, format = &quot;fasta&quot;))[1:25],
+  refseq = 
+    names(rtracklayer::import(genome_paths$refseq, format = &quot;fasta&quot;)) %&gt;% 
+      .[str_detect(., extract_seqnames_regex$refseq)],
+  genbank = 
+    names(rtracklayer::import(genome_paths$genbank, format = &quot;fasta&quot;)) %&gt;% 
+      .[str_detect(., extract_seqnames_regex$genbank)]
+)
+</code></pre>
+<h2 id="create-a-frame-which-allows-mapping-between-sources">Create a frame which allows mapping between sources</h2>
+<p>Note that gencode is the same as UCSC</p>
+<pre><code>clean_seqnames_regex = list(
+  refseq = &quot;NC_\\d+.\\d+ Homo sapiens chromosome |NC_\\d+.\\d+ Homo sapiens|, GRCh38.p14 Primary Assembly|, complete genome&quot;,
+  genbank = &quot;CM\\d+.\\d+ Homo sapiens chromosome |J\\d+.\\d+ Homo sapiens|, GRCh38 reference primary assembly|, complete genome&quot;
+)
+genomes_df_list = list(
+  ensembl = tibble(
+    ensembl = genomes$ensembl, 
+    seq = genomes$ensembl),
+  ucsc    = tibble(
+    ucsc = genomes$ucsc, 
+    seq = str_remove(genomes$ucsc, &quot;chr&quot;)),
+  # gencode is the same as ucsc
+  gencode = tibble(
+    gencode = genomes$ucsc, 
+    seq = str_remove(genomes$ucsc, &quot;chr&quot;)),
+  refseq  = tibble(
+    refseq = unlist(map(str_split(genomes$refseq, &quot; &quot;), ~.[[1]][[1]])), 
+    seq = str_remove_all(genomes$refseq, clean_seqnames_regex$refseq)),
+  genbank  = tibble(
+    genbank = unlist(map(str_split(genomes$genbank, &quot; &quot;), ~.[[1]][[1]])), 
+    seq = str_remove_all(genomes$genbank, clean_seqnames_regex$genbank))
 )
 
 cleanup_genomes_df = function(df){
@@ -364,6 +474,8 @@ genomes_df_list = map(genomes_df_list, cleanup_genomes_df)
 chr_map = genomes_df_list %&gt;%
   reduce(left_join) %&gt;%
   select(-seq)
+
+write_csv(chr_map, &quot;~/code/nf-core-callingcards/assets/human/chr_map.csv&quot;)
 </code></pre>
 
               
@@ -381,13 +493,13 @@ chr_map = genomes_df_list %&gt;%
       
       
         
-        <a href="../../macs_style/annotate/" class="md-footer__link md-footer__link--next" aria-label="Next: Annotate" rel="next">
+        <a href="../../bam_parser/BarcodeParser/" class="md-footer__link md-footer__link--next" aria-label="Next: BarcodeParser" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Annotate
+              BarcodeParser
             </div>
           </div>
           <div class="md-footer__button md-icon">

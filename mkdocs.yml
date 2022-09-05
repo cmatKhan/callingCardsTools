@@ -11,5 +11,5 @@ plugins:
 nav:
   - "Create Calling Cards Pipeline Assets":
     - "Chromosome Name Map": create_assets/create_chr_map.md
-  - "Macs Style":
-    - "Annotate": macs_style/annotate.md
+  - "Bam Parsers":
+    - "BarcodeParser": bam_parser/BarcodeParser.md

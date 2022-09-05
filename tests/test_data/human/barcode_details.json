@@ -1,0 +1,19 @@
+{
+    "indicies": {
+        "om_pb": [0, 3],
+        "pb_lrt1": [3, 28],
+        "srt": [28, 32],
+        "pb_lrt2": [32, 38]
+    },
+    "components": {
+        "om_pb":   ["TAg"],
+        "pb_lrt1": ["CGTCAATTtTACGCAGACTATCTTT"],
+        "srt":     ["CTAG", "CAAC", "CTGA", "GCAT", "GTAC", "CACA", "TGAC", "GTCA",
+                    "CGAT", "CTCT", "GAaG", "TCGA", "CATG", "GTTG", "CTTC", "GCTA",
+                    "GAGA", "GTGT", "CGTA", "TGGT", "GGAA", "ACAC", "TCAG", "TTGG",
+                    "CAGT", "TTTT"],
+        "pb_lrt2": ["GGTTAA"]
+    },
+    "insert_seq": ["TtAA"]
+
+}
