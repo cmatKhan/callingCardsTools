@@ -1,5 +1,6 @@
 """Set up bam_parser fixtures"""
 import pytest
+import pysam
 from callingcardstools.bam_parsers.BarcodeParser import BarcodeParser
 from callingcardstools.bam_parsers.ReadTagger import ReadTagger
 
@@ -36,11 +37,13 @@ def yeast_barcode_dict():
         'tf_map': {
             'bc_components': ['r1_primer_bc', 'r2_primer_bc'],
             'tf': ['MIG2', 'CAT8', 'GLN3', 'ARO80', 'CBF1']},
+        'insert_seqs': ['*'],
         'match_allowance': {
             'transposon_seq': 1,
             'r1_primer_bc': 0,
             'r2_primer_bc': 0,
-            'restriction_site': 0},
+            'restriction_site': 1,
+            'max': 1},
         'tf_dict':{
             'TCAGTCCCGTTGG': 'MIG2',
             'GCCTGGGCGGCAG': 'CAT8',
@@ -112,6 +115,12 @@ def yeast_readtagger():
 
     return rt
 
+@pytest.fixture
+def yeast_bamfile():
+    """An open AlignmentFile object of yeast untagged yeast alignments"""
+    bampath = "tests/test_data/yeast/untagged.bam"
+    return pysam.AlignmentFile(bampath, "rb")
+
 # Human fixtures ---------------------------------------------------------------
 
 @pytest.fixture
@@ -138,12 +147,13 @@ def human_barcode_dict():
                         "CAGT", "TTTT"],
             "pb_lrt2": ["GGTTAA"]
         },
-        "insert_seq": ["TTAA"],
+        "insert_seqs": ["TTAA"],
         "match_allowance" : {
             "om_pb": 0,
             "pb_lrt1": 0,
             "srt": 0,
-            "pb_lrt2": 0
+            "pb_lrt2": 0,
+            "max": 0
         }
     }
 
@@ -209,3 +219,9 @@ def human_readtagger():
     rt = ReadTagger(**setup)
 
     return rt
+
+@pytest.fixture
+def human_bamfile():
+    """an open AlignmentFile object for human untagged alignments"""
+    bampath = "tests/test_data/human/untagged.bam"
+    return pysam.AlignmentFile(bampath, "rb")

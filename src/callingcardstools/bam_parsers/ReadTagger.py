@@ -14,7 +14,6 @@ Returns:
 import os
 import sys
 import logging
-from xml.dom.minidom import Attr
 # outside dependencies
 import pysam
 
@@ -159,8 +158,8 @@ class ReadTagger:
                     # This is the first base -- adjusted for soft clipping -- 
                     # in the read which cover the genome
                     tag_dict['XT'] = read_3_prime
-                    tag_dict['XI'] = read_3_prime - self.insertion_length
-                    tag_dict['XE'] = read_3_prime
+                    tag_dict['XI'] = read_3_prime + 1
+                    tag_dict['XE'] = read_3_prime + 1 + self.insertion_length
                     tag_dict['XZ'] = self.genome.fetch(read.reference_name,
                                             read_3_prime+1,
                                             read_3_prime+1 +
@@ -210,8 +209,8 @@ class ReadTagger:
                     # This is the first base -- adjusted for soft clipping -- 
                     # in the read which cover the genome
                     tag_dict['XT'] = read_3_prime
-                    tag_dict['XI'] = read_3_prime + 1
-                    tag_dict['XE'] = read_3_prime + 1 + self.insertion_length
+                    tag_dict['XI'] = read_3_prime - self.insertion_length
+                    tag_dict['XE'] = read_3_prime
                     tag_dict['XZ'] = self.genome.fetch(read.reference_name,
                                             read_3_prime-self.insertion_length,
                                             read_3_prime).upper()

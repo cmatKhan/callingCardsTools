@@ -11,20 +11,19 @@ class BarcodeParser:
     key_dict = {
         "indicies":"indicies",
         "components":"components",
-        "insert_seq": "insert_seq",
+        "insert_seqs": "insert_seqs",
         "tf_map": "tf_map",
         "tf_map_keys": {"bc_components": "bc_components", "tf": "tf"},
         # this is created from tf_map, which is provided in barcode_details
         "tf_dict": "tf_dict",
-        "match_allowance": "match_allowance"
+        "match_allowance": "match_allowance",
+        "max_mismatch_key": "max"
     }
     barcode_dict = {}
     barcode_details_json = ""
     barcode = ""
     # constructor
     def __init__(self, barcode_details_json):
-        # set attributes
-        self.barcode_details_json = barcode_details_json
         # set the initialized barcode details
         # note that this also sets the match allowances
         self.set_barcode_details(barcode_details_json)
@@ -39,44 +38,34 @@ class BarcodeParser:
         self.barcode = barcode.upper()
 
     def set_barcode_details(self, barcode_details_json):
-        """parse the calling cards bed file name column into components and perform
-        This expects a dataframe with AT LEAST the columns (there may be more):
-        ['chrom','chromStart','chromEnd','barcode', 'strand', 'insert_seq']
-
-        :param bed_df:
-        :param barcode_details:
-        :param fltr_bed_output_name:
-
-        """
-        # check barcode_details path
-        for input_path in [barcode_details_json]:
-            if not os.path.exists(input_path):
-                raise FileNotFoundError(f"Input file DNE: {input_path}")
-        # open json, read in as dict
-        with open(barcode_details_json) as f1:
-            barcode_dict = json.load(f1)
-        # verify format
-        barcode_dict = self.verify_barcode_details(barcode_dict)
-        # update self
-        self.barcode_dict = barcode_dict
-        self.set_component_match_allowances()
-        self.barcode_details_json = barcode_details_json
-    
-    def verify_barcode_details(self, barcode_dict):
-        """Verify expectations on the barcode details
+        """Set the barcode dictionary and barcode detail json path attributes
 
         Args:
-            barcode_dict (dict): A barcode_details dictionary parsed from the 
-            barcode_details json file
+            barcode_details_json (str): path to barcode_details json file
+        """
+        # verify format
+        self.set_barcode_dict(barcode_details_json)
+        # update details path
+        self.barcode_details_json = barcode_details_json
+    
+    def set_barcode_dict(self, barcode_details_json):
+        """Set the barcode_dict attribute. Many accuracy checks on the 
+        barcode_details json, also.
+
+        Args:
+            barcode_details_json (dict): Path to a barcode_details json file
 
         Raises:
             KeyError: Raised if an expected key in the barcode_details DNE
             ValueError: Raised if a value in a given field in the barcode_details 
             does not match expectations
-        
-        Returns:
-            (dict): The verified barcode_details dictionary
         """
+        # check that barcode json exists
+        if not os.path.exists(barcode_details_json):
+            raise FileNotFoundError(f"barcode details json DNE: {barcode_details_json}")
+        # open json, read in as dict
+        with open(barcode_details_json) as f1:
+            barcode_dict = json.load(f1)
         # check that the indicies and components match
         if not list(barcode_dict[self.key_dict['components']].keys()).sort() == \
             list(barcode_dict[self.key_dict['indicies']].keys()).sort():
@@ -107,7 +96,7 @@ class BarcodeParser:
         # those in the components field, and that the distance is an integer
         if self.key_dict['match_allowance'] in barcode_dict:
             for comp, dist in barcode_dict[self.key_dict['match_allowance']].items():
-                if comp not in barcode_dict[self.key_dict['components']]:
+                if comp not in barcode_dict[self.key_dict['components']] and not comp == "max":
                     raise KeyError(f"The keys in "\
                         f"{self.barcode_dict[self.key_dict['match_allowance']]} " \
                             f"must be in {self.barcode_dict[self.key_dict['components']]}")
@@ -127,28 +116,38 @@ class BarcodeParser:
         barcode_dict[self.key_dict['components']] = upper_components_dict
 
         # cast insert seq to upper if it exists
-        if self.key_dict['insert_seq'] in barcode_dict:
-            upper_insert_seq = []
-            for sequence in barcode_dict[self.key_dict['insert_seq']]:
-                upper_insert_seq.append(sequence.upper())
-            barcode_dict[self.key_dict['insert_seq']] = upper_insert_seq
+        if self.key_dict['insert_seqs'] in barcode_dict:
+            upper_insert_seqs = []
+            for sequence in barcode_dict[self.key_dict['insert_seqs']]:
+                upper_insert_seqs.append(sequence.upper())
+            barcode_dict[self.key_dict['insert_seqs']] = upper_insert_seqs
         
         # if tf_map exists, then set the tf_dict
         if self.key_dict['tf_map'] in barcode_dict:
             barcode_dict[self.key_dict['tf_dict']] = self.tf_dict(barcode_dict)
         
-        return barcode_dict
-
-    def set_component_match_allowances(self):
-        """update the barcode_dict attribute with match allowances for all 
-        components which are not already set in the barcode_details json"""
         # if the match_allowance field DNE, create one with an empty dict
-        x = self.barcode_dict.setdefault(self.key_dict['match_allowance'], {})
+        if self.key_dict['match_allowance'] not in barcode_dict:
+            barcode_dict[self.key_dict['match_allowance']] = {}
         # for each key in the barcode_dict[comp], set to 0 if it does not 
         # already exist
-        for comp in self.barcode_dict[self.key_dict['components']]:
-            x = self.barcode_dict[self.key_dict['match_allowance']]\
+        for comp in barcode_dict[self.key_dict['components']]:
+            x = barcode_dict[self.key_dict['match_allowance']]\
                 .setdefault(comp,0)
+        # if a 'max' category is not set, set max to the sum of the component 
+        # match allowances
+        if 'max' not in barcode_dict[self.key_dict['match_allowance']]:
+            barcode_dict[self.key_dict['match_allowance']]\
+                [self.key_dict['max_mismatch_key']] = \
+                    sum([v for v in \
+                        barcode_dict[self.key_dict['match_allowance']].values()])
+        
+        # set insert_seqs if DNE
+        if self.key_dict['insert_seqs'] not in barcode_dict:
+            barcode_dict[self.key_dict['insert_seqs']] = ["*"]
+
+        self.barcode_dict = barcode_dict
+
 
     def component_edit_distance(self):
         """Check the barcode against the expected values at each component 
@@ -207,18 +206,39 @@ class BarcodeParser:
         if self.barcode == "":
             raise AttributeError("No barcode set")
 
+        allowance_dict = self.barcode_dict[self.key_dict['match_allowance']]
+
         tf = self.get_tf()
         component_edit_dist_dict = self.component_edit_distance()
         try:
-            false_count = sum([0 if v <= \
-                self.barcode_dict[self.key_dict['match_allowance']][k] else 1 \
-                for k,v in component_edit_dist_dict.items()])
+            # iterate over the component edit dist dict and test if a given
+            # barcode component matches. If the match is not exact, but is
+            # within the match_allowance, increment mismatch_counter. If a
+            # component has distance greater than the match_allowance, or
+            # exceeds 'max', mark the barcode as failing
+            barcode_passing = True
+            mismatch_counter = 0
+            it = iter(component_edit_dist_dict.items())
+            key_value = next(it, None)
+            while key_value and barcode_passing:
+                if key_value[1] > allowance_dict[key_value[0]]:
+                    barcode_passing = False
+                if key_value[1] > 0:
+                    mismatch_counter += 1
+                if mismatch_counter > allowance_dict[self.key_dict['max_mismatch_key']]:
+                    barcode_passing = False
+                key_value = next(it, None)
+
+            # for comp,edit_dist in component_edit_dist_dict.items():
+            #     if edit_dist <= allowance_dict[comp] and mismatch_counter <= allowance_dict[self.key_dict['max_mismatch_key']]:
+            #         if edit_dist != 0:
+            #             mismatch_counter += 1
+            #         false_count.append(0)
+            # false_count = sum([0 if v <= [k] else 1 for k,v in component_edit_dist_dict.items()])
         except KeyError:
             KeyError("A given component was not present in the component match dict")
 
-        bc_pass = True if false_count == 0 else False
-
-        return ({"pass": bc_pass, "tf": tf})
+        return ({"pass": barcode_passing, "tf": tf})
 
     def min_edit_dist(self, barcode_component, barcode_substr):
         """get the minimum levenshtein edit distance between a given barcode 
@@ -285,8 +305,8 @@ class BarcodeParser:
         Returns:
             Str: The insert seq string (upper case) from the barcode details
         """
-        if self.key_dict['insert_seq'] in self.barcode_dict:
-            return self.barcode_dict[self.key_dict['insert_seq']]
+        if self.key_dict['insert_seqs'] in self.barcode_dict:
+            return self.barcode_dict[self.key_dict['insert_seqs']]
         else:
             raise AttributeError(f'Current barcode details '\
                 f'{self.barcode_details_json} does not have an ' \

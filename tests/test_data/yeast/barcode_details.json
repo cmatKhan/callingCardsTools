@@ -16,7 +16,9 @@
         "tf":            ["MIG2", "CAT8", "GLN3", "ARO80", "CBF1"]
     },
     "match_allowance": {
-        "transposon_seq": 1
+        "transposon_seq": 1,
+        "restriction_site": 1,
+        "max": 1
     }
 
 }

@@ -58,7 +58,7 @@ def test_edit_distance(yeast_bp, valid_mig2_yeast_barcode):
 
 def test_get_insert_seq(human_bp, human_barcode_dict):
     insert_seqs = human_bp.get_insert_seqs() 
-    assert insert_seqs == human_barcode_dict["insert_seq"]
+    assert insert_seqs == human_barcode_dict["insert_seqs"]
 
 def test_get_tf_barcode(yeast_bp, yeast_barcode_dict, valid_mig2_yeast_barcode):
     """test with barcode which is exact"""
