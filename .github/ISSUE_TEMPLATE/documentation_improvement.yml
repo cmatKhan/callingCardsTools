@@ -1,0 +1,11 @@
+name: Documentation improvement suggestion
+description: Suggest improvement to documentation nf-core/callingcards pipeline
+labels: documentation
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description of feature
+      description: Please describe your suggestion for better documentation. If possible, point to the specific section and any alternatives that you have considered.
+    validations:
+      required: true
