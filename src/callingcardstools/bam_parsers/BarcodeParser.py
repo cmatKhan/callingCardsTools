@@ -17,7 +17,9 @@ class BarcodeParser:
         # this is created from tf_map, which is provided in barcode_details
         "tf_dict": "tf_dict",
         "match_allowance": "match_allowance",
-        "max_mismatch_key": "max"
+        "max_mismatch_key": "max",
+        "barcode_length": "length",
+        "insert_length": "insert_length"
     }
     barcode_dict = {}
     barcode_details_json = ""
@@ -84,6 +86,9 @@ class BarcodeParser:
                     f"described by the barcode_details['indicies']: "\
                     f"{comp}, {barcode_components_length_check_dict[k]}")
         
+        # set barcode length
+        barcode_dict[self.key_dict['barcode_length']] = sum(barcode_components_length_check_dict.values())
+        
         # if a tf_map dict exists, check that the bc_components and tf list 
         # exist
         if self.key_dict['tf_map'] in barcode_dict:
@@ -145,9 +150,30 @@ class BarcodeParser:
         # set insert_seqs if DNE
         if self.key_dict['insert_seqs'] not in barcode_dict:
             barcode_dict[self.key_dict['insert_seqs']] = ["*"]
-
+        
+        # set insertion length
+        # TODO check that all insertion seqs are the same length
+        barcode_dict[self.key_dict['insert_length']] = \
+            len(barcode_dict[self.key_dict['insert_seqs']][0])
+        
+        # set barcode dict
         self.barcode_dict = barcode_dict
+    
+    def get_barcode_length(self):
+        """getter for the barcode length
 
+        Returns:
+            int: integer length of the barcode (summed lengths of components)
+        """
+        return self.barcode_dict[self.key_dict['barcode_length']]
+    
+    def get_insert_length(self):
+        """getter for the insert sequence length
+
+        Returns:
+            int: integer length of the insert sequence
+        """
+        return self.barcode_dict[self.key_dict['insert_length']]
 
     def component_edit_distance(self):
         """Check the barcode against the expected values at each component 
@@ -228,13 +254,6 @@ class BarcodeParser:
                 if mismatch_counter > allowance_dict[self.key_dict['max_mismatch_key']]:
                     barcode_passing = False
                 key_value = next(it, None)
-
-            # for comp,edit_dist in component_edit_dist_dict.items():
-            #     if edit_dist <= allowance_dict[comp] and mismatch_counter <= allowance_dict[self.key_dict['max_mismatch_key']]:
-            #         if edit_dist != 0:
-            #             mismatch_counter += 1
-            #         false_count.append(0)
-            # false_count = sum([0 if v <= [k] else 1 for k,v in component_edit_dist_dict.items()])
         except KeyError:
             KeyError("A given component was not present in the component match dict")
 

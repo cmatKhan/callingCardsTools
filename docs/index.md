@@ -1,19 +1,10 @@
-# Welcome to MkDocs
+# Calling Cards Tools
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+This package is intended to provide both command line utilities as well as 
+useful objects for the processing and analysis of Calling Cards sequencing 
+data.  
 
-# Reference
-
-## Commands
-
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
-
-## Project layout
-
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+This document (will eventually) provides both user and developer documentation. The intent of the 
+developer documentation is to provide both an overview of the package structure, 
+and also provide some tips on using vscode and the test suite to explore and 
+hopefully expand the functionality.

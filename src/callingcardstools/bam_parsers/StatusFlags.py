@@ -6,6 +6,9 @@ class StatusFlags(IntFlag):
     is 0x3. A read that fails both barcode and mapq for instance would have 
     status 3.
     """
-    BARCODE    = 0x1
-    MAPQ       = 0x2
-    INSERT_SEQ = 0x3
+    BARCODE    = 0x0
+    MAPQ       = 0x1
+    INSERT_SEQ = 0x2
+
+    def flag(self):
+        return 2**self.value

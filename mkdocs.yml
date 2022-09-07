@@ -13,3 +13,4 @@ nav:
     - "Chromosome Name Map": create_assets/create_chr_map.md
   - "Bam Parsers":
     - "BarcodeParser": bam_parser/BarcodeParser.md
+    - "ReadTagger": bam_parser/ReadTagger.md

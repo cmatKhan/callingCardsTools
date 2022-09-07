@@ -3,6 +3,7 @@ import pytest
 import pysam
 from callingcardstools.bam_parsers.BarcodeParser import BarcodeParser
 from callingcardstools.bam_parsers.ReadTagger import ReadTagger
+from callingcardstools.bam_parsers.SummaryParser import SummaryParser
 
 # yeast fixtures ---------------------------------------------------------------
 
@@ -50,7 +51,9 @@ def yeast_barcode_dict():
             'ATTTGGGGGGGGT': 'GLN3',
             'TTGGTGGGGGTAG': 'ARO80',
             'CTCGGTCGTCAGT': 'CBF1'
-        }
+        },
+        'length': 34,
+        'insert_length': 1
     }
 
     return expected
@@ -149,12 +152,14 @@ def human_barcode_dict():
         },
         "insert_seqs": ["TTAA"],
         "match_allowance" : {
-            "om_pb": 0,
+            "om_pb": 1,
             "pb_lrt1": 0,
-            "srt": 0,
-            "pb_lrt2": 0,
-            "max": 0
-        }
+            "srt": 1,
+            "pb_lrt2": 1,
+            "max": 2
+        },
+        "length": 38,
+        "insert_length": 4
     }
 
     return expected
@@ -225,3 +230,9 @@ def human_bamfile():
     """an open AlignmentFile object for human untagged alignments"""
     bampath = "tests/test_data/human/untagged.bam"
     return pysam.AlignmentFile(bampath, "rb")
+
+@pytest.fixture
+def human_sp():
+    summary_path = "tests/test_data/human/summary.csv"
+    sp = SummaryParser(summary_path)
+    return(sp)

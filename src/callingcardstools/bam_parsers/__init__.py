@@ -3,4 +3,4 @@ from calling cards experiments"""
 from .BarcodeParser import *
 from .ReadTagger import *
 from .StatusFlags import *
-from .main import main
+from .SummaryParser import *

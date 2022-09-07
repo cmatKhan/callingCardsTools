@@ -1,15 +1,23 @@
 import pytest
 from .conftests import *
 
-def test_BarcodeParser_constructor_yeast(yeast_bp, yeast_barcode_dict):
+def test_constructor_yeast(yeast_bp, yeast_barcode_dict):
     """test""" 
 
     assert yeast_bp.barcode_dict == yeast_barcode_dict
 
-def test_BarcodeParser_constructor_human(human_bp, human_barcode_dict):
+def test_constructor_human(human_bp, human_barcode_dict):
     """test"""
 
     assert human_bp.barcode_dict == human_barcode_dict
+
+def test_barcode_length_getter(yeast_bp, yeast_barcode_dict):
+    """test barcode length getter"""
+    assert yeast_bp.get_barcode_length() == yeast_barcode_dict['length']
+
+def test_insert_length_getter(human_bp, human_barcode_dict):
+    """test barcode length getter"""
+    assert human_bp.get_insert_length() == human_barcode_dict['insert_length']
 
 def test_inexact_component_edit_distance_with_diffs(yeast_bp, invalid_yeast_barcode):
     """test with barcode which is not exact"""

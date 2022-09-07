@@ -26,7 +26,7 @@ logging.basicConfig(
 
 class ReadTagger:
     """Given an indexed fasta file (genome), id length and insertion length, 
-    this object can returned a read tagged with the RG, XT and XZ tags"""
+    this object can returned a read tagged with the RG, XS and XZ tags"""
     def __init__(self, fasta_path, fasta_index_path, barcode_length, insertion_length):
         # check genome and index paths
         for input_path in [fasta_path,fasta_index_path]:
@@ -85,7 +85,7 @@ class ReadTagger:
         return self.genome.is_open()
     
     def tag_read(self, read):
-        """given a AlignedSegment object, add RG, XT and XZ tags
+        """given a AlignedSegment object, add RG, XS and XZ tags
 
         Args:
             read (AlignedSegment): An aligned segment object -- eg returned 
@@ -96,9 +96,9 @@ class ReadTagger:
             ValueError: Raised when the insertion sequence indicies are out of bounds
 
         Returns:
-            AlignedSegment: The same read, but with RG, XT and XZ tags added
+            AlignedSegment: The same read, but with RG, XS and XZ tags added
         """
-        # Extract RG, XT and XZ tags -------------------------------------------
+        # Extract RG, XS and XZ tags -------------------------------------------
         tag_dict = dict()
 
         # set Read Group
@@ -108,7 +108,7 @@ class ReadTagger:
         # if so, set the region_dict start and end to *, indicating that there is
         # no alignment, and so there is no start and end region for the alignment
         if read.flag & 0x4:
-            tag_dict['XT'] = "*"
+            tag_dict['XS'] = "*"
             tag_dict['XZ'] = "*"
         # if the bit flag 0x10 is set, the read reverse strand. Handle accordingly
         elif read.flag & 0x10:
@@ -133,41 +133,41 @@ class ReadTagger:
             # The insertion point is at the end of the alignment
             # note that this is -1 because per the docs
             # reference_end points to one past the last aligned residue.
-            read_3_prime = (read.reference_end-1)+soft_clip_length
+            read_5_prime = (read.reference_end-1)+soft_clip_length
 
             # this is the `insert_length` number bases which precede the
             # read (after adjusting for soft clipping)
             try:
                 # if the soft-clip adjustment put the 3 prime end beyond the
-                # end of the chrom, set XT to *
-                if(read_3_prime >
+                # end of the chrom, set XS to *
+                if(read_5_prime >
                    self.genome.get_reference_length(read.reference_name)):
-                    tag_dict['XT'] = "*"
+                    tag_dict['XS'] = "*"
                     tag_dict['XI'] = "*"
                     tag_dict['XE'] = "*"
                     tag_dict['XZ'] = "*"
                 # if the endpoint of the insertion sequence is off the end of
                 # the chrom, set XZ to *
-                elif(read_3_prime+1+self.insertion_length >=
+                elif(read_5_prime+1+self.insertion_length >=
                 self.genome.get_reference_length(read.reference_name)):
-                    tag_dict['XT'] = read_3_prime
+                    tag_dict['XS'] = read_5_prime
                     tag_dict['XI'] = "*"
                     tag_dict['XE'] = "*"
                     tag_dict['XZ'] = "*"
                 else:
                     # This is the first base -- adjusted for soft clipping -- 
                     # in the read which cover the genome
-                    tag_dict['XT'] = read_3_prime
-                    tag_dict['XI'] = read_3_prime + 1
-                    tag_dict['XE'] = read_3_prime + 1 + self.insertion_length
+                    tag_dict['XS'] = read_5_prime
+                    tag_dict['XI'] = read_5_prime + 1
+                    tag_dict['XE'] = read_5_prime + 1 + self.insertion_length
                     tag_dict['XZ'] = self.genome.fetch(read.reference_name,
-                                            read_3_prime+1,
-                                            read_3_prime+1 +
+                                            read_5_prime+1,
+                                            read_5_prime+1 +
                                             self.insertion_length).upper()
             except ValueError:
                 sys.exit(f"Read {read.query_name}, "
-                f"insert region {read.reference_name}:{read_3_prime+1}-"\
-                    f"{read_3_prime+1+self.insertion_length} is out of bounds")
+                f"insert region {read.reference_name}:{read_5_prime+1}-"\
+                    f"{read_5_prime+1+self.insertion_length} is out of bounds")
 
         # else, Read is in the forward orientation. Note that a single end
         # forward strand read with no other flags will have flag 0
@@ -186,39 +186,39 @@ class ReadTagger:
                     f"cigar string {read.cigartuples} is not parse-able") \
                         from exc
             # extract insert position
-            read_3_prime = read.reference_start - soft_clip_length
+            read_5_prime = read.reference_start - soft_clip_length
 
             # this is the `insert_length` number bases which precede the
             # read (after adjusting for soft clipping)
             try:
-                # if the 3 prime end, after soft clipping, is less than 0, set
-                # XT to *
-                if(read_3_prime < 0):
-                    tag_dict['XT'] = "*"
+                # if the 5 prime end, after soft clipping, is less than 0, set
+                # XS to *
+                if(read_5_prime < 0):
+                    tag_dict['XS'] = "*"
                     tag_dict['XI'] = "*"
                     tag_dict['XE'] = "*"
                     tag_dict['XZ'] = "*"
                 # if the insertion sequence extends beyond the beginning of the
                 # chrom, set to *
-                elif(read_3_prime-self.insertion_length < 0):
-                    tag_dict['XT'] = read_3_prime
+                elif(read_5_prime-self.insertion_length < 0):
+                    tag_dict['XS'] = read_5_prime
                     tag_dict['XI'] = "*"
                     tag_dict['XE'] = "*"
                     tag_dict['XZ'] = "*"
                 else:
                     # This is the first base -- adjusted for soft clipping -- 
                     # in the read which cover the genome
-                    tag_dict['XT'] = read_3_prime
-                    tag_dict['XI'] = read_3_prime - self.insertion_length
-                    tag_dict['XE'] = read_3_prime
+                    tag_dict['XS'] = read_5_prime
+                    tag_dict['XI'] = read_5_prime - self.insertion_length
+                    tag_dict['XE'] = read_5_prime
                     tag_dict['XZ'] = self.genome.fetch(read.reference_name,
-                                            read_3_prime-self.insertion_length,
-                                            read_3_prime).upper()
+                                            read_5_prime-self.insertion_length,
+                                            read_5_prime).upper()
             except ValueError as exc:
                 raise ValueError(f"Read {read.query_name}, "
                 f"insert region "\
-                    f"{read.reference_name}:{read_3_prime-self.insertion_length}-"\
-                    f"{read_3_prime} is out of bounds") from exc
+                    f"{read.reference_name}:{read_5_prime-self.insertion_length}-"\
+                    f"{read_5_prime} is out of bounds") from exc
 
         # Set tags -------------------------------------------------------------
         for tag, tag_str in tag_dict.items():

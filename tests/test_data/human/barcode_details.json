@@ -14,6 +14,12 @@
                     "CAGT", "TTTT"],
         "pb_lrt2": ["GGTTAA"]
     },
-    "insert_seqs": ["TtAA"]
+    "insert_seqs": ["TtAA"],
+    "match_allowance":{
+        "om_pb": 1,
+        "srt": 1,
+        "pb_lrt2": 1,
+        "max": 2
+    }
 
 }
