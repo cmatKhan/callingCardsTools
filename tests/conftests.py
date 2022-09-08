@@ -1,4 +1,6 @@
 """Set up bam_parser fixtures"""
+import os
+import sqlite3
 import pytest
 import pysam
 from callingcardstools.bam_parsers.BarcodeParser import BarcodeParser
@@ -236,3 +238,24 @@ def human_sp():
     summary_path = "tests/test_data/human/summary.csv"
     sp = SummaryParser(summary_path)
     return(sp)
+
+@pytest.fixture
+def create_hop_tbl_sql():
+    sql = {
+        'drop': """DROP TABLE IF EXISTS qbed;""",
+        'create': """CREATE TABLE "qbed" (
+                            "chr"	TEXT,
+                            "start"	INTEGER,
+                            "end"	INTEGER,
+                            "hops"	INTEGER,
+                            "sig"	INTEGER
+                        );""",
+        'fill': """insert into qbed
+                        values
+                        ('chr1', 1,2, 10, 1),
+                        ('chr1', 2,4, 10, 1),
+                        ('chr1', 4,6, 5, 0),
+                        ('chr2', 6,10, 10, 1);"""
+    }
+
+    return sql
