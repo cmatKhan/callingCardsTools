@@ -197,6 +197,7 @@ def find_peaks(experiment_frame,background_frame,TTAA_frame,
 		#populate tree with position as interval
 		for idx, row in TTAA_frame_gbChr_dict[name].iterrows():	
 			TTAA_dict_of_trees[name].add_interval(Interval(int(idx),int(idx+3)))
+	
 	#group by chromosome and populate interval tree with positions of background hops
 	for name,group in background_frame.groupby('Chr'):
 		background_gnashy_dict[name] = group

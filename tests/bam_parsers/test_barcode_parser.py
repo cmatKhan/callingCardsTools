@@ -25,8 +25,8 @@ def test_inexact_component_edit_distance_with_diffs(yeast_bp, invalid_yeast_barc
     expected = {
         'transposon_seq': 2,
         'r1_primer_bc': 2,
-        'r2_primer_bc': 1,
-        'restriction_site': 0}
+        'r2_trans_bc': 1,
+        'restriction_site': 1}
         
     
     with pytest.raises(AttributeError):
@@ -43,7 +43,7 @@ def test_exact_component_edit_distance(yeast_bp, valid_mig2_yeast_barcode):
     expected = {
         'transposon_seq': 0,
         'r1_primer_bc': 0,
-        'r2_primer_bc': 0,
+        'r2_trans_bc': 0,
         'restriction_site': 0}
     
     with pytest.raises(AttributeError):
@@ -67,6 +67,13 @@ def test_edit_distance(yeast_bp, valid_mig2_yeast_barcode):
 def test_get_insert_seq(human_bp, human_barcode_dict):
     insert_seqs = human_bp.get_insert_seqs() 
     assert insert_seqs == human_barcode_dict["insert_seqs"]
+
+def test_get_restriction_enzyme(yeast_bp, valid_mig2_yeast_barcode_Hall, valid_mig2_yeast_barcode_HinP1I):
+    
+    yeast_bp.set_barcode(valid_mig2_yeast_barcode_Hall)
+    assert 'Hpall' == yeast_bp.get_restriction_enzyme()
+    yeast_bp.set_barcode(valid_mig2_yeast_barcode_HinP1I)
+    assert "HinP1I" == yeast_bp.get_restriction_enzyme()
 
 def test_get_tf_barcode(yeast_bp, yeast_barcode_dict, valid_mig2_yeast_barcode):
     """test with barcode which is exact"""
@@ -139,3 +146,11 @@ def test_tf_dict(yeast_bp, yeast_barcode_dict):
     """test with barcode which is not exact"""
 
     assert yeast_bp.barcode_dict['tf_dict'] == yeast_barcode_dict['tf_dict']
+
+def test_barcode_check(yeast_bp, valid_mig2_yeast_barcode_HinP1I):
+    yeast_bp.set_barcode(valid_mig2_yeast_barcode_HinP1I)
+
+    expected = {"pass": True, "tf": "MIG2", "restriction_enzyme": "HinP1I"}
+    actual = yeast_bp.barcode_check()
+
+    assert actual == expected

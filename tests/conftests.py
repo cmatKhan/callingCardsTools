@@ -1,13 +1,40 @@
 """Set up bam_parser fixtures"""
-import os
-import sqlite3
+import random
 import pytest
 import pysam
+import pandas as pd
 from callingcardstools.bam_parsers.BarcodeParser import BarcodeParser
 from callingcardstools.bam_parsers.ReadTagger import ReadTagger
 from callingcardstools.bam_parsers.SummaryParser import SummaryParser
+from callingcardstools.fastq_parsers.BarcodeExtractor import BarcodeExtractor
+from callingcardstools.significance.HopsDb import HopsDb
 
 # yeast fixtures ---------------------------------------------------------------
+
+@pytest.fixture
+def yeast_reads():
+    """paths relative to project root to yeast r1 and r2 fastq files
+
+    Returns:
+        dict: key, value where keys are r1, r2 and values are paths to fastq files
+    """
+    return {'r1':"tests/test_data/yeast/r1.fastq", 
+            'r2':"tests/test_data/yeast/r2.fastq"}
+
+@pytest.fixture
+def yeast_be_full():
+    be = BarcodeExtractor("tests/test_data/yeast/read_barcode_details_full.json")
+    return be
+
+@pytest.fixture
+def yeast_be_concise():
+    be = BarcodeExtractor("tests/test_data/read_barcode_details_concise.json")
+    return be
+
+@pytest.fixture
+def yeast_be_trim():
+    be = BarcodeExtractor("tests/test_data/read_barcode_details_trim.json")
+    return be
 
 @pytest.fixture
 def yeast_barcode_details():
@@ -30,21 +57,23 @@ def yeast_barcode_dict():
         'indicies':{
             'r1_primer_bc': [0, 5], 
             'transposon_seq': [5, 22],
-            'r2_primer_bc': [22, 30], 
-            'restriction_site': [30, 34]},
+            'r2_trans_bc': [22, 30], 
+            'restriction_site': [30, 42]},
         'components': {
             'r1_primer_bc': ['TCAGT', 'GCCTG', 'ATTTG', 'TTGGT', 'CTCGG'],
             'transposon_seq': ['AATTCACTACGTCAACA'],
-            'r2_primer_bc': ['CCCGTTGG', 'GGCGGCAG', 'GGGGGGGT', 'GGGGGTAG', 'TCGTCAGT'],
-            'restriction_site': ['TCGA', 'GCGC', 'CCGG']},
+            'r2_trans_bc': ['CCCGTTGG', 'GGCGGCAG', 'GGGGGGGT', 'GGGGGTAG', 'TCGTCAGT'],
+            'restriction_site': {"seq": ['TCGAGCGCCCGG', 'TCGAGCGC', 'TCGA'], 
+                                 "name": ["Hpall", "HinP1I", "TaqAI"]}
+            },
         'tf_map': {
-            'bc_components': ['r1_primer_bc', 'r2_primer_bc'],
+            'bc_components': ['r1_primer_bc', 'r2_trans_bc'],
             'tf': ['MIG2', 'CAT8', 'GLN3', 'ARO80', 'CBF1']},
         'insert_seqs': ['*'],
         'match_allowance': {
             'transposon_seq': 1,
             'r1_primer_bc': 0,
-            'r2_primer_bc': 0,
+            'r2_trans_bc': 0,
             'restriction_site': 1,
             'max': 1},
         'tf_dict':{
@@ -54,7 +83,7 @@ def yeast_barcode_dict():
             'TTGGTGGGGGTAG': 'ARO80',
             'CTCGGTCGTCAGT': 'CBF1'
         },
-        'length': 34,
+        'length': 42,
         'insert_length': 1
     }
 
@@ -68,8 +97,28 @@ def valid_mig2_yeast_barcode():
         str: a full yeast barcode which corresponds to current yeast barcode 
         details json
     """
-    return "TCAGTAATTCACTACGTCAACACCCGTTGGTCGA"
+    return "TCAGTAATTCACTACGTCAACACCCGTTGGTCGANNNNNNNN"
 
+@pytest.fixture
+def valid_mig2_yeast_barcode_Hall():
+    """Valid yeast barcode for a TF in the tf_map with the Hall restriction site
+
+    Returns:
+        str: a full yeast barcode which corresponds to current yeast barcode 
+        details json
+    """
+    return "TCAGTAATTCACTACGTCAACACCCGTTGGTCGAGCGCCCGG"
+
+@pytest.fixture
+def valid_mig2_yeast_barcode_HinP1I():
+    """Valid yeast barcode for a TF in the tf_map with the HpinP1I restriction site
+
+    Returns:
+        str: a full yeast barcode which corresponds to current yeast barcode 
+        details json
+    """
+    return "TCAGTAATTCACTACGTCAACACCCGTTGGNNTCGAGCGCNN"
+                                            
 @pytest.fixture
 def mig2_tseq_dist1_yeast_barcode():
     """cat8 barcode with edit distance 1 in transposon_seq
@@ -78,7 +127,7 @@ def mig2_tseq_dist1_yeast_barcode():
         str: a full yeast barcode which does not meet expectations
         details json
     """
-    return "TCAGTNATTCACTACGTCAACACCCGTTGGTCGA"
+    return "TCAGTNATTCACTACGTCAACACCCGTTGGTCGANNNNNNNN"
 
 @pytest.fixture
 def invalid_yeast_barcode():
@@ -89,7 +138,7 @@ def invalid_yeast_barcode():
         str: a full yeast barcode which does not meet expectations
         details json
     """
-    return "NCANTAATTCACNACGTCANCACCCGNTGGTCGA"
+    return "NCANTAATTCACNACGTCANCACCCGNTGGTNGANNNNNNNN"
 
 @pytest.fixture
 def yeast_bp():
@@ -125,6 +174,47 @@ def yeast_bamfile():
     """An open AlignmentFile object of yeast untagged yeast alignments"""
     bampath = "tests/test_data/yeast/untagged.bam"
     return pysam.AlignmentFile(bampath, "rb")
+
+@pytest.fixture
+def yeast_hops_data():
+    """A set of region, background and hop files to test hopdb
+
+    Returns:
+        dict: a dict with keys regions, background and experiment storing 
+        paths to corresponding bed/qbed files 
+    """
+    file_dict = {
+        "chr_map": "src/callingcardstools/resources/yeast/chr_map.csv",
+        "regions": "tests/test_data/yeast/regions.bed",
+        "background": "tests/test_data/yeast/background.qbed",
+        "experiment": "tests/test_data/yeast/experiment.qbed"
+    }
+
+    return file_dict
+
+@pytest.fixture
+def yeast_hopsdb(yeast_hops_data):
+
+    hops_db = HopsDb(":memory:")
+
+    chr_map_df = pd.read_csv(yeast_hops_data['chr_map'])
+
+    hops_db.add_table(chr_map_df, "chr_map")
+
+    regions_df = pd.read_csv(yeast_hops_data["regions"], sep = "\t", names = ['chr', 'start', 'end','name', 'value', 'strand'])
+
+    hops_db.add_table(regions_df, 'regions', 'upstream_700')
+
+    qbed_colnames = ['chr', 'start', 'end', 'depth', 'strand', 'annotation', 'sample']
+    background_df = pd.read_csv(yeast_hops_data["background"], sep = "\t", names = qbed_colnames )
+
+    hops_db.add_table(background_df, 'background', 'sir4')
+
+    expr_df = pd.read_csv(yeast_hops_data['experiment'], sep = "\t", names = qbed_colnames)
+
+    hops_db.add_table(expr_df, 'experiment', 'test')
+
+    return hops_db
 
 # Human fixtures ---------------------------------------------------------------
 
@@ -240,22 +330,56 @@ def human_sp():
     return(sp)
 
 @pytest.fixture
-def create_hop_tbl_sql():
-    sql = {
-        'drop': """DROP TABLE IF EXISTS qbed;""",
-        'create': """CREATE TABLE "qbed" (
-                            "chr"	TEXT,
-                            "start"	INTEGER,
-                            "end"	INTEGER,
-                            "hops"	INTEGER,
-                            "sig"	INTEGER
-                        );""",
-        'fill': """insert into qbed
-                        values
-                        ('chr1', 1,2, 10, 1),
-                        ('chr1', 2,4, 10, 1),
-                        ('chr1', 4,6, 5, 0),
-                        ('chr2', 6,10, 10, 1);"""
+def background_hops():
+    background_dict = {
+        'chr': pd.Series(['chr1']*5 + ['chr2']*4, dtype = str),
+        'start': pd.Series([1,3,5,7,10]+[1,3,5,10],dtype = int ),
+        'end': pd.Series([x+1 for x in [1,3,5,7,10]+[1,3,5,10]], dtype = int),
+        'depth': pd.Series([random.randrange(1,300,1) for x in range(9)], dtype = int),
+        'strand': pd.Series(['+','+','-','+','-']+['+','-','+','-'], dtype = str)
     }
 
-    return sql
+@pytest.fixture
+def human_hops_data():
+    """A set of region, background and hop files to test hopdb
+
+    Returns:
+        dict: a dict with keys regions, background and experiment storing 
+        paths to corresponding bed/qbed files 
+    """
+    file_dict = {
+        "chr_map": "src/callingcardstools/resources/human/chr_map.csv",
+        "ttaa": "temp/human/TTAA_hg38.qbed",
+        "experiment": "temp/human/TAG_AY53-1_50k_downsampled_human_map_sort_final.qbed"
+    }
+
+    return file_dict
+
+@pytest.fixture
+def human_hopsdb(human_hops_data):
+
+    hops_data = human_hops_data
+
+    hops_db = HopsDb(":memory:")
+
+    chr_map_df = pd.read_csv(hops_data['chr_map'])
+
+    hops_db.add_table(chr_map_df, "chr_map")
+
+    qbed_colnames = ['chr', 'start', 'end', 'depth', 'strand', 'annotation', 'sample']
+    
+    ttaa_df = pd.read_csv(
+        hops_data['ttaa'],
+        sep = "\t",
+        names = qbed_colnames
+    )
+    hops_db.add_table(ttaa_df, 'ttaa')
+
+    expr_df = pd.read_csv(
+        hops_data['experiment'], 
+        sep = "\t", 
+        names = qbed_colnames)
+
+    hops_db.add_table(expr_df, 'experiment', 'ay53-1_50k')
+
+    return hops_db

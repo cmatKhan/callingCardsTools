@@ -9,16 +9,16 @@ def test_summary_parser_constructor(human_sp):
     assert human_sp.summary.shape[1] > 12
 
 def test_to_qBed(human_sp):
-    expected = {'chr': ['chr1', 'chr1', 'chr1'], 
-                'insert_start': [30191, 32303, 32303],
-                'insert_stop':  [30195, 32307, 32307],
-                'depth' : [2,1,1],
-                'strand': ['+', '+', '-'],
-                'annotation': ['TTAA', 'TTAA', 'TTAA']}
+    expected = {'chr': pd.Series(['chr1', 'chr1', 'chr1'], dtype = str), 
+                'insert_start': pd.Series(['30191', '32303', '32303'], dtype = str),
+                'insert_stop':  pd.Series([30195, 32307, 32307], dtype = str),
+                'depth' : pd.Series([2,1,1], dtype = int),
+                'strand': pd.Series(['+', '+', '-'], dtype = str),
+                'annotation': pd.Series(['TTAA', 'TTAA', 'TTAA'], dtype = str)}
 
     expected_df = pd.DataFrame(expected)
 
-    assert_frame_equal(human_sp.to_qBed('insert_seq'), expected_df)
+    assert_frame_equal(human_sp.to_qBed('insert_seq'), expected_df, check_dtype = False)
 
 def test_write_split(human_sp, tmpdir):
     human_sp.set_filter("mapq < 1000")

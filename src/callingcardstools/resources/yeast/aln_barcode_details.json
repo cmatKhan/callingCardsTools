@@ -1,0 +1,26 @@
+{
+    "indicies": {
+        "r1_primer_bc":     [0, 5],
+        "transposon_seq":   [5, 22],
+        "r2_trans_bc":     [22, 30],
+        "restriction_site": [30, 34]
+    },
+    "components": {
+        "r1_primer_bc":     ["GAATC", "GCTTA", "TTGCG", "TACTC", "CCTGC"],
+        "transposon_seq":   ["AATTCACTACGTCAACA"],
+        "r2_trans_bc":     ["TTTTTCTA", "CAGAGGGG", "ACCTGTTT", "ACGCACGC", "TACGGCGT"],
+        "restriction_site": ["TCGA","GCGC","CCGG"]
+    },
+    "tf_map": {
+        "bc_components":   ["r1_primer_bc", "r2_trans_bc"],
+        "tf":              ["RIM101", "RTG1", "ERT1", "MTH1", "MET32"]
+    },
+    "max_mismatch":{
+        "r1_primer_bc": 0,
+        "transposon_seq": 0,
+        "r2_trans_bc": 0,
+        "restriction_site": 0
+    }
+
+}
+

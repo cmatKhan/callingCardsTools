@@ -1,0 +1,1 @@
+from .BarcodeExtractor import *

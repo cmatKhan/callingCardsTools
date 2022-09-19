@@ -109,6 +109,8 @@ class ReadTagger:
         # no alignment, and so there is no start and end region for the alignment
         if read.flag & 0x4:
             tag_dict['XS'] = "*"
+            tag_dict['XI'] = "*"
+            tag_dict['XE'] = "*"
             tag_dict['XZ'] = "*"
         # if the bit flag 0x10 is set, the read reverse strand. Handle accordingly
         elif read.flag & 0x10:

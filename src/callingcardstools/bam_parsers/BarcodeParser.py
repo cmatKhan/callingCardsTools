@@ -10,6 +10,7 @@ class BarcodeParser:
     # set attributes
     key_dict = {
         "indicies":"indicies",
+        "restriction_enzyme": "restriction_site",
         "components":"components",
         "insert_seqs": "insert_seqs",
         "tf_map": "tf_map",
@@ -79,18 +80,27 @@ class BarcodeParser:
         barcode_components_length_check_dict = { k:v[1]-v[0] for k,v in \
                                                 barcode_dict['indicies'].items()}
         for k,v in barcode_dict['components'].items():
-            for comp in v:
-                if not len(comp) == barcode_components_length_check_dict[k]:
+            if isinstance(v, dict):
+                # TODO address hard coding 'seq' here
+                if not max([len(x) for x in v['seq']]) == \
+                    barcode_components_length_check_dict[k]:
                     raise ValueError(f"There exists a component in "\
                     f"barcode_components which is not the length " \
                     f"described by the barcode_details['indicies']: "\
-                    f"{comp}, {barcode_components_length_check_dict[k]}")
+                    f"{k}, {barcode_components_length_check_dict[k]}")
+            else:
+                for comp in v:
+                    if not len(comp) == barcode_components_length_check_dict[k]:
+                        raise ValueError(f"There exists a component in "\
+                        f"barcode_components which is not the length " \
+                        f"described by the barcode_details['indicies']: "\
+                        f"{comp}, {barcode_components_length_check_dict[k]}")
         
         # set barcode length
-        barcode_dict[self.key_dict['barcode_length']] = sum(barcode_components_length_check_dict.values())
+        barcode_dict[self.key_dict['barcode_length']] = \
+            sum(barcode_components_length_check_dict.values())
         
-        # if a tf_map dict exists, check that the bc_components and tf list 
-        # exist
+        # if a tf_map dict exists, check that the bc_components and tf list exist
         if self.key_dict['tf_map'] in barcode_dict:
             for bc_comp in barcode_dict[self.key_dict['tf_map']]\
                 [self.key_dict['tf_map_keys']['bc_components']]:
@@ -112,13 +122,15 @@ class BarcodeParser:
         
         # cast all values in self.key_dict['components'] to upper
         # note that the barcode is also always cast to upper
-        upper_components_dict = {}
         for k,seq_list in barcode_dict[self.key_dict['components']].items():
-            upper_seq_list = []
-            for sequence in seq_list:
-                upper_seq_list.append(sequence.upper())
-            upper_components_dict.setdefault(k,upper_seq_list)
-        barcode_dict[self.key_dict['components']] = upper_components_dict
+            if isinstance(seq_list, dict):
+                barcode_dict[self.key_dict['components']][k]['seq'] = \
+                    [x.upper() for x in barcode_dict[self.key_dict['components']][k]['seq']]
+            elif isinstance(seq_list, list):
+                barcode_dict[self.key_dict['components']][k] = \
+                    [x.upper() for x in seq_list]
+            else:
+                ValueError(f"Unrecognized element in {k}. Recognized data types are list and dict")
 
         # cast insert seq to upper if it exists
         if self.key_dict['insert_seqs'] in barcode_dict:
@@ -235,6 +247,10 @@ class BarcodeParser:
         allowance_dict = self.barcode_dict[self.key_dict['match_allowance']]
 
         tf = self.get_tf()
+        # note that this is redundant -- the same code essentially is used 
+        # to check edit distance below.
+        # TODO implement a different parser for each component type
+        restriction_enzyme = self.get_restriction_enzyme()
         component_edit_dist_dict = self.component_edit_distance()
         try:
             # iterate over the component edit dist dict and test if a given
@@ -257,7 +273,7 @@ class BarcodeParser:
         except KeyError:
             KeyError("A given component was not present in the component match dict")
 
-        return ({"pass": barcode_passing, "tf": tf})
+        return ({"pass": barcode_passing, "tf": tf, "restriction_enzyme": restriction_enzyme})
 
     def min_edit_dist(self, barcode_component, barcode_substr):
         """get the minimum levenshtein edit distance between a given barcode 
@@ -280,9 +296,19 @@ class BarcodeParser:
             raise KeyError(f"{barcode_component} is not in " \
                 f"the keys of the current barcode_details dict "\
                     f"{self.barcode_details_json}")
-
-        min_dist = min([self.edit_dist(barcode_substr, valid_component) for \
-            valid_component in self.barcode_dict[self.key_dict['components']][barcode_component]])
+        
+        component_set = self.barcode_dict[self.key_dict['components']][barcode_component]
+        
+        # TODO handle hard coding
+        if isinstance(component_set, dict):
+            min_dist = 1
+            for seq in component_set['seq']:
+                if seq in barcode_substr:
+                    min_dist = 0
+                    break
+        else:
+            min_dist = min([self.edit_dist(barcode_substr, valid_component) \
+                for valid_component in component_set])
 
         return min_dist
 
@@ -313,6 +339,31 @@ class BarcodeParser:
                                       distances[i1 + 1], distances_[-1])))
             distances = distances_
         return distances[-1]
+    
+    def get_restriction_enzyme(self):
+        """extract the restriction enzyme name, if one exists. Note that this is 
+        set up for exact matches only, no correction/fuzzy matching
+
+        Raises:
+            AttributeError: when no barcode is set in self
+
+        Returns:
+            string: either the name of the restriction enzyme, or "*"
+        """
+        if self.barcode == "":
+            raise AttributeError("No barcode set")
+
+        seq_indicies = self.barcode_dict[self.key_dict['indicies']][self.key_dict['restriction_enzyme']]
+        restriction_seq = self.barcode[seq_indicies[0]:seq_indicies[1]]
+        restriction_enzyme_dict = self.barcode_dict[self.key_dict['components']][self.key_dict['restriction_enzyme']]
+        
+        # TODO address hard coding in seq
+        for i in range(len(restriction_enzyme_dict['seq'])):
+            seq = restriction_enzyme_dict['seq'][i]
+            if seq in restriction_seq:
+                return restriction_enzyme_dict['name'][i]
+        
+        return "*"
 
     def get_insert_seqs(self):
         """Getter for the insert seq sequence from the barcode details json

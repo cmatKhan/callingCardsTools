@@ -4,6 +4,7 @@ import os
 import logging
 # outside library
 import pandas as pd
+import numpy as np
 
 logging.basicConfig(
     level=logging.CRITICAL,
@@ -16,9 +17,10 @@ class SummaryParser:
 
     query_string = "status == 0"
 
-    summary_columns = ['id', 'bc', 'status', 'mapq', 'flag', 'chr', 
-                       'strand', 'five_prime', 'insert_start', 
-                       'insert_stop', 'insert_seq', 'tf', 'depth']
+    summary_columns = {'id':str, 'bc':str, 'status':int, 'mapq':int, 'flag':int, 'chr':str, 
+                       'strand':str, 'five_prime':str, 'insert_start':str, 
+                       'insert_stop':str, 'insert_seq':str, 'tf':str, 
+                       'restriction_enzyme': str, 'depth': int}
 
     grouping_fields = {'chr', 'insert_start', 'insert_stop', 'strand'}
 
@@ -57,7 +59,7 @@ class SummaryParser:
         for input_path in [summary_csv_path]:
             if not os.path.exists(input_path):
                 raise FileNotFoundError(f"Input file DNE: {input_path}")
-        summary = pd.read_csv(summary_csv_path)
+        summary = pd.read_csv(summary_csv_path, dtype = self.summary_columns)
         if 'depth' not in summary.columns:
             summary['depth'] = 1
 
@@ -66,7 +68,7 @@ class SummaryParser:
         self.summary = summary
 
     def _check_summary(self, summary):
-        if summary.columns != self.summary_columns:
+        if len(np.setdiff1d(summary.columns,list(self.summary_columns.keys()))) > 0:
             raise ValueError(f"The expected summary columns are {','.join(self.summary_columns)} in that order")
 
     def set_summary_columns(self, col_list):

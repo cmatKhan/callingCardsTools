@@ -1,0 +1,13 @@
+{
+    "r1": {
+        "primer": {"index": [0,5]},
+    
+        "transposon_seq": {"index": [5,22]}
+    },
+
+    "r2": {
+        "transposon_bc": {"index":[0,8]},
+                          
+        "restriction": {"index": [8,20]}
+    }
+}

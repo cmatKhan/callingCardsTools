@@ -1,0 +1,21 @@
+{
+    "r1": {
+        "primer": {"trim": true, 
+                   "index": [0,5], 
+                   "append": true},
+    
+        "transposon_seq": {"trim": true, 
+                           "index": [5,22], 
+                           "append": true}
+    },
+
+    "r2": {
+        "transposon_bc": {"trim": true, 
+                          "index":[0,8], 
+                          "append": true},
+                          
+        "restriction": {"trim": false, 
+                        "index": [8,20],
+                        "append": true}
+    }
+}

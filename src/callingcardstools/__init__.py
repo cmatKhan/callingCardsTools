@@ -2,6 +2,6 @@
 #from .general import *
 #from . import utils
 
-__all__ = ["bam_parsers",]
+__all__ = ["bam_parsers", "fastq_parsers", "utils", "significance"]
 
 __version__ = '0.0.0'
