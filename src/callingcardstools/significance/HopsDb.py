@@ -2,7 +2,7 @@ import os
 import sys
 import re
 import logging
-from math import inf,ceil
+from math import inf,floor,ceil
 
 import pysqlite3 as sqlite3
 import pandas as pd
@@ -44,13 +44,15 @@ class HopsDb():
         chr_map_table: [standard_chr_format, 'seqlength']
     }
 
-    index_col_string = ','.join(['chr', 'start', 'end', 'strand'])
+    index_col_string = ','.join(['"chr"', '"start" ASC', '"end" ASC', '"strand"'])
 
     def __init__(self, db_path):
         self.open(db_path)
 
     def __del__(self):
         try:
+            # save changes
+            self.con.commit()
             self.con.close()
         except AttributeError:
             pass
@@ -179,6 +181,7 @@ class HopsDb():
             # where X are the experimental hops,
             # and mu is the background hops * (total_expr_hops/total_background_hops)
             return 1-scistat.poisson.cdf(x, mu)
+        return pval
 
     @staticmethod
     def hypergeometric_pval_factory(total_bg_hops, total_expr_hops):
@@ -196,6 +199,7 @@ class HopsDb():
             x = expr_hops - 1
             N = bg_hops + expr_hops
             return 1-scistat.hypergeom.cdf(x,M,n,N)
+        return pval
      
     def count_hops_factory(self,tbl):
 
@@ -212,6 +216,7 @@ class HopsDb():
                 aggregate_sql %(chrom,tbl,region_start, region_end))
                 
             return res.fetchall()
+        return hops
     
 
     def get_total_hops(self, tbl):
@@ -310,15 +315,16 @@ class HopsDb():
             print("Current database tables are valid")
             return True
     
-
+    # TODO return inserter, updater, etc as an 'overloaded' function (via 
+    # internal factory function)
     def new_table(self,tablename,col_dict):
         # drop the table if it exists
         drop_sql = f"""DROP TABLE IF EXISTS {tablename}""" 
         # create the table if it exists
-        parsed_col_dict = ",".join([" ".join([k.strip(),v.strip()]) \
+        parsed_col_dict = ",".join([" ".join(['"'+k.strip()+'"',v.strip()]) \
             for k,v in col_dict.items()])
         create_sql = f"CREATE TABLE {tablename}("\
-            f"{self.pk} INTEGER NOT NULL PRIMARY KEY, {parsed_col_dict})"
+            f'"{self.pk}" INTEGER NOT NULL PRIMARY KEY, {parsed_col_dict})'
         
         cur = self.con.cursor()
         for sql in [drop_sql, create_sql]:
@@ -326,14 +332,16 @@ class HopsDb():
     
         def inserter(values, columns = col_dict.keys()):
             insert_sql = f"INSERT INTO {tablename} ({','.join(columns)}) "\
-                         f"VALUES ({values})"
+                         f"VALUES ({','.join([str(x) for x in values])})"
             self.db_execute(cur,insert_sql)
+            self.con.commit()
+        return inserter
 
     def index_table(self,tablename):
         cur = self.con.cursor()
         # create index on table
         index_sql = f"CREATE INDEX {tablename + '_index'} "\
-                    f"ON {tablename} {self.index_col_string}"
+                    f"ON {tablename} ({self.index_col_string})"
         self.db_execute(cur, index_sql)
 
     def add_frame(self, df, table_type, tablename_suffix=None):
@@ -388,7 +396,7 @@ class HopsDb():
         # create table
         self.new_table(tablename,col_dict)
         # create index
-        if table_type in [x for x in self.required_fields if x != 'chr_map']:
+        if table_format in [x for x in self.required_fields if x != 'chr_map']:
             self.index_table(tablename) 
         # add the data
         df.to_sql(tablename,
@@ -602,44 +610,61 @@ class HopsDb():
                 %(chrom,ttaa_tbl,region_start,region_stop)).fetchall(),1)
             # calculate significance
             return poisson_pval(bg_hops, expr_hops, **pval_kwargs)              #pylint: disable=E1102
+        return calculator
 
     def region_significance_calculator_bf(self,ttaa_tbl,experiment_tbl,
                                           background_region_size, 
                                           poisson_pseudocount):
-        sql_dict = {
-            'aggregate_region': ' '.join(["SELECT COUNT(*) as hops"
-                                   "FROM %s"
-                                   "WHERE chr = %s AND start BETWEEN %s AND %s"])
-        }
-        def calculator(cur,chrom,region_start,region_stop):
+        aggregate_region = " ".join(["SELECT IFNULL(COUNT(*),0) as hops",
+                                   "FROM %s",
+                                   "WHERE chr = '%s' AND start BETWEEN %s AND %s"])
+        def calculator(cur,chrom,window_start,window_stop):
             # NOTE there was a -1 on this in the original code, but I think 
             # that was to adjust for a 1 indexed TTAA (which the current is?) TTAA
             # may be. However, all qBed files should be 0 indexed, and that is 
             # the assumption here, hence no -1
-            expected_region_start = region_start - (ceil(background_region_size/2))
-            expected_region_stop  = region_stop + (ceil(background_region_size/2))
+            expected_region_start = window_start - (ceil(background_region_size/2))
+            expected_region_stop  = window_stop + (ceil(background_region_size/2))
+            sql_dict = {
+                'background':{
+                    'ttaa': aggregate_region \
+                        %(ttaa_tbl,chrom, 
+                        expected_region_start, expected_region_stop),
+                    'hops': aggregate_region \
+                        %(experiment_tbl, chrom, 
+                        expected_region_start, expected_region_stop)
+                },
+                'window':{
+                    'ttaa': aggregate_region \
+                        %(ttaa_tbl,chrom,window_start, window_stop),
+                    'hops': aggregate_region \
+                        %(experiment_tbl,chrom,window_start, window_stop)
+
+                }
+            }
             # get ttaa in the expectation background
-            ttaa_in_background = cur.execute(sql_dict['aggregate_region'] \
-                %(chrom,ttaa_tbl,expected_region_start, 
-                expected_region_stop)).fetchall()
-            ttaa_in_background = max(ttaa_in_background, 1)
-            # get hops in expectation background
-            hops_in_background = cur.execute(sql_dict['aggregate_region'] \
-                %(chrom,experiment_tbl, expected_region_start, 
-                expected_region_stop)).fetchall()
-            # get ttaa in region
-            ttaa_in_region = cur.execute(sql_dict['aggregate_region'] \
-                %(chrom,ttaa_tbl,region_start, region_stop)).fetchall()
-            ttaa_in_region = max(ttaa_in_region, 1)
+            ttaa_in_background = max(
+                1,
+                self.db_execute(
+                    cur,
+                    sql_dict['background']['ttaa']).fetchone()['hops'])
+            # get hops in expectation background 
+            hops_in_background = self.db_execute(
+                cur,
+                sql_dict['background']['hops']).fetchone()['hops'] 
+            ttaa_in_window = max(
+                1,
+                self.db_execute(cur,sql_dict['window']['ttaa']).fetchone()['hops'])
             # extract hops in region
-            hops_in_region = cur.execute(sql_dict['aggregate_region'] \
-                %(chrom,experiment_tbl,region_start, region_stop)).fetchall()
+            hops_in_window = self.db_execute(
+                cur,sql_dict['window']['hops']).fetchone()['hops']
             # set poisson parameters
-            x = hops_in_region + poisson_pseudocount
+            x = hops_in_window + poisson_pseudocount
             mu = ((hops_in_background / ttaa_in_background) * \
-                ttaa_in_region) + poisson_pseudocount
+                ttaa_in_window) + poisson_pseudocount
             # return pvalue
             return 1-scistat.poisson.cdf(x, mu)
+        return calculator
 
 
     def range_score_macslike_bf(self, experiment_tbl, ttaa_tbl,
@@ -650,7 +675,7 @@ class HopsDb():
                                 step_size = 500):
         # check input to function
         for tbl in [experiment_tbl, ttaa_tbl]:
-            if not re.match(tbl, "^experiment_|^background_"):
+            if not re.match("^experiment_|^background_|^ttaa_",tbl):
                 IOError(f"{tbl} must start with experiment_ or background_ "\
                         f"per HopsDB conventions")
         if tbl not in list(self.list_tables(self.con)):
@@ -660,11 +685,11 @@ class HopsDb():
                                          ttaa_tbl,experiment_tbl])
         sig_region_col_dict = {'chr': 'TEXT', 'start':'INTEGER', 
                               'end':'INTEGER', 'poisson_pval':'NUMERIC'}        
-        sig_table_inserter = self.new_table( #pylint: disable=E1111
+        sig_table_inserter = self.new_table(
             sig_region_tablename, 
             sig_region_col_dict)
         # create poisson pvalue calculator
-        region_sig_calculator = self.region_significance_calculator_bf(         #pylint: disable=E1111
+        region_sig_calculator = self.region_significance_calculator_bf(
             ttaa_tbl,
             experiment_tbl,
             background_window_size,
@@ -674,25 +699,33 @@ class HopsDb():
         cur = self.con.cursor()
         seqinfo_sql = f"SELECT {self.standard_chr_format}, seqlength "\
                                    f"FROM {self.chr_map_table}"
-        seqinfo = self.db_execute(cur,seqinfo_sql)
-        for chrom, seqlength in seqinfo.items():
+        seqinfo = self.db_execute(cur,seqinfo_sql).fetchall()
+        for chrom, seqlength in seqinfo:
             
-            min_expr_hop_position = cur.execute(f"SELECT MIN(end) as min_end "\
-                                                f"FROM {experiment_tbl}").min_end
-            max_expr_hop_position = cur.execute(f"SELECT MAX(end) as max_end "\
-                                                f"FROM {experiment_tbl}").max_end
-
-            iteration_start = min(0,min_expr_hop_position-background_window_size/2)
-            iteration_end = max(seqlength, max_expr_hop_position+background_window_size/2)
+            min_max_sql = ' '.join(["SELECT MIN(end) AS min_end,",
+                                    "max(END) as max_end",
+                                    f"FROM {experiment_tbl}"])
+            min_max_res = self.db_execute(cur,min_max_sql).fetchall()[0]
+            # extract values
+            min_expr_hop_position = min_max_res['min_end']
+            max_expr_hop_position = min_max_res['max_end']
+  
+            iteration_start = max(
+                0,
+                floor(min_expr_hop_position-background_window_size/2))
+            iteration_end = min(
+                seqlength, 
+                ceil(max_expr_hop_position+background_window_size/2))
             
             # instantiate variable to track significant regions
             sig_region_start = inf
             sig_region_end = 0
             # iterate over tiles of width tile_width between iteration_start 
             # and iteration_end
+            print(f"working on {chrom}...")
             for window_start in range(iteration_start,iteration_end,step_size):
                 window_end = window_start + window_width
-                region_pval = region_sig_calculator(                            #pylint: disable=E1102
+                region_pval = region_sig_calculator(
                     cur, chrom, window_start,window_end)
                 if region_pval <= significance_threshold:
                     # update if sig_region_start is infinity. otherwise, 
@@ -704,15 +737,11 @@ class HopsDb():
                 elif sig_region_start < window_start:
                     if sig_region_end < sig_region_start:
                         raise ValueError("Region end cannot be less than region start")
-                    sig_region_pval = region_sig_calculator(                    #pylint: disable=E1102
+                    sig_region_pval = region_sig_calculator(
                         cur,chrom,sig_region_start,sig_region_end
                     )
-
-                    strand = "*"
-                    values = [chrom, sig_region_start, sig_region_end,strand,
-                              sig_region_pval]
-                    values = []
-                    sig_table_inserter(values)                                  #pylint: disable=E1102
+                    values = ['"'+chrom+'"', sig_region_start, sig_region_end, sig_region_pval]
+                    sig_table_inserter(values)
                     # reset sig_region boundaries
                     sig_region_start = inf
                     sig_region_end = 0
@@ -720,15 +749,11 @@ class HopsDb():
             if sig_region_start is not inf:
                 if sig_region_end < sig_region_start:
                     raise ValueError("Region end cannot be less than region start")
-                sig_region_pval = region_sig_calculator(                        #pylint: disable=E1102
+                sig_region_pval = region_sig_calculator(
                     cur,chrom,sig_region_start,sig_region_end
                 )
-
-                strand = "*"
-                values = [chrom, sig_region_start, sig_region_end,strand,
-                            sig_region_pval]
-                values = []
-                sig_table_inserter(values)                                      #pylint: disable=E1102
+                values = ['"'+chrom+'"', sig_region_start, sig_region_end, sig_region_pval]
+                sig_table_inserter(values)
 
 
     # UNTESTED, UNREVISED, KONWN MISTAKES IN REGION SIG SETTINGS
@@ -746,11 +771,11 @@ class HopsDb():
                                          background_tbl,experiment_tbl])
         sig_region_col_dict = {'chr': 'TEXT', 'start':'INTEGER', 
                               'end':'INTEGER', 'poisson_pval':'NUMERIC'}        
-        sig_table_inserter = self.new_table( #pylint: disable=E1111
+        sig_table_inserter = self.new_table(
             sig_region_tablename, 
             sig_region_col_dict)
         # create poisson pvalue calculator
-        region_sig_calculator = self.region_significance_calculator(            #pylint: disable=E1111
+        region_sig_calculator = self.region_significance_calculator(
             background_tbl,
             experiment_tbl,
             ttaa_tbl,

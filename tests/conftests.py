@@ -6,7 +6,7 @@ import pandas as pd
 from callingcardstools.bam_parsers.BarcodeParser import BarcodeParser
 from callingcardstools.bam_parsers.ReadTagger import ReadTagger
 from callingcardstools.bam_parsers.SummaryParser import SummaryParser
-from callingcardstools.fastq_parsers.BarcodeExtractor import BarcodeExtractor
+from callingcardstools.fastq_parsers.ReadParser import ReadParser
 from callingcardstools.significance.HopsDb import HopsDb
 
 # yeast fixtures ---------------------------------------------------------------
@@ -22,18 +22,8 @@ def yeast_reads():
             'r2':"tests/test_data/yeast/r2.fastq"}
 
 @pytest.fixture
-def yeast_be_full():
-    be = BarcodeExtractor("tests/test_data/yeast/read_barcode_details_full.json")
-    return be
-
-@pytest.fixture
-def yeast_be_concise():
-    be = BarcodeExtractor("tests/test_data/read_barcode_details_concise.json")
-    return be
-
-@pytest.fixture
-def yeast_be_trim():
-    be = BarcodeExtractor("tests/test_data/read_barcode_details_trim.json")
+def yeast_be():
+    be = ReadParser("tests/test_data/yeast/read_barcode_details_trim.json")
     return be
 
 @pytest.fixture

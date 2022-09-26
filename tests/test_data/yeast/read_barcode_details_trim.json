@@ -14,7 +14,7 @@
                           "index":[0,8], 
                           "append": true},
                           
-        "restriction": {"trim": false, 
+        "restriction": {"trim": true, 
                         "index": [8,20],
                         "append": true}
     }

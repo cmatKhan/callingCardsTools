@@ -1,1 +1,1 @@
-from .BarcodeExtractor import *
+from .ReadParser import *

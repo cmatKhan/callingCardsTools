@@ -1,9 +1,12 @@
-import pysqlite3 as sqlite3
 import os
-from .conftests import *
+
+from memory_profiler import profile
+import cProfile
+import pysqlite3 as sqlite3
 import pandas as pd
 from pandas.testing import assert_frame_equal, assert_series_equal
 
+from .conftests import *
 from callingcardstools.significance import HopsDb
 
 def test_sig_hop_aggregate(tmp_path):
@@ -164,6 +167,9 @@ def test_yeast_add_qbed_and_standardize_seqnames(yeast_hops_data):
     assert hops_db.add_frame(expr_df, 'experiment', 'test') == True
 
 def test_add_ttaa(human_hops_data):
+
+    save_db = True
+
     hops_data = human_hops_data
 
     hops_db = HopsDb(":memory:")
@@ -192,6 +198,26 @@ def test_add_ttaa(human_hops_data):
         ['chr'+str(x) for x in range(1,22)] + ["chrX", "chrY", "chrM"])]
 
     assert hops_db.add_frame(expr_df, 'experiment', 'test') == True
+ 
+    if save_db:
+        db_disk = "temp/human_hopsdb.sqlite"
+        if os.path.exists(db_disk):
+            os.remove(db_disk)
+        hops_db.con.backup(sqlite3.connect(db_disk))
+    hops_db.close()
+
+def test_region_score_human_bf():
+    hops_db_path = 'temp/human_hopsdb.sqlite'
+    hops_db = HopsDb(hops_db_path)
+    if not os.path.exists("temp"):
+        os.mkdir("temp")
+    #memory_profile = open("temp/range_score_macslike_bf_memory_profile.txt")
+    with cProfile.Profile() as pr:
+        #@profile(stream = memory_profile)
+        hops_db.range_score_macslike_bf('experiment_test', 'ttaa_hg38',1e-4)
+    pr.dump_stats("temp/range_score_macslike_bf_time_profile.txt")
+
+    assert 2==2
 
 def test_aggregate_hops(yeast_hopsdb):
 
