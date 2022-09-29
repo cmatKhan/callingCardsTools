@@ -3,11 +3,12 @@ import random
 import pytest
 import pysam
 import pandas as pd
-from callingcardstools.bam_parsers.BarcodeParser import BarcodeParser
-from callingcardstools.bam_parsers.ReadTagger import ReadTagger
-from callingcardstools.bam_parsers.SummaryParser import SummaryParser
-from callingcardstools.fastq_parsers.ReadParser import ReadParser
-from callingcardstools.significance.HopsDb import HopsDb
+from callingcardstools.BarcodeParser import BarcodeParser
+from callingcardstools.AlignmentTagger import AlignmentTagger
+from callingcardstools.SummaryParser import SummaryParser
+from callingcardstools.ReadParser import ReadParser
+from callingcardstools.HopsDb import HopsDb
+from callingcardstools.peak_callers.yeast.WithBackground import WithBackground as yeast_peaks_db
 
 # yeast fixtures ---------------------------------------------------------------
 
@@ -145,7 +146,7 @@ def yeast_readtagger():
     """A read tagger object for yeast data
 
     Returns:
-        ReadTagger: A default read tagger with data from test_data
+        AlignmentTagger: A default read tagger with data from test_data
     """
 
     setup = {
@@ -155,7 +156,7 @@ def yeast_readtagger():
         "insertion_length": 1
     }
     
-    rt = ReadTagger(**setup)
+    rt = AlignmentTagger(**setup)
 
     return rt
 
@@ -185,24 +186,29 @@ def yeast_hops_data():
 @pytest.fixture
 def yeast_hopsdb(yeast_hops_data):
 
-    hops_db = HopsDb(":memory:")
+    hops_db = yeast_peaks_db(":memory:")
 
     chr_map_df = pd.read_csv(yeast_hops_data['chr_map'])
 
-    hops_db.add_table(chr_map_df, "chr_map")
+    hops_db.add_frame(chr_map_df, "chr_map")
 
-    regions_df = pd.read_csv(yeast_hops_data["regions"], sep = "\t", names = ['chr', 'start', 'end','name', 'value', 'strand'])
+    regions_df = pd.read_csv(yeast_hops_data["regions"], 
+                             sep = "\t", 
+                             names = hops_db.required_fields['bed6'])
 
-    hops_db.add_table(regions_df, 'regions', 'upstream_700')
+    hops_db.add_frame(regions_df, 'regions', 'upstream_700')
 
-    qbed_colnames = ['chr', 'start', 'end', 'depth', 'strand', 'annotation', 'sample']
-    background_df = pd.read_csv(yeast_hops_data["background"], sep = "\t", names = qbed_colnames )
+    background_df = pd.read_csv(yeast_hops_data["background"], 
+                                sep = "\t", 
+                                names = hops_db.required_fields['qbed'] )
 
-    hops_db.add_table(background_df, 'background', 'sir4')
+    hops_db.add_frame(background_df, 'background', 'sir4')
 
-    expr_df = pd.read_csv(yeast_hops_data['experiment'], sep = "\t", names = qbed_colnames)
+    expr_df = pd.read_csv(yeast_hops_data['experiment'], 
+                          sep = "\t", 
+                          names = hops_db.required_fields['qbed'])
 
-    hops_db.add_table(expr_df, 'experiment', 'test')
+    hops_db.add_frame(expr_df, 'experiment', 'test')
 
     return hops_db
 
@@ -293,7 +299,7 @@ def human_readtagger():
     """A read tagger object for human data
 
     Returns:
-        ReadTagger: A default read tagger with data from test_data
+        AlignmentTagger: A default read tagger with data from test_data
     """
 
     setup = {
@@ -303,7 +309,7 @@ def human_readtagger():
         "insertion_length": 4
     }
 
-    rt = ReadTagger(**setup)
+    rt = AlignmentTagger(**setup)
 
     return rt
 
@@ -354,7 +360,7 @@ def human_hopsdb(human_hops_data):
 
     chr_map_df = pd.read_csv(hops_data['chr_map'])
 
-    hops_db.add_table(chr_map_df, "chr_map")
+    hops_db.add_frame(chr_map_df, "chr_map")
 
     qbed_colnames = ['chr', 'start', 'end', 'depth', 'strand', 'annotation', 'sample']
     
@@ -363,13 +369,13 @@ def human_hopsdb(human_hops_data):
         sep = "\t",
         names = qbed_colnames
     )
-    hops_db.add_table(ttaa_df, 'ttaa')
+    hops_db.add_frame(ttaa_df, 'ttaa')
 
     expr_df = pd.read_csv(
         hops_data['experiment'], 
         sep = "\t", 
         names = qbed_colnames)
 
-    hops_db.add_table(expr_df, 'experiment', 'ay53-1_50k')
+    hops_db.add_frame(expr_df, 'experiment', 'ay53-1_50k')
 
     return hops_db

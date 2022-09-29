@@ -1,7 +1,6 @@
-#from .macs_style import *
-#from .general import *
-#from . import utils
+from . import *
 
-__all__ = ["bam_parsers", "fastq_parsers", "utils", "significance"]
+__all__ = ["BarcodeParser", "HopsDb", "ReadParser", "AlignmentTagger", 
+           "StatusFlags", "SummaryParser", 'peak_callers']
 
 __version__ = '0.0.0'

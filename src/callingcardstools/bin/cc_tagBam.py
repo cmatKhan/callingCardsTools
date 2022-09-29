@@ -10,7 +10,7 @@ import pysam
 import pandas as pd
 # from memory_profiler import profile
 # local dependencies
-from callingcardstools.bam_parsers.ReadTagger import ReadTagger
+from callingcardstools.bam_parsers.AlignmentTagger import AlignmentTagger
 from callingcardstools.bam_parsers.BarcodeParser import BarcodeParser
 from callingcardstools.bam_parsers.StatusFlags import StatusFlags
 
@@ -65,7 +65,7 @@ def run(bampath, genome_path, genome_index_path, barcode_details_json,
 
         bp = BarcodeParser(barcode_details_json)
 
-        rt = ReadTagger(genome_path, genome_index_path, 
+        rt = AlignmentTagger(genome_path, genome_index_path, 
                         bp.get_barcode_length(), bp.get_insert_length())
 
         read_group_set = set()

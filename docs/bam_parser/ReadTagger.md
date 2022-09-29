@@ -1,1 +1,0 @@
-::: callingcardstools.bam_parsers.ReadTagger

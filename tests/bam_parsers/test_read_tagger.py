@@ -1,5 +1,5 @@
 from .conftests import *
-from callingcardstools.bam_parsers import StatusFlags
+from callingcardstools import StatusFlags
 
 def check_tags(read, expected, tag_list):
     """check tags against an expected dictionary

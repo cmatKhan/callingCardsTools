@@ -38,6 +38,7 @@ pyright = "^1.1.269"
 pytest = "^7.1.3"
 memory-profiler = "^0.60.0"
 bx = "^0.3.0"
+mkdocs-section-index = "^0.3.4"
 
 [tool.pyright]
 include = ["src/callingcardstools"]
