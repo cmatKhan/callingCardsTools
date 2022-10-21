@@ -1,4 +1,5 @@
 """An object to facilitate adding tags to alignments in a bam file"""
+#pylint:disable=W0622,C0103
 # standard library
 import os
 import sys
@@ -17,22 +18,17 @@ class AlignmentTagger(BarcodeParser):
 
     _fasta = ""
     _genome = ""
-    _insertion_length = 1
 
-    def __init__(self, fasta_path:str, barcode_details_json:str, insertion_length:int = 1) -> None:
+    def __init__(self, barcode_details_json:str,fasta_path:str) -> None:
         """_summary_
 
         Args:
             fasta_path (str): Path to a genome fasta file. Note that a fai index file created by samtools faidx must 
             exist at the same location.
             barcode_details_json (str): Path to the barcode_details json file
-            insertion_length (int): The length of the sequence which is expected to fall directly before the 5' end of 
-            the read. Defaults to 1.
         """
         super().__init__(barcode_details_json)
-        self.fasta(fasta_path)
-        self.insertion_length(insertion_length)
-        self.fasta(fasta_path)
+        self.fasta = fasta_path
         # open the fasta file as a pysam.FastaFile obj
         self.open()
     
@@ -46,6 +42,8 @@ class AlignmentTagger(BarcodeParser):
         return self._fasta
     @fasta.setter
     def fasta(self, new_fasta: str) -> None:
+        if not os.path.exists(new_fasta):
+            raise FileNotFoundError(f'{new_fasta} does not exist -- check path')
         if not os.path.exists(new_fasta+'.fai'):
             raise FileNotFoundError(f"Genome index not found for {new_fasta}. "\
                 f"The index .fai file must exist in same path. "\
@@ -66,20 +64,9 @@ class AlignmentTagger(BarcodeParser):
         except AttributeError:
             pass
 
-    @property
-    def insertion_length(self):
-        """length of the sequence expected to immediately preceed the 5' end of a read"""
-        return self._insertion_length
-    @insertion_length.setter
-    def insertion_length(self,new_insertion_length):
-        if not isinstance(new_insertion_length, int):
-            raise ValueError(f"Input value {new_insertion_length} must be an integer" \
-                f"currently a {type(new_insertion_length)}")
-        self._insertion_length = new_insertion_length
-
     def open(self):
         """open the genome file and set the self.genome attribute"""
-        self.genome(pysam.FastaFile(self.fasta, self.fasta+'.fai'))
+        self.genome = pysam.FastaFile(self.fasta, self.fasta+'.fai')
     
     def is_open(self):
         """check if genome file is open"""
@@ -88,7 +75,40 @@ class AlignmentTagger(BarcodeParser):
     def close(self):
         """close the genome file"""
         del self.genome
-        
+    
+    def extract_tag_dict(self, id:str) -> dict:
+        """given an id string created by ReadParser, parse into a dictionary of 
+        tags
+
+        Args:
+            id (str): id line from a given read in a bam produced from a fastq 
+            processed by (a script that uses) the ReadParser
+
+        Raises:
+            IndexError: Raised if parsing of the id doesn't work as expected
+
+        Returns:
+            dict: For example, the id line 
+            MN00200:647:000H533KW:1:11102:20080:1075_RT-AATTCACTACGTCAACA;RS-TaqAI;TF-ERT1 
+            would be returned as {'RT': 'AATTCACTACGTCAACA', 'RS': 'TaqAI', 'TF': 'ERT1'}
+        """
+        try:
+            tag_str = id.split('_')[1]
+        except IndexError as exc:
+            raise IndexError('No read ID present -- '\
+                'expecting a string appended to the read '\
+                    'ID with a _ in the bam') from exc
+        try:
+            tag_dict = {x.split('-')[0]:x.split('-')[1] \
+                for x in tag_str.split(';')}
+        except IndexError as exc:
+            raise IndexError(f'{tag_str} not formed as expected -- '\
+                f'should have format similar to '\
+                    f'RT-AATTCACTACGTCAACA;RS-TaqAI;TF-ERT1 where different tags '\
+                        f'are delimited by ; and tag-value pairs are delimited by - ') \
+                            from exc
+        return tag_dict
+
     def tag_read(self, read):
         """given a AlignedSegment object, add RG, XS and XZ tags
 
@@ -106,8 +126,9 @@ class AlignmentTagger(BarcodeParser):
         # Extract RG, XS and XZ tags -------------------------------------------
         tag_dict = dict()
 
-        # set Read Group
-        tag_dict['RG'] = read.query_name[-self.barcode_length:]
+        # add tags from the id line
+        for tag,value in self.extract_tag_dict(read.query_name).items():
+            tag_dict[tag] = value
 
         # (using the bitwise operator) check if the read is unmapped,
         # if so, set the region_dict start and end to *, indicating that there is
@@ -147,16 +168,17 @@ class AlignmentTagger(BarcodeParser):
             try:
                 # if the soft-clip adjustment put the 3 prime end beyond the
                 # end of the chrom, set XS to *
+                # TODO remove removeprefix removesuffix once ref genome fixed for eyast
                 if(read_5_prime >
-                   self.genome.get_reference_length(read.reference_name)):
+                   self.genome.get_reference_length(read.reference_name.removeprefix("ref|").removesuffix('|'))):
                     tag_dict['XS'] = "*"
                     tag_dict['XI'] = "*"
                     tag_dict['XE'] = "*"
                     tag_dict['XZ'] = "*"
                 # if the endpoint of the insertion sequence is off the end of
                 # the chrom, set XZ to *
-                elif(read_5_prime+1+self.insertion_length >=
-                self.genome.get_reference_length(read.reference_name)):
+                elif(read_5_prime+1+self.insert_length >=
+                self.genome.get_reference_length(read.reference_name.removeprefix("ref|").removesuffix('|'))):
                     tag_dict['XS'] = read_5_prime
                     tag_dict['XI'] = "*"
                     tag_dict['XE'] = "*"
@@ -166,15 +188,16 @@ class AlignmentTagger(BarcodeParser):
                     # in the read which cover the genome
                     tag_dict['XS'] = read_5_prime
                     tag_dict['XI'] = read_5_prime + 1
-                    tag_dict['XE'] = read_5_prime + 1 + self.insertion_length
-                    tag_dict['XZ'] = self.genome.fetch(read.reference_name,
+                    tag_dict['XE'] = read_5_prime + 1 + self.insert_length
+                    # TODO remove removeprefix remove suffix once reference genome is fixed for yeast
+                    tag_dict['XZ'] = self.genome.fetch(read.reference_name.removeprefix("ref|").removesuffix('|'),
                                             read_5_prime+1,
                                             read_5_prime+1 +
-                                            self.insertion_length).upper()
+                                            self.insert_length).upper()
             except ValueError:
                 sys.exit(f"Read {read.query_name}, "
                 f"insert region {read.reference_name}:{read_5_prime+1}-"\
-                    f"{read_5_prime+1+self.insertion_length} is out of bounds")
+                    f"{read_5_prime+1+self.insert_length} is out of bounds")
 
         # else, Read is in the forward orientation. Note that a single end
         # forward strand read with no other flags will have flag 0
@@ -207,7 +230,7 @@ class AlignmentTagger(BarcodeParser):
                     tag_dict['XZ'] = "*"
                 # if the insertion sequence extends beyond the beginning of the
                 # chrom, set to *
-                elif(read_5_prime-self.insertion_length < 0):
+                elif(read_5_prime-self.insert_length < 0):
                     tag_dict['XS'] = read_5_prime
                     tag_dict['XI'] = "*"
                     tag_dict['XE'] = "*"
@@ -216,15 +239,16 @@ class AlignmentTagger(BarcodeParser):
                     # This is the first base -- adjusted for soft clipping -- 
                     # in the read which cover the genome
                     tag_dict['XS'] = read_5_prime
-                    tag_dict['XI'] = read_5_prime - self.insertion_length
+                    tag_dict['XI'] = read_5_prime - self.insert_length
                     tag_dict['XE'] = read_5_prime
-                    tag_dict['XZ'] = self.genome.fetch(read.reference_name,
-                                            read_5_prime-self.insertion_length,
+                    # TODO remove the removeprefix removesuffix -- need to standardize rob's genome names
+                    tag_dict['XZ'] = self.genome.fetch(read.reference_name.removeprefix('ref|').removesuffix('|'),
+                                            read_5_prime-self.insert_length,
                                             read_5_prime).upper()
             except ValueError as exc:
                 raise ValueError(f"Read {read.query_name}, "
                 f"insert region "\
-                    f"{read.reference_name}:{read_5_prime-self.insertion_length}-"\
+                    f"{read.reference_name}:{read_5_prime-self.insert_length}-"\
                     f"{read_5_prime} is out of bounds") from exc
 
         # Set tags -------------------------------------------------------------

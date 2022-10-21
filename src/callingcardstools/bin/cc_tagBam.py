@@ -10,27 +10,24 @@ import pysam
 import pandas as pd
 # from memory_profiler import profile
 # local dependencies
-from callingcardstools.bam_parsers.AlignmentTagger import AlignmentTagger
-from callingcardstools.bam_parsers.BarcodeParser import BarcodeParser
-from callingcardstools.bam_parsers.StatusFlags import StatusFlags
+from callingcardstools.AlignmentTagger import AlignmentTagger
+from callingcardstools.StatusFlags import StatusFlags
 
 logging.basicConfig(
-    level=logging.CRITICAL,
+    level=logging.INFO,
     format='[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',
     datefmt='%H:%M:%S',
     stream=sys.stdout
 )
 
-# @profile
-def run(bampath, genome_path, genome_index_path, barcode_details_json,
+def run(bampath, fasta_path, barcode_details_json,
         mapq_threshold = 0, out_suffix = "_tagged.bam", nthreads=5):
     """Iterate over a bam file, set tags and output updated bam with read groups 
     added to the header, tags added to the reads. Also output a summary of the 
     reads
 
     Args:
-        genome_path (str): Path to a fasta file
-        genome_index_path (str): Path to the index file for the fasta (fai)
+        fasta_path (str): Path to a fasta file
         bampath (str): path to the alignment file (bam)
         barcode_length (int): Expected length of the barcode
         insertion_length (int): Expected length of the insertion sequence
@@ -56,31 +53,25 @@ def run(bampath, genome_path, genome_index_path, barcode_details_json,
         summary_out = os.path.splitext(bampath_out)[0] + "_summary.csv"
 
         # open files
-        # including the index allows random access on disc
-        genome = pysam.FastaFile(genome_path, genome_index_path)
         # open the input bam
-        input_bamfile = pysam.AlignmentFile(bampath, "rb", require_index=True,threads = nthreads)
+        input_bamfile = pysam.AlignmentFile(
+            bampath, "rb", 
+            require_index=True,
+            threads = nthreads)
 
-        tmp_tagged_bam = pysam.AlignmentFile(bampath_tmp, "wb", header = input_bamfile.header)
+        tmp_tagged_bam = pysam.AlignmentFile(
+            bampath_tmp, 
+            "wb", 
+            header = input_bamfile.header)
 
-        bp = BarcodeParser(barcode_details_json)
-
-        rt = AlignmentTagger(genome_path, genome_index_path, 
-                        bp.get_barcode_length(), bp.get_insert_length())
-
+        at = AlignmentTagger(barcode_details_json,fasta_path)
+        
         read_group_set = set()
         read_summary = []
         read_obj_list = []
         # until_eof will include unmapped reads, also
         for read in input_bamfile.fetch(until_eof=True):
-            tagged_read = rt.tag_read(read)
-
-            read_group_set.add(tagged_read.get_tag("RG"))
-
-            bp.set_barcode(tagged_read.get_tag("RG"))
-            parsed_barcode_dict = bp.barcode_check()
-            tagged_read.set_tag("XF", parsed_barcode_dict['tf'])
-            tagged_read.set_tag("XR", parsed_barcode_dict['restriction_enzyme'])
+            tagged_read = at.tag_read(read)
 
             status_code = 0
             # if the read is unmapped, add the flag, but don't check 
@@ -98,22 +89,15 @@ def run(bampath, genome_path, genome_index_path, barcode_details_json,
                 if (read.is_forward and tagged_read.query_alignment_start != 0) \
                     or (read.is_reverse and tagged_read.query_alignment_end != read.infer_query_length()):
                     status_code += StatusFlags.FIVE_PRIME_CLIP.flag()
-            # check whether the barcode matches the expected barcode
-            if not parsed_barcode_dict['pass']:
-                    status_code += StatusFlags.BARCODE.flag()
             # check the insert sequence
             try:
-                if not bp.get_insert_seqs() == ["*"]:
-                    if tagged_read.get_tag("XZ") not in bp.get_insert_seqs():
+                if not at.insert_seqs == ["*"]:
+                    if tagged_read.get_tag("XZ") not in at.insert_seqs:
                             status_code += StatusFlags.INSERT_SEQ.flag()
             except AttributeError as exc:
-                print(f"insert sequence not found in Barcode Parser. {exc}")
+                logging.debug(f"insert sequence not found in Barcode Parser. {exc}")
             
-            if tagged_read.get_tag("XR") == "*":
-                status_code += StatusFlags.RESTRICTION_ENZYME.flag()
-
-            read_summary.append({"id": tagged_read.query_name,
-                            "bc": tagged_read.get_tag("RG"),
+            summary_record = {"id": tagged_read.query_name,
                             "status": status_code,
                             "mapq": tagged_read.mapping_quality,
                             "flag": tagged_read.flag,
@@ -123,9 +107,13 @@ def run(bampath, genome_path, genome_index_path, barcode_details_json,
                             "five_prime": tagged_read.get_tag("XS"),
                             "insert_start": tagged_read.get_tag("XI"),
                             "insert_stop": tagged_read.get_tag("XE"),
-                            "insert_seq": tagged_read.get_tag("XZ"),
-                            "tf": tagged_read.get_tag("XF"),
-                            "restriction_enzyme": tagged_read.get_tag("XR")})
+                            "insert_seq": tagged_read.get_tag("XZ")}
+            
+            # add the additional tagged elements, defined in the barcode_details json
+            for k,v in at.tagged_components.items():
+                summary_record[k] = tagged_read.get_tag(v)
+
+            read_summary.append(summary_record)
 
             tmp_tagged_bam.write(tagged_read)
             #read_obj_list.append(tagged_read)
@@ -159,7 +147,6 @@ def run(bampath, genome_path, genome_index_path, barcode_details_json,
         tmp_tagged_bam.close()
 
     # Close files
-    genome.close()
     tagged_bam_output.close()
     input_bamfile.close()
 
@@ -193,11 +180,9 @@ def parse_args(args=None):
     parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
     parser.add_argument("--bam",
                          help="path to the input bam file")
-    parser.add_argument("--genome",
-                        help="",
+    parser.add_argument("--fasta",
+                        help="Note that an index .fai file must exist in the same path",
                         default='False')
-    parser.add_argument("--genome_index",
-                         help = "")
     parser.add_argument("--barcode_details",
                          help = "")
     parser.add_argument("--mapq_threshold",
@@ -220,8 +205,8 @@ def main(args=None):
 
     # Check inputs
     input_path_list = [args.bam,
-                       args.genome,
-                       args.genome_index,
+                       args.fasta,
+                       args.fasta + '.fai',
                        args.barcode_details]
     for input_path in input_path_list:
         if not os.path.exists(input_path):
@@ -231,14 +216,10 @@ def main(args=None):
     # and the XI and XZ tags
     # with cProfile.Profile() as pr:
     run(args.bam,
-        args.genome,
-        args.genome_index,
+        args.fasta,
         args.barcode_details,
         int(args.mapq_threshold))
     # pr.print_stats()
-
-    sys.exit(0)
-
 
 if __name__ == "__main__":
     sys.exit(main())

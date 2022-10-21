@@ -22,6 +22,7 @@ biopython = "^1.79"
 scipy = "^1.8.1"
 pysqlite3-binary = "^0.4.7"
 SQLAlchemy = "^1.4.41"
+edlib = "^1.3.9"
 
 [tool.poetry.dev-dependencies]
 ipykernel = "^6.15.1"
@@ -68,6 +69,7 @@ executionEnvironments = [
 
 [tool.poetry.scripts]
 cc_tagBam = "callingcardstools.bin:cc_tagBam.main"
+parse_fastq = "callingcardstools.bin:parse_fastq.main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

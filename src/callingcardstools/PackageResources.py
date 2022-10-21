@@ -13,7 +13,7 @@ class Resources:
 			'background_sir4':pkg_resources.read_text(yeast, "S288C_dSir4_Background.qbed"),
 			'background_adh1':pkg_resources.read_text(yeast, "minus_adh1_2015.qbed"),
 			'regions_not_orf':pkg_resources.read_text(yeast, "regions_not_orf_from_mitra.bed"),
-			'yiming_regions':pkg_resources.read_text(yeast, "orf_coding_all_R61-1-1_20080606.promoter_-700bpto0bp_with_ucsc_seqnames_common_names_coord_corrected.bed")
+			'yiming_regions':pkg_resources.read_text(yeast, "orf_coding_all_R61-1-1_20080606.promoter_-700bpto0bp_with_ucsc_seqnames_common_names_coord_corrected_systematic.bed7")
 		}
 		self._human_resources = {
 			'chr_map': pkg_resources.read_text(human, "chr_map.csv"),

@@ -35,7 +35,7 @@ nav:
   - BarcodeParser: 'code/BarcodeParser'
   - ReadParser: 'code/ReadParser.md'
   - AlignmentTagger: 'code/AlignmentTagger.md'
-  - HopsDb: 'code/HopsDb.md'
+  - DatabaseApi: 'code/DatabaseApi.md'
 
 markdown_extensions:
     - smarty

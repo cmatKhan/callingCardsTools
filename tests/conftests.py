@@ -7,25 +7,9 @@ from callingcardstools.BarcodeParser import BarcodeParser
 from callingcardstools.AlignmentTagger import AlignmentTagger
 from callingcardstools.SummaryParser import SummaryParser
 from callingcardstools.ReadParser import ReadParser
-from callingcardstools.HopsDb import HopsDb
-from callingcardstools.peak_callers.yeast.WithBackground import WithBackground as yeast_peaks_db
 
 # yeast fixtures ---------------------------------------------------------------
 
-@pytest.fixture
-def yeast_reads():
-    """paths relative to project root to yeast r1 and r2 fastq files
-
-    Returns:
-        dict: key, value where keys are r1, r2 and values are paths to fastq files
-    """
-    return {'r1':"tests/test_data/yeast/r1.fastq", 
-            'r2':"tests/test_data/yeast/r2.fastq"}
-
-@pytest.fixture
-def yeast_be():
-    be = ReadParser("tests/test_data/yeast/read_barcode_details_trim.json")
-    return be
 
 @pytest.fixture
 def yeast_barcode_details():
@@ -36,100 +20,6 @@ def yeast_barcode_details():
     """
     barcode_details = "tests/test_data/yeast/barcode_details.json"
     return barcode_details
-
-@pytest.fixture
-def yeast_barcode_dict():
-    """expected result of parsing the yeast barcode details json
-
-    Returns:
-        dict: the expected barcode dict from the yeast barcode details json file
-    """
-    expected = {
-        'indicies':{
-            'r1_primer_bc': [0, 5], 
-            'transposon_seq': [5, 22],
-            'r2_trans_bc': [22, 30], 
-            'restriction_site': [30, 42]},
-        'components': {
-            'r1_primer_bc': ['TCAGT', 'GCCTG', 'ATTTG', 'TTGGT', 'CTCGG'],
-            'transposon_seq': ['AATTCACTACGTCAACA'],
-            'r2_trans_bc': ['CCCGTTGG', 'GGCGGCAG', 'GGGGGGGT', 'GGGGGTAG', 'TCGTCAGT'],
-            'restriction_site': {"seq": ['TCGAGCGCCCGG', 'TCGAGCGC', 'TCGA'], 
-                                 "name": ["Hpall", "HinP1I", "TaqAI"]}
-            },
-        'tf_map': {
-            'bc_components': ['r1_primer_bc', 'r2_trans_bc'],
-            'tf': ['MIG2', 'CAT8', 'GLN3', 'ARO80', 'CBF1']},
-        'insert_seqs': ['*'],
-        'match_allowance': {
-            'transposon_seq': 1,
-            'r1_primer_bc': 0,
-            'r2_trans_bc': 0,
-            'restriction_site': 1,
-            'max': 1},
-        'tf_dict':{
-            'TCAGTCCCGTTGG': 'MIG2',
-            'GCCTGGGCGGCAG': 'CAT8',
-            'ATTTGGGGGGGGT': 'GLN3',
-            'TTGGTGGGGGTAG': 'ARO80',
-            'CTCGGTCGTCAGT': 'CBF1'
-        },
-        'length': 42,
-        'insert_length': 1
-    }
-
-    return expected
-
-@pytest.fixture
-def valid_mig2_yeast_barcode():
-    """Valid yeast barcode for a TF in the tf_map
-
-    Returns:
-        str: a full yeast barcode which corresponds to current yeast barcode 
-        details json
-    """
-    return "TCAGTAATTCACTACGTCAACACCCGTTGGTCGANNNNNNNN"
-
-@pytest.fixture
-def valid_mig2_yeast_barcode_Hall():
-    """Valid yeast barcode for a TF in the tf_map with the Hall restriction site
-
-    Returns:
-        str: a full yeast barcode which corresponds to current yeast barcode 
-        details json
-    """
-    return "TCAGTAATTCACTACGTCAACACCCGTTGGTCGAGCGCCCGG"
-
-@pytest.fixture
-def valid_mig2_yeast_barcode_HinP1I():
-    """Valid yeast barcode for a TF in the tf_map with the HpinP1I restriction site
-
-    Returns:
-        str: a full yeast barcode which corresponds to current yeast barcode 
-        details json
-    """
-    return "TCAGTAATTCACTACGTCAACACCCGTTGGNNTCGAGCGCNN"
-                                            
-@pytest.fixture
-def mig2_tseq_dist1_yeast_barcode():
-    """cat8 barcode with edit distance 1 in transposon_seq
-
-    Returns:
-        str: a full yeast barcode which does not meet expectations
-        details json
-    """
-    return "TCAGTNATTCACTACGTCAACACCCGTTGGTCGANNNNNNNN"
-
-@pytest.fixture
-def invalid_yeast_barcode():
-    """Invalid yeast barcode, but created from MIG2. Edit distance from MIG2 is 
-    5 with an edit distance of 3 in the barcode
-
-    Returns:
-        str: a full yeast barcode which does not meet expectations
-        details json
-    """
-    return "NCANTAATTCACNACGTCANCACCCGNTGGTNGANNNNNNNN"
 
 @pytest.fixture
 def yeast_bp():
@@ -183,34 +73,6 @@ def yeast_hops_data():
 
     return file_dict
 
-@pytest.fixture
-def yeast_hopsdb(yeast_hops_data):
-
-    hops_db = yeast_peaks_db(":memory:")
-
-    chr_map_df = pd.read_csv(yeast_hops_data['chr_map'])
-
-    hops_db.add_frame(chr_map_df, "chr_map")
-
-    regions_df = pd.read_csv(yeast_hops_data["regions"], 
-                             sep = "\t", 
-                             names = hops_db.required_fields['bed6'])
-
-    hops_db.add_frame(regions_df, 'regions', 'upstream_700')
-
-    background_df = pd.read_csv(yeast_hops_data["background"], 
-                                sep = "\t", 
-                                names = hops_db.required_fields['qbed'] )
-
-    hops_db.add_frame(background_df, 'background', 'sir4')
-
-    expr_df = pd.read_csv(yeast_hops_data['experiment'], 
-                          sep = "\t", 
-                          names = hops_db.required_fields['qbed'])
-
-    hops_db.add_frame(expr_df, 'experiment', 'test')
-
-    return hops_db
 
 # Human fixtures ---------------------------------------------------------------
 
@@ -356,7 +218,7 @@ def human_hopsdb(human_hops_data):
 
     hops_data = human_hops_data
 
-    hops_db = HopsDb(":memory:")
+    hops_db = DatabaseApi(":memory:")
 
     chr_map_df = pd.read_csv(hops_data['chr_map'])
 

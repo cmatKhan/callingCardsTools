@@ -1,24 +1,32 @@
 {
-    "indicies": {
-        "r1_primer_bc":     [0, 5],
-        "transposon_seq":   [5, 22],
-        "r2_trans_bc":     [22, 30],
-        "restriction_site": [30, 42]
+    "r1": {
+        "primer": {"trim": true, 
+                   "index": [0,5]},
+    
+        "transposon": {"trim": true, 
+                       "index": [5,22]}
+    },
+    "r2": {
+        "transposon": {"trim": true, 
+                       "index":[0,8]},
+                          
+        "restriction": {"trim": true, 
+                        "index": [8,20]}
     },
     "components": {
-        "r1_primer_bc":     ["TCAGT", "GCCTG", "ATTTG", "TTGGT", "CTCGG"],
-        "transposon_seq":   ["AATTCACTACGTCAACA"],
-        "r2_trans_bc":     ["CCCGTTGG", "GGCGGCAG", "GGGGGGGT", "GGGGGTAG", "TCGTCAGT"],
-        "restriction_site": {"seq": ["TcgAgCgCcCgG","TCGagCgC","TcGA"], 
-                             "name": ["Hpall", "HinP1I", "TaqAI"]}
-    },
-    "tf_map": {
-        "bc_components": ["r1_primer_bc", "r2_trans_bc"],
-        "tf":            ["MIG2", "CAT8", "GLN3", "ARO80", "CBF1"]
+        "r1_transposon":  {"map":["AATTCACTACGTCAACA"],
+                           "bam_tag": "RT"},
+        "r2_restriction": {"map": {"TCGAGCGCCCGG":"Hpall","TCGAGCGC":"HinP1I","TCGA":"TaqAI"},
+                           "match_type": "greedy",
+                           "require": false,
+                           "bam_tag": "RS"},
+        "tf":             {"components": ["r1_primer", "r2_transposon"],
+                           "map": {"TGATAACCTGTTT": "RIM101", "TACTCCAGAGGGG":"RTG1",
+                           "CCTGCACGCACGC":"ERT1","TCGTCTACGGCGT":"MTH1",
+                           "AACGCTTTTTCTA":"MET32"},
+                           "bam_tag": "TF"}
     },
     "match_allowance": {
-        "transposon_seq": 1,
-        "restriction_site": 1,
-        "max": 1
+        "r1_transposon": 1
     }
 }
