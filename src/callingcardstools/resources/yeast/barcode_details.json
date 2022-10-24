@@ -19,14 +19,14 @@
         "r2_restriction": {"map": {"TCGAGCGCCCGG":"Hpall","TCGAGCGC":"HinP1I","TCGA":"TaqAI"},
                            "match_type": "greedy",
                            "require": false,
-                           "bam_tag": "XR"},
+                           "bam_tag": "RS"},
         "tf":             {"components": ["r1_primer", "r2_transposon"],
                            "map": {"TGATAACCTGTTT": "RIM101", "TACTCCAGAGGGG":"RTG1",
                            "CCTGCACGCACGC":"ERT1","TCGTCTACGGCGT":"MTH1",
                            "AACGCTTTTTCTA":"MET32"},
-                           "bam_tag": "XF"}
+                           "bam_tag": "TF"}
     },
     "match_allowance": {
-        "r1_transposon": 0
+        "r1_transposon": 1
     }
 }

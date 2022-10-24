@@ -7,6 +7,8 @@ from Bio import SeqIO
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
+__all__ = ['ReadParser']
+
 class ReadParser(BarcodeParser):
     """Given either single or paired end reads, use the provided barcode details json to examine expected read components
 

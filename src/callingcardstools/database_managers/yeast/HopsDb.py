@@ -1,19 +1,34 @@
 # stdlib
+from ipaddress import summarize_address_range
 import re
+import os
 from typing import Callable, Literal
 import logging
 # local
-from ...DatabaseApi import DatabaseApi
+from callingcardstools.BarcodeParser import BarcodeParser
+from callingcardstools.DatabaseApi import DatabaseApi
 from .peak_calling import call_peaks_with_background
 # outside
 import pandas as pd
 import numpy as np
+import edlib
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 class HopsDb(DatabaseApi):
     """A database manager for yeast calling cards experiments which includes background hops data"""
     
+    def __init__(self, *args) -> None:
+        """Create a database structured to perform QC on yeast data. positional arguments are the same as DatabaseAPI"""
+
+        super().__init__(*args)
+        # create batch summary table
+        self.create_batch_table()
+        # create qc tables
+        self.create_qc_tables()
+        # create trigger
+        self.create_qc_table_triggers()
+
     def add_regions(self, regions_df: pd.DataFrame, *args, **kwargs) -> bool:
         """Add a regions table to the database. note that this function is a convenience function 
         which wraps DatabaseApi.add_table. It does some checking of the regions dataframe and then 
@@ -41,7 +56,7 @@ class HopsDb(DatabaseApi):
                     f"Use an annotation table if you need to annotate the same region with multiple affiliations.")
         else:
             self.add_frame(regions_df,'regions','bed3', *args,**kwargs)
-    
+         
     def add_annotation_fk(self, df: pd.DataFrame, regions_fk_table:str) -> bool:
         """Add an annotation table. Optionally key to a regions table
 
@@ -159,6 +174,318 @@ class HopsDb(DatabaseApi):
                              "ORDER BY sample,chr,start,end"])
         return sql
     
+    def create_batch_table(self, **kwargs)->dict:
+        """_summary_
+
+        Returns:
+            dict: _description_
+        """
+        tables_dict = {
+            'batch':{
+                'fk': None,
+                'fields':{
+                    'batch': 'TEXT NOT NULL',
+                    'tf': 'TEXT NOT NULL',
+                    'replicate': 'TEXT DEFAULT \'none\''}},
+
+        }
+
+        return {k:self.new_table(k,v['fields'],v['fk'], **kwargs) for k,v in tables_dict.items()}
+
+    def create_qc_tables(self, **kwargs)->dict:
+        """_summary_
+
+        Returns:
+            dict: _description_
+        """
+        # note DatabaseAPI.pk will be added as primary key -- by default id
+        tables_dict = {
+            'qc_manual_review':{
+                'fk':['batch'],
+                 'fields':{
+                    'batch_id': 'INTEGER',
+                    'rank_recall': '"rank_recall"	TEXT DEFAULT \'unreviewed\' CHECK("rank_recall" IN (\'pass\', \'fail\', \'unreviewed\', \'note\'))',
+                    'chip_better': 'TEXT DEFAULT \'unreviewed\' CHECK("chip_better" IN (\'yes\', \'no\', \'unreviewed\', \'note\'))',
+                    'data_usable': 'TEXT DEFAULT \'unreviewed\' CHECK("data_usable" IN (\'yes\', \'no\', \'unreviewed\', \'note\'))',
+                    'passing_replicate': 'TEXT DEFAULT \'unreviewed\' CHECK("passing_replicate" IN (\'pass\', \'fail\', \'unreviewed\', \'note\'))',
+                    'notes': 'TEXT DEFAULT \'unreviewed\''
+             }   
+            },
+            'qc_r1_to_r2_tf':{
+                'fk':['batch'],
+                'fields':{
+                    'batch_id': 'INTEGER',
+                    'edit_dist': 'INTEGER DEFAULT -1 NOT NULL',
+                    'tally':'INTEGER DEFAULT -1 NOT NULL' 
+            }},
+            'qc_r2_to_r1_tf':{
+                'fk':['batch'],
+                'fields':{
+                    'batch_id': 'INTEGER',
+                    'edit_dist': 'INTEGER DEFAULT -1 NOT NULL',
+                    'tally':'INTEGER DEFAULT -1 NOT NULL' 
+            }},
+            'qc_tf_to_transposon':{
+                'fk':['batch'],
+                'fields':{
+                    'batch_id': 'INTEGER',
+                    'edit_dist': 'INTEGER DEFAULT -1 NOT NULL',
+                    'tally':'INTEGER DEFAULT -1 NOT NULL' 
+            }},
+            'qc_alignment':{
+                'fk':['batch'],
+                'fields':{
+                    'batch_id': 'INTEGER',
+                    'total': 'INTEGER DEFAULT -1 NOT NULL',
+                    'mapped': 'INTEGER DEFAULT -1 NOT NULL',
+                    'multimap': 'INTEGER DEFAULT -1 NOT NULL',
+            }},
+            'qc_hops':{
+                'fk':['batch'],
+                'fields':{
+                    'batch_id': 'INTEGER',
+                    'total': 'INTEGER DEFAULT -1 NOT NULL',
+                    'transpositions': 'INTEGER DEFAULT -1 NOT NULL',
+                    'plasmid_transpositions': 'INTEGER DEFAULT -1 NOT NULL'
+            }}
+        }
+        
+        return {k:self.new_table(k,v['fields'],v['fk'],**kwargs) for k,v in tables_dict.items()}
+    
+    def create_qc_table_triggers(self) -> None:
+
+        # TODO address hard coding here -- turn into property?
+        batch_tablename = 'batch'
+        batchtable_fk = 'batch_id'
+
+        repeat_record_qc_tbls = ['qc_r1_to_r2_tf', 'qc_r2_to_r1_tf', 'qc_tf_to_transposon']
+
+
+        repeat_sql_prefix = f"CREATE TRIGGER IF NOT EXISTS repeat_qc_records AFTER INSERT ON {batch_tablename} BEGIN "
+        insert_stmts = []
+        for tbl in repeat_record_qc_tbls:
+            insert_stmts.append("; ".join([f'INSERT INTO {tbl} ({batchtable_fk},edit_dist) VALUES (new.id, {x})' \
+                for x in range(5)]))
+        repeat_entry_sql = repeat_sql_prefix + ";".join(insert_stmts) + '; END;'
+
+        cur = self.con.cursor()
+        self.db_execute(cur,repeat_entry_sql)
+        self.con.commit()
+        
+        single_entry_qc_tbls = ['qc_manual_review', 'qc_alignment', 'qc_hops']
+        single_entry_sql = f"CREATE TRIGGER IF NOT EXISTS single_qc_records AFTER INSERT ON {batch_tablename} BEGIN "+\
+        "; ".join([f'INSERT INTO {x} ({batchtable_fk}) VALUES (new.id)' \
+            for x in single_entry_qc_tbls]) +\
+		'; END;'
+
+        cur = self.con.cursor()
+        self.db_execute(cur,single_entry_sql)
+        self.con.commit()
+
+
+    def add_batch_qc(self, batch:str, barcode_details_json:str,id_to_bc_map_path:str = None,split_char = "(") -> int:
+
+        bp = BarcodeParser(barcode_details_json)
+    
+        tfs = bp.barcode_dict['components']['tf']['map'].values()
+        replicates = []
+        for x in tfs:
+            try:
+                replicates.append(x.split(split_char)[1].replace(')', ''))
+            except IndexError:
+                replicates.append('none')
+
+        df = pd.DataFrame({'batch': [batch for x in tfs], 'tf': tfs, 'replicate': replicates })
+
+        # add the data
+        df.to_sql('batch',
+                  con=self.con,
+                  if_exists='append',
+                  index=False)
+        
+        # note that a trigger creates which creates default entries in all other 
+        # qc tables
+
+        if id_to_bc_map_path:
+            self.add_read_qc(batch,barcode_details_json,id_to_bc_map_path)
+    
+    def _update_qc_table(self, tablename, id_col, id_value, update_dict):
+        
+        for record in update_dict:
+            sql = f"UPDATE {tablename} SET tally = {record.get('tally')} "\
+                f"WHERE {id_col} = {id_value} AND "\
+                    f"edit_dist = {record.get('edit_dist')}"
+            cur = self.con.cursor()
+            self.db_execute(cur,sql)
+            self.con.commit()
+    
+    def _summarize_r1_primer(self,id_to_bc_df:pd.DataFrame, r1_primer:str,r2_transposon:str) -> pd.DataFrame:
+        """group by a given r1_primer and return the number of r2_transposon seq within 0 to 4 edit distance 
+        of the expected r2_transposon seq
+
+        Args:
+            id_to_bc_df (pd.DataFrame): _description_
+            r1_primer (str): _description_
+            r2_transposon (str): _description_
+
+        Returns:
+            pd.DataFrame: dataframe with 5 rows
+        """
+        
+        primer_df = id_to_bc_df[id_to_bc_df.r1_primer == r1_primer]
+        primer_df = primer_df\
+            .assign(edit_dist = primer_df\
+                .apply(lambda x: \
+                    edlib.align(
+                        x['r2_transposon'], 
+                        r2_transposon)['editDistance'],
+                        axis=1))
+
+        summarised_primer_df = primer_df\
+            .sort_values('edit_dist')\
+            .groupby('edit_dist')[['edit_dist']]\
+            .count()\
+            .rename(columns={'edit_dist':'tally'})\
+            .reset_index()
+        
+        summarised_primer_df = \
+            summarised_primer_df[summarised_primer_df.edit_dist <=4]
+        
+        if summarised_primer_df.loc[0,'edit_dist'] != 0:
+            summarised_primer_df = \
+                pd.concat([
+                    pd.DataFrame({'edit_dist':[0], 'tally':[0]}), 
+                    summarised_primer_df])\
+                .reset_index(drop=True)
+        
+        return summarised_primer_df
+    
+    def _summarize_r2_transposon(self,id_to_bc_df:pd.DataFrame, r1_primer:str,r2_transposon:str) -> pd.DataFrame:
+        """group by a given r2_transposon seq and return the number of r1_primer seqs within 0 to 4 edit distance of the 
+        expected r1_primer seq
+
+        Args:
+            id_to_bc_df (pd.DataFrame): _description_
+            r1_primer (str): _description_
+            r2_transposon (str): _description_
+
+        Returns:
+            pd.DataFrame: dataframe with 5 rows
+        """
+        
+        trans_df = id_to_bc_df[id_to_bc_df.r2_transposon == r2_transposon]
+        trans_df = trans_df\
+            .assign(edit_dist = trans_df\
+                .apply(lambda x: \
+                    edlib.align(
+                        x['r1_primer'], 
+                        r1_primer)['editDistance'],
+                        axis=1))
+
+        summarised_trans_df = trans_df\
+            .sort_values('edit_dist')\
+            .groupby('edit_dist')[['edit_dist']]\
+            .count()\
+            .rename(columns={'edit_dist':'tally'})\
+            .reset_index()
+        
+        summarised_trans_df = \
+            summarised_trans_df[summarised_trans_df.edit_dist <=4]
+        
+        if summarised_trans_df.loc[0,'edit_dist'] != 0:
+            summarised_trans_df = \
+                pd.concat([
+                    pd.DataFrame({'edit_dist':[0], 'tally':[0]}), 
+                    summarised_trans_df])\
+                .reset_index(drop=True)
+        
+        return summarised_trans_df
+    
+    def _summarize_tf_to_r1_transposon(self,id_to_bc_df:pd.DataFrame, r1_primer:str, r2_transposon:str, r1_transposon:str) -> pd.DataFrame:
+        
+        r1_trans_df = id_to_bc_df[id_to_bc_df.r1_primer == r1_primer]
+        r1_trans_df = r1_trans_df[r1_trans_df.r2_transposon == r2_transposon]
+        r1_trans_df = r1_trans_df\
+            .assign(edit_dist = r1_trans_df\
+                .apply(lambda x: \
+                    edlib.align(
+                        x['r1_transposon'], 
+                        r1_transposon)['editDistance'],
+                        axis=1))
+
+        summarised_r1_trans_df = r1_trans_df\
+            .sort_values('edit_dist')\
+            .groupby('edit_dist')[['edit_dist']]\
+            .count()\
+            .rename(columns={'edit_dist':'tally'})\
+            .reset_index()
+        
+        summarised_r1_trans_df = \
+            summarised_r1_trans_df[summarised_r1_trans_df.edit_dist <=4]
+        
+        if summarised_r1_trans_df.loc[0,'edit_dist'] != 0:
+            summarised_trans_df = \
+                pd.concat([
+                    pd.DataFrame({'edit_dist':[0], 'tally':[0]}), 
+                    summarised_trans_df])\
+                .reset_index(drop=True)
+        
+        return summarised_r1_trans_df
+
+
+    def add_read_qc(self, batch:str, barcode_details_json:str, id_to_bc_map_path:str):
+        
+        bp = BarcodeParser(barcode_details_json)
+        
+        if not os.path.exists(id_to_bc_map_path):
+            raise FileNotFoundError(f'{id_to_bc_map_path} DNE')
+        if not id_to_bc_map_path.endswith('tsv'):
+            logging.warning('%s does not end with tsv' %id_to_bc_map_path) #pylint:disable=W1201,C0209
+
+        batch_sql = f"SELECT * FROM batch WHERE batch = '{batch}'"
+        cur = self.con.cursor()
+
+        batch_records = self.db_execute(cur,batch_sql).fetchall()
+
+        id_to_bc_df = pd.read_csv(id_to_bc_map_path, sep = '\t')
+
+        tf_to_bc_dict = {v: k for k,v in bp.barcode_dict['components']['tf']['map'].items()}
+        
+        # TODO  address hardcoding
+        # possibly extend BarcodeParser with organism specific settings
+        r1_primer_indices = [0,5]
+        r2_transposon_indicies = [5,13]
+
+        r1_transposon = bp.barcode_dict['components']['r1_transposon']['map'][0]
+
+        for record in batch_records:
+            #TODO address hardcoding in extracting from records
+            tf_seq = tf_to_bc_dict[record['tf']]
+            r1_primer = tf_seq[r1_primer_indices[0]:r1_primer_indices[1]]
+            r2_transposon = tf_seq[r2_transposon_indicies[0]:r2_transposon_indicies[1]]
+
+            qc_summaries = {
+                'qc_r1_to_r2_tf': self._summarize_r1_primer(
+                    id_to_bc_df, 
+                    r1_primer, 
+                    r2_transposon),
+                'qc_r2_to_r1_tf': self._summarize_r2_transposon(
+                    id_to_bc_df, 
+                    r1_primer, 
+                    r2_transposon),
+                'qc_tf_to_transposon': self._summarize_tf_to_r1_transposon(
+                    id_to_bc_df, 
+                    r1_primer,
+                    r2_transposon,
+                    r1_transposon)
+            }
+
+            for k,v in qc_summaries.items(): 
+                self._update_qc_table(
+                    k, 
+                    'batch_id', 
+                    record['id'], 
+                    v.to_dict(orient='records'))
 
     def consolidate_tables(self,table_class:Literal['background','experiment']) -> bool:
         # take all tables which start with the prefix 'background_' and collapse them 

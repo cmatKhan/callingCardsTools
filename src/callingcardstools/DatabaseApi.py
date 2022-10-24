@@ -14,6 +14,10 @@ __all__ = ['DatabaseApi']
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
+# https://github.com/pandas-dev/pandas/issues/14553#issuecomment-778599042
+# class for SqlUpsert. Also consider SQLalchemy or that sql package i sent to 
+# daniel
+
 # discovered the 'row_factory' attribute in writing this. The connection
 # row factory is set to sqlite.Row. This is another interesting one:
 # see https://docs.python.org/3/library/sqlite.html#connection-objects
@@ -155,7 +159,6 @@ class DatabaseApi():
         """
         try:
             return cur.execute(sql)
-            self.con.commit()
         except sqlite.OperationalError as exc:  # pylint: disable=E1101
             msg = f"Could not execute sql: {sql}. Error: {exc}"
             logging.critical(msg+" ", exc_info=(sys.exc_info()))
@@ -389,7 +392,7 @@ class DatabaseApi():
 
     # TODO return inserter, updater, etc as an 'overloaded' function (via
     # internal factory function)
-    def new_table(self, tablename: str, col_dict: dict, fk_tablelist:list = None) -> Callable[[list, list], int]:
+    def new_table(self, tablename: str, col_dict: dict, fk_tablelist:list = None, clean:bool = False) -> Callable[[list, list], int]:
         """Create a new table in the database
         
         Args:
@@ -397,41 +400,45 @@ class DatabaseApi():
             col_dict (dict): dictionary where the keys are field names and values are data types
             fk_tablelist (list): list of tables to which to foreign key, Note that the 
             field name table_id for each table in the fk_tablelist must exist, and the table must 
-            already exist in the database
+            already exist in the database 
+            clean (bool): whether to drop an existing table of the same name and create a new (empty) table. 
+            Defaults to False
 
         Returns:
             Callable[[list,list], int]: A function to insert values into the new table. 
             Note that this is in development -- there are some problems with appropriately 
             quoting columns and character values
         """
-        # drop the table if it exists
-        drop_sql = f"""DROP TABLE IF EXISTS {tablename}"""
-        # create the table if it exists
-        parsed_col_dict = ",".join([" ".join(['"'+k.strip()+'"', v.strip()])
-                                    for k, v in col_dict.items()])
-        # create the foreign key constraint if a fk_tablelist is passed
-        fk_constraints = []
-        if fk_tablelist:
-            for table in fk_tablelist:
-                if table not in self.list_tables(self.con):
-                    raise AttributeError(f"Tables in the foreign key list must exist in the database. {table} DNE.")
-                elif table+"_id" not in col_dict:
-                    raise AttributeError(f"{table+'_id'} does not exist as a field in col_dict. Foreign key columns must have format <fk_table>_id and exist in col_dict")
-                else:
-                    fk_constraints.append(f"FOREIGN KEY ({table}_id) REFERENCES {table}(id)")
-        # turn the fk_constraints list into a sql statement, or an empty string
-        # if there is on fk_tablelist
-        fk_sql = ","+",".join(fk_constraints) if len(fk_constraints)>0 else ""
+        if not tablename in self.list_tables(self.con) or clean:
+            # drop the table if it exists
+            drop_sql = f"""DROP TABLE IF EXISTS {tablename}"""
+            # create the table if it exists
+            parsed_col_dict = ",".join([" ".join(['"'+k.strip()+'"', v.strip()])
+                                        for k, v in col_dict.items()])
+            # create the foreign key constraint if a fk_tablelist is passed
+            fk_constraints = []
+            if fk_tablelist:
+                for table in fk_tablelist:
+                    if table not in self.list_tables(self.con):
+                        raise AttributeError(f"Tables in the foreign key list must exist in the database. {table} DNE.")
+                    elif table+"_id" not in col_dict:
+                        raise AttributeError(f"{table+'_id'} does not exist as a field in col_dict. Foreign key columns must have format <fk_table>_id and exist in col_dict")
+                    else:
+                        fk_constraints.append(f"FOREIGN KEY ({table}_id) REFERENCES {table}(id)")
+            # turn the fk_constraints list into a sql statement, or an empty string
+            # if there is on fk_tablelist
+            fk_sql = ","+",".join(fk_constraints) if len(fk_constraints)>0 else ""
+            
+            # construct the create table sql
+            create_sql = "".join([f"CREATE TABLE {tablename} (",
+            ",".join([f'"{self.pk}" INTEGER PRIMARY KEY AUTOINCREMENT',parsed_col_dict]),
+            fk_sql, ")"])
+            # execute
+            cur = self.con.cursor()
+            for sql in [drop_sql, create_sql]:
+                self.db_execute(cur, sql)
+                self.con.commit()
         
-        # construct the create table sql
-        create_sql = "".join([f"CREATE TABLE {tablename} (",
-        ",".join([f'"{self.pk}" INTEGER NOT NULL PRIMARY KEY',parsed_col_dict]),
-        fk_sql, ")"])
-        # execute
-        cur = self.con.cursor()
-        for sql in [drop_sql, create_sql]:
-            self.db_execute(cur, sql)
-
         def inserter(values: list, columns: list = col_dict.keys()) -> int:
             """new_table() both creates a table, and returns a callable function 
             which takes a list of values and the columns into which to insert. By 
@@ -449,7 +456,7 @@ class DatabaseApi():
             # TODO this won't work as stands -- need some way of handling data type 
             # and appropriate quoting
             insert_sql = f"INSERT INTO {tablename} ({','.join(columns)}) "\
-                         f"VALUES ({','.join([str(x) for x in values])})"
+                        f"VALUES ({','.join([str(x) for x in values])})"
             # update_sql = " ".join([f"UPDATE {tablename}",])
             logging.debug(f"attempting to insert: {insert_sql}")
             self.db_execute(cur, insert_sql)

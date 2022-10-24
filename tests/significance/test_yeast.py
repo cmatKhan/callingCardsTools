@@ -14,7 +14,6 @@ from .conftests import *
 
 def test_hopsdb_constructor(tmp_path):
     tmp_file = os.path.join(tmp_path, "test.sqlite")
-    assert 2 == 2
     # test instantiating at various locations
     for loc in [":memory:", tmp_file]:
         hops_db = _yeast_hopsdb(loc)
@@ -22,8 +21,6 @@ def test_hopsdb_constructor(tmp_path):
         hops_db.close()
         assert hops_db.is_open() == False
         assert hops_db.db_loc == loc
-
-
 
 def test_yeast_add_chr_map(yeast_hops_data):
     hops_db = _yeast_hopsdb(":memory:")
@@ -124,3 +121,17 @@ def test_region_score(yeast_hopsdb):
         yeast_hopsdb.con.backup(sqlite3.Connection(db_disk))
 
     assert actual == True
+
+def test_create_batch_and_qc_tables(yeast_hopsdb):
+
+    qc_set = {'batch', 'qc_manual_review', 
+    'qc_r1_to_r2_tf', 'qc_r2_to_r1_tf', 'qc_alignment', 'qc_hops'}
+
+    assert len(qc_set-set(yeast_hopsdb.list_tables(yeast_hopsdb.con)))==0
+
+    yeast_hopsdb.add_batch_qc(
+        'run_6073', 
+        '/mnt/scratch/calling_cards/sequence/run_6073/run_6073_barcode_details.json', 
+        '/mnt/scratch/calling_cards/sequence/run_6073/cctools_split/id_bc_map.tsv')
+    
+    assert 2==2

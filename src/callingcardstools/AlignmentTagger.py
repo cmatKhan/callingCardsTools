@@ -10,6 +10,8 @@ from .BarcodeParser import BarcodeParser
 import pysam
 from pysam import FastaFile
 
+__all__ = ['AlignmentTagger']
+
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 class AlignmentTagger(BarcodeParser):

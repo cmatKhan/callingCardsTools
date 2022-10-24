@@ -6,7 +6,11 @@ import logging
 from math import inf as infinity
 from typing import Literal
 
+# outside package
 from edlib import align
+
+
+__all__ = ['BarcodeParser']
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 

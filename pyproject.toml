@@ -68,6 +68,10 @@ executionEnvironments = [
 ]
 
 [tool.poetry.scripts]
+barcode_table_to_json = "callingcardstools.bin:barcode_table_to_json.main"
+map_novo_spack = "callingcardstools.bin:map_novo.main"
+legacy_split_fastq = "callingcardstools.bin:legacy_split_fastq.main"
+legacy_makeccf = "callingcardstools.bin:legacy_makeccf.main"
 cc_tagBam = "callingcardstools.bin:cc_tagBam.main"
 parse_fastq = "callingcardstools.bin:parse_fastq.main"
 

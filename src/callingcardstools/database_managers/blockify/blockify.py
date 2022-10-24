@@ -8,6 +8,9 @@ from scipy.stats import poisson
 import sys
 import warnings
 
+
+__all__ = ['blockify','Algorithm', 'BayesianBlocks', 'OptimalPartitioning', 'PELT', 'FPOP']
+
 def blockify(t, x=None, sigma=None, algorithm='bayesian_blocks', **kwargs):
     """_summary_
 

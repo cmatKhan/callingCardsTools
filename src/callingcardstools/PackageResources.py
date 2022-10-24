@@ -2,6 +2,8 @@ import os
 import importlib.resources as pkg_resources
 from .resources import yeast,human,mouse
 
+__all__ = ['Resources']
+
 class Resources:
 
 	_configured_organisms = ['yeast', 'human', 'mouse']
@@ -9,7 +11,7 @@ class Resources:
 	def __init__(self) -> None:
 		self._yeast_resources = {
 			'chr_map': pkg_resources.read_text(yeast, "chr_map.csv"),
-			'barcode_details':pkg_resources.read_text(yeast, "aln_barcode_details.json"),
+			'barcode_details':pkg_resources.read_text(yeast, "barcode_details.json"),
 			'background_sir4':pkg_resources.read_text(yeast, "S288C_dSir4_Background.qbed"),
 			'background_adh1':pkg_resources.read_text(yeast, "minus_adh1_2015.qbed"),
 			'regions_not_orf':pkg_resources.read_text(yeast, "regions_not_orf_from_mitra.bed"),

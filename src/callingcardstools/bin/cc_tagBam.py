@@ -201,7 +201,7 @@ def main(args=None):
     Raises:
         FileNotFoundError: _description_
     """
-    args = parse_args(args)
+   args = parse_args(args)
 
     # Check inputs
     input_path_list = [args.bam,

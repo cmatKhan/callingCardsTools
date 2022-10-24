@@ -7,6 +7,8 @@ import pandas as pd
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
+__all__ = ['SummaryParser']
+
 class SummaryParser():
 
     _query_string = "status == 0"

@@ -12,7 +12,6 @@ import pandas as pd
 import numpy as np
 import scipy.stats as scistat
 
-
 with open('logging.config.yaml', 'r') as f: #pylint:disable=W1514
     config = yaml.safe_load(f.read())
     logging.config.dictConfig(config)
