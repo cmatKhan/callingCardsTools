@@ -27,6 +27,6 @@
                            "bam_tag": "TF"}
     },
     "match_allowance": {
-        "r1_transposon": 1
+        "r1_transposon": 0
     }
 }

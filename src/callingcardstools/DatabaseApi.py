@@ -36,7 +36,7 @@ class DatabaseApi():
     _standard_chr_format = 'ucsc'
 
     _required_fields = {
-        'qbed': ['chr', 'start', 'end', 'depth', 'strand', 'annotation', 'sample'],
+        'qbed': ['chr', 'start', 'end', 'depth', 'strand', 'annotation', 'batch_id'],
         'bed6': ["chr", "start", "end", "name", "score", "strand"],
         'bed3': ["chr", "start", "end"],
         _chr_map_table: [_standard_chr_format, 'seqlength']
@@ -392,7 +392,9 @@ class DatabaseApi():
 
     # TODO return inserter, updater, etc as an 'overloaded' function (via
     # internal factory function)
-    def new_table(self, tablename: str, col_dict: dict, fk_tablelist:list = None, clean:bool = False) -> Callable[[list, list], int]:
+    def new_table(self, tablename: str, col_dict: dict, 
+                  fk_tablelist:list = None, on_delete_cascade:bool = True, 
+                  clean:bool = False) -> Callable[[list, list], int]:
         """Create a new table in the database
         
         Args:
@@ -401,6 +403,8 @@ class DatabaseApi():
             fk_tablelist (list): list of tables to which to foreign key, Note that the 
             field name table_id for each table in the fk_tablelist must exist, and the table must 
             already exist in the database 
+            on_delete_cascade (bool): whether to delete the referencing record when the referenced record is deleted. 
+            True by default.
             clean (bool): whether to drop an existing table of the same name and create a new (empty) table. 
             Defaults to False
 
@@ -424,7 +428,10 @@ class DatabaseApi():
                     elif table+"_id" not in col_dict:
                         raise AttributeError(f"{table+'_id'} does not exist as a field in col_dict. Foreign key columns must have format <fk_table>_id and exist in col_dict")
                     else:
-                        fk_constraints.append(f"FOREIGN KEY ({table}_id) REFERENCES {table}(id)")
+                        fk_str = f"FOREIGN KEY ({table}_id) REFERENCES {table}(id)"
+                        if on_delete_cascade:
+                            fk_str = fk_str + ' ON DELETE CASCADE'
+                        fk_constraints.append(fk_str)
             # turn the fk_constraints list into a sql statement, or an empty string
             # if there is on fk_tablelist
             fk_sql = ","+",".join(fk_constraints) if len(fk_constraints)>0 else ""
@@ -474,7 +481,7 @@ class DatabaseApi():
         """
         cur = self.con.cursor()
         # create index on table
-        index_sql = f"CREATE INDEX {tablename + '_index'} "\
+        index_sql = f"CREATE INDEX IF NOT EXISTS {tablename + '_index'} "\
                     f"ON {tablename} ({index_col_string})"
         self.db_execute(cur, index_sql)
         self.con.commit()

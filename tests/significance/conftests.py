@@ -44,6 +44,6 @@ def yeast_hopsdb(yeast_hops_data):
 		expr_df, 'qbed', 
 		table_type='experiment', tablename_suffix = 'test')
 	
-	hops_db.create_aggregate_view('regions_test')
+	#hops_db.create_aggregate_view('regions_test')
 
 	return hops_db

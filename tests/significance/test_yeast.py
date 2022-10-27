@@ -135,3 +135,12 @@ def test_create_batch_and_qc_tables(yeast_hopsdb):
         '/mnt/scratch/calling_cards/sequence/run_6073/cctools_split/id_bc_map.tsv')
     
     assert 2==2
+
+def test_summarize_tf_to_r1_transposon(yeast_hopsdb):
+
+    yeast_hopsdb.add_batch_qc(
+        'run_5423_aro80', 
+        'tests/test_data/yeast/run_5423_barcode_details.json', 
+        'temp/yeast/run_5423_id_bc_map.tsv')
+    
+    assert 2==2

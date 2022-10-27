@@ -95,48 +95,52 @@ class HopsDb(DatabaseApi):
                        fk_table     = regions_fk_table,
                        fk_keys      = [fk_field])
 
-    def create_aggregate_view(self, regions_tbl:str) -> bool:
+    def create_aggregate_view(self, qbed_tbl:str, regions_tbl:str) -> bool:
         """For each background and experiment table, create a view where the hops are 
         aggregated over the regions provided in the regions table
 
         Args:
+            tbl_list (list): list of table names from which aggregate views will 
+            be created. Eg, a list of all experiment and background tables
             regions_tbl (str): name of the regions table to use to aggregate the hops
 
         Returns:
             bool: True if successful
         """
-        if not regions_tbl in self.list_tables(self.con):
-            raise AttributeError(f'No table named {regions_tbl}')
-        # get table lists
-        tbl_list = self.list_tables(self.con)
-        background_and_expr_tbls = [x for x in tbl_list \
-            if re.search(r"^background|^experiment",x)]
-        available_regions = [x for x in tbl_list if x.startswith("regions_")]
+        # verify qbed_tbl
+        if qbed_tbl not in [x for x in self.list_tables(self.con) \
+            if x.startswith('experiment_') or x.startswith('background_')]:
+                AttributeError(f"No table named {qbed_tbl} "\
+                    f"in database with prefix experiment_ or background_")
+
+        # verify regions_tbl
         # check if region_tbl is in the regions table list
-        if regions_tbl not in self.list_tables(self.con):
-            AttributeError(f"No table named {regions_tbl} in database. "\
-                           f"Current tables are: {','.join(available_regions)}")
+        if regions_tbl not in [x for x in self.list_tables(self.con) \
+            if x.startswith('regions_')]:
+            AttributeError(f"No table named {regions_tbl} "\
+                f"in the regions tbls in the database")
+        
+
         # create the views
         cur = self.con.cursor()
-        for tbl in background_and_expr_tbls:
+        viewname = regions_tbl + '_' +  qbed_tbl
+        drop_view_sql = f'DROP VIEW IF EXISTS "main"."{viewname}";'
+        self.db_execute(cur,drop_view_sql)
 
-            viewname = regions_tbl + '_' +  tbl
-            drop_view_sql = f'DROP VIEW IF EXISTS "main"."{viewname}";'
-            self.db_execute(cur,drop_view_sql)
+        create_view_sql = \
+            " ".join([f"CREATE VIEW {viewname} AS",
+            "SELECT r.chr as chr,r.start as start,r.end as end, count(*) as hops, batch_id, name",
+            f"FROM {regions_tbl} as r",
+            f"LEFT JOIN {qbed_tbl} as x",
+            "WHERE (x.chr = r.chr AND x.start BETWEEN r.start AND r.end)",
+            "GROUP BY batch_id, name, r.chr,r.start,r.end"])
 
-            create_view_sql = " ".join([f"CREATE VIEW {viewname} AS",
-                                         "SELECT r.chr as chr,r.start as start,r.end as end, count(*) as hops, sample, name",
-                                        f"FROM {regions_tbl} as r",
-                                        f"LEFT JOIN {tbl} as x",
-                                        "WHERE (x.chr = r.chr AND x.start BETWEEN r.start AND r.end)",
-                                        "GROUP BY sample, name, r.chr,r.start,r.end"])
-
-            self.db_execute(cur,create_view_sql)
-            self.con.commit()
+        self.db_execute(cur,create_view_sql)
+        self.con.commit()
 
         return True
     
-    def regions_background_expr_sql(self, regions:str, background:str, experiment:str)->str:
+    def _regions_background_expr_sql(self, **kwargs)->str:
         """_summary_
 
         Note that the keyword arguments must remain the same as the expected 
@@ -153,9 +157,14 @@ class HopsDb(DatabaseApi):
         Returns:
             str: _description_
         """
-        # get the viewname
-        hop_views = {'background': regions + '_' + background,
-                     'experiment': regions + '_' + experiment}
+        try:
+            hop_views = {
+                'background': kwargs['regions'] + '_' + kwargs['background'],
+                'experiment': kwargs['regions'] + '_' + kwargs['experiment']
+            }
+        except KeyError as exp:
+            raise f'_regions_background_sql requires that regions,background,experiment '\
+                f'be passed as a named argument' from exp
 
         # check that the views are in the database
         tbl_list = self.list_tables(self.con)
@@ -168,10 +177,10 @@ class HopsDb(DatabaseApi):
         # don't matter -- no reason to save them, anyway.
         sql = " ".join(["SELECT e.chr AS chr, e.start AS start, e.end AS end,",
                              "IFNULL(b.hops,0) AS bg_hops, e.hops AS expr_hops,",
-                             "e.sample as sample",
+                             "e.batch_id as batch_id",
                              f"FROM {hop_views['experiment']} as e",
                              f"LEFT JOIN {hop_views['background']} as b USING(chr,start,end,name)",
-                             "ORDER BY sample,chr,start,end"])
+                             "ORDER BY batch_id,chr,start,end"])
         return sql
     
     def create_batch_table(self, **kwargs)->dict:
@@ -207,7 +216,7 @@ class HopsDb(DatabaseApi):
                     'rank_recall': '"rank_recall"	TEXT DEFAULT \'unreviewed\' CHECK("rank_recall" IN (\'pass\', \'fail\', \'unreviewed\', \'note\'))',
                     'chip_better': 'TEXT DEFAULT \'unreviewed\' CHECK("chip_better" IN (\'yes\', \'no\', \'unreviewed\', \'note\'))',
                     'data_usable': 'TEXT DEFAULT \'unreviewed\' CHECK("data_usable" IN (\'yes\', \'no\', \'unreviewed\', \'note\'))',
-                    'passing_replicate': 'TEXT DEFAULT \'unreviewed\' CHECK("passing_replicate" IN (\'pass\', \'fail\', \'unreviewed\', \'note\'))',
+                    'passing_replicate': 'TEXT DEFAULT \'unreviewed\' CHECK("passing_replicate" IN (\'yes\', \'no\', \'unreviewed\', \'note\'))',
                     'notes': 'TEXT DEFAULT \'unreviewed\''
              }   
             },
@@ -333,33 +342,31 @@ class HopsDb(DatabaseApi):
         """
         
         primer_df = id_to_bc_df[id_to_bc_df.r1_primer == r1_primer]
-        primer_df = primer_df\
-            .assign(edit_dist = primer_df\
-                .apply(lambda x: \
-                    edlib.align(
-                        x['r2_transposon'], 
-                        r2_transposon)['editDistance'],
-                        axis=1))
+        summarised_dict = {}
+        if not primer_df.shape[0] == 0:
+            primer_df = primer_df\
+                .assign(edit_dist = primer_df\
+                    .apply(lambda x: \
+                        edlib.align(
+                            x['r2_transposon'], 
+                            r2_transposon)['editDistance'],
+                            axis=1))
 
-        summarised_primer_df = primer_df\
-            .sort_values('edit_dist')\
-            .groupby('edit_dist')[['edit_dist']]\
-            .count()\
-            .rename(columns={'edit_dist':'tally'})\
-            .reset_index()
+            summarised_dict = primer_df\
+                .sort_values('edit_dist')\
+                .groupby('edit_dist')[['edit_dist']]\
+                .count()\
+                .rename(columns={'edit_dist':'tally'})\
+                .loc[:10,:]\
+                .to_dict(orient='index')
         
-        summarised_primer_df = \
-            summarised_primer_df[summarised_primer_df.edit_dist <=4]
+        output_dict = {'edit_dist':[], 'tally':[]}
+        for edit_dist in range(5):
+            output_dict['edit_dist'].append(edit_dist)
+            output_dict['tally'].append(summarised_dict.get(edit_dist, {}).get('tally', 0))
         
-        if summarised_primer_df.loc[0,'edit_dist'] != 0:
-            summarised_primer_df = \
-                pd.concat([
-                    pd.DataFrame({'edit_dist':[0], 'tally':[0]}), 
-                    summarised_primer_df])\
-                .reset_index(drop=True)
-        
-        return summarised_primer_df
-    
+        return pd.DataFrame(output_dict)
+
     def _summarize_r2_transposon(self,id_to_bc_df:pd.DataFrame, r1_primer:str,r2_transposon:str) -> pd.DataFrame:
         """group by a given r2_transposon seq and return the number of r1_primer seqs within 0 to 4 edit distance of the 
         expected r1_primer seq
@@ -374,64 +381,62 @@ class HopsDb(DatabaseApi):
         """
         
         trans_df = id_to_bc_df[id_to_bc_df.r2_transposon == r2_transposon]
-        trans_df = trans_df\
-            .assign(edit_dist = trans_df\
-                .apply(lambda x: \
-                    edlib.align(
-                        x['r1_primer'], 
-                        r1_primer)['editDistance'],
-                        axis=1))
+        summarised_dict = {}
+        if not trans_df.shape[0] == 0:
+            trans_df = trans_df\
+                .assign(edit_dist = trans_df\
+                    .apply(lambda x: \
+                        edlib.align(
+                            x['r1_primer'], 
+                            r1_primer)['editDistance'],
+                            axis=1))
 
-        summarised_trans_df = trans_df\
-            .sort_values('edit_dist')\
-            .groupby('edit_dist')[['edit_dist']]\
-            .count()\
-            .rename(columns={'edit_dist':'tally'})\
-            .reset_index()
+            summarised_dict = trans_df\
+                .sort_values('edit_dist')\
+                .groupby('edit_dist')[['edit_dist']]\
+                .count()\
+                .rename(columns={'edit_dist':'tally'})\
+                .loc[:10,:]\
+                .to_dict(orient='index')
+
+        output_dict = {'edit_dist':[], 'tally':[]}
+        for edit_dist in range(5):
+            output_dict['edit_dist'].append(edit_dist)
+            output_dict['tally'].append(summarised_dict.get(edit_dist, {}).get('tally', 0))
         
-        summarised_trans_df = \
-            summarised_trans_df[summarised_trans_df.edit_dist <=4]
-        
-        if summarised_trans_df.loc[0,'edit_dist'] != 0:
-            summarised_trans_df = \
-                pd.concat([
-                    pd.DataFrame({'edit_dist':[0], 'tally':[0]}), 
-                    summarised_trans_df])\
-                .reset_index(drop=True)
-        
-        return summarised_trans_df
+        return pd.DataFrame(output_dict)
     
     def _summarize_tf_to_r1_transposon(self,id_to_bc_df:pd.DataFrame, r1_primer:str, r2_transposon:str, r1_transposon:str) -> pd.DataFrame:
         
         r1_trans_df = id_to_bc_df[id_to_bc_df.r1_primer == r1_primer]
         r1_trans_df = r1_trans_df[r1_trans_df.r2_transposon == r2_transposon]
-        r1_trans_df = r1_trans_df\
-            .assign(edit_dist = r1_trans_df\
-                .apply(lambda x: \
-                    edlib.align(
-                        x['r1_transposon'], 
-                        r1_transposon)['editDistance'],
-                        axis=1))
 
-        summarised_r1_trans_df = r1_trans_df\
-            .sort_values('edit_dist')\
-            .groupby('edit_dist')[['edit_dist']]\
-            .count()\
-            .rename(columns={'edit_dist':'tally'})\
-            .reset_index()
-        
-        summarised_r1_trans_df = \
-            summarised_r1_trans_df[summarised_r1_trans_df.edit_dist <=4]
-        
-        if summarised_r1_trans_df.loc[0,'edit_dist'] != 0:
-            summarised_trans_df = \
-                pd.concat([
-                    pd.DataFrame({'edit_dist':[0], 'tally':[0]}), 
-                    summarised_trans_df])\
-                .reset_index(drop=True)
-        
-        return summarised_r1_trans_df
+        # this is here to handle case in which there are no r1, r2 expected 
+        # matches
+        summarised_dict = {}
+        if not r1_trans_df.shape[0] == 0:
+            r1_trans_df = r1_trans_df\
+                .assign(edit_dist = r1_trans_df\
+                    .apply(lambda x: \
+                        edlib.align(
+                            x['r1_transposon'], 
+                            r1_transposon)['editDistance'],
+                            axis=1))
 
+            summarised_dict = r1_trans_df\
+                .sort_values('edit_dist')\
+                .groupby('edit_dist')[['edit_dist']]\
+                .count()\
+                .rename(columns={'edit_dist':'tally'})\
+                .loc[:10,:]\
+                .to_dict(orient='index')
+
+        output_dict = {'edit_dist':[], 'tally':[]}
+        for edit_dist in range(5):
+            output_dict['edit_dist'].append(edit_dist)
+            output_dict['tally'].append(summarised_dict.get(edit_dist, {}).get('tally', 0))
+        
+        return pd.DataFrame(output_dict)
 
     def add_read_qc(self, batch:str, barcode_details_json:str, id_to_bc_map_path:str):
         
@@ -463,7 +468,9 @@ class HopsDb(DatabaseApi):
             tf_seq = tf_to_bc_dict[record['tf']]
             r1_primer = tf_seq[r1_primer_indices[0]:r1_primer_indices[1]]
             r2_transposon = tf_seq[r2_transposon_indicies[0]:r2_transposon_indicies[1]]
-
+            
+            # TODO there is a lot of repeated code in each of the summarize 
+            # fucntions -- unify
             qc_summaries = {
                 'qc_r1_to_r2_tf': self._summarize_r1_primer(
                     id_to_bc_df, 
@@ -489,10 +496,13 @@ class HopsDb(DatabaseApi):
 
     def consolidate_tables(self,table_class:Literal['background','experiment']) -> bool:
         # take all tables which start with the prefix 'background_' and collapse them 
-        # into a single table indexed by the sample column
+        # into a single table indexed by the batch_id column
         raise NotImplementedError
+    
+    def _get_passing_batch_ids(self, batch_id, **kwargs) -> list:
+        raise NotImplementedError()
 
-    def peak_caller(self,replicate_handling:Literal['separate','sum']='separate',poisson_pseudocount:float = 0.2, *args, **kwargs) -> None:
+    def peak_caller(self,replicate_handling:Literal['separate','sum']='separate',poisson_pseudocount:float = 0.2, if_exists:str = 'fail', *args, **kwargs) -> None:
         """Call Peaks and add the result to the database.
 
         Args:
@@ -508,39 +518,80 @@ class HopsDb(DatabaseApi):
         Raises:
             AttributeError: _description_
         """
-        if {'regions','background','experiment'} == set(kwargs):
-            join_sql = self.regions_background_expr_sql(**kwargs)
-            quant_df = pd.read_sql_query(join_sql, self.con)
-            total_hops_dict = \
-                {'background': self.get_total_hops(kwargs.get('background'))}
-            if replicate_handling == 'separate':
-                # group by sample (replicates)
-                grouped_df = quant_df.groupby('sample')
-                # add total hops for each replicate to the total_hop_dict
-                for group,df in grouped_df:
-                    total_hops_dict[group] = \
-                        self.get_total_hops(kwargs.get('experiment'),group)
-                # create the tablename
-                sig_tablename = kwargs.get('regions') + '_' + kwargs.get('background')+ \
-                                "_" + kwargs.get('experiment') + "_sig"
-            else:
-                NotImplementedError(f'Replicate handling method: '\
-                    f'{replicate_handling} is not implemented')
-            # call peaks
-            output_df = call_peaks_with_background(grouped_df, total_hops_dict,poisson_pseudocount)
-        else:
+        # note that the idea of using the kwargs argument is to simulate 
+        # overloading, so that a different set of kwargs could be used to call 
+        # a different peak caller. If another peak caller is added at some point, 
+        # this will need to turn into an if, elif, ... statement with this 
+        # error handling ahppening in the final 'else' 
+        if {'regions','background','experiment'} != set(kwargs):
             raise KeyError(f'The combination of tables {kwargs} '\
                 'does not match any expected combinations -- cannot find an '
                 'appropriate peak calling method')
+         
+        # create the tablename 
+        join_sql = self._regions_background_expr_sql(**kwargs)
+
+        quant_df = pd.read_sql_query(join_sql, self.con)
+
+        total_hops_dict = \
+            {'background': self.get_total_hops(kwargs.get('background'))}
+        
+        # group by batch_id (replicates)
+        batch_grouped_df = quant_df.groupby('batch_id')
+        # add total hops for each replicate to the total_hop_dict
+        for group,df in batch_grouped_df:
+            total_hops_dict[group] = \
+                self.get_total_hops(kwargs.get('experiment'),group)
+        
+        if replicate_handling == 'separate': 
+            # call peaks
+            output_df = \
+                call_peaks_with_background(
+                    batch_grouped_df, 
+                    total_hops_dict,poisson_pseudocount)
+            # send the table to the database
+
+        elif replicate_handling == 'sum':
+            passing_batch_ids = \
+                self._get_passing_batch_ids(
+                    quant_df.loc[0,'batch_id'],
+                    kwargs.get('include_unreviewed', False))
+            summed_passing_replicate_df = \
+                quant_df[quant_df.batch_id in passing_batch_ids]
+            summed_passing_replicate_df['group'] = \
+                ['all'] * len(summed_passing_replicate_df)
+            summed_passing_replicate_df = \
+                summed_passing_replicate_df\
+                    .groupby('group')
+                    # SUM OVER POSITIONS!
             
-        # send the table to the database
+            # extract the max hops for a given passing replicate
+            remove_keys = [k for k in total_hops_dict if k in passing_batch_ids]
+            max_expr_hops = max([total_hops_dict.pop(k) for k in remove_keys])
+            total_hops_dict['all'] = max_expr_hops
+
+            # call peaks
+            output_df = call_peaks_with_background(
+                summed_passing_replicate_df, 
+                total_hops_dict, 
+                poisson_pseudocount)
+        else:
+            raise IOError(f'replicate handling method '\
+                f'{replicate_handling} not recognized.')
+        
+        sig_tablename = kwargs.get('regions') + '_' + kwargs.get('background')+ \
+                    "_" + kwargs.get('experiment') + replicate_handling + "_sig"
         output_df.to_sql(sig_tablename,
             con=self.con,
-            if_exists='replace',
+            if_exists=if_exists,
             index=False)
+
         
-        # index the table
-        index_col_string = self.index_col_string_dict['qbed']+',"sample"'
+        # index the table note that the index is create only if one with the 
+        # same name doesn't already exist
+        index_col_string = self.index_col_string_dict['qbed']+',"batch_id"'
         self.index_table(sig_tablename, index_col_string)
-    
+
+
+
         return True
