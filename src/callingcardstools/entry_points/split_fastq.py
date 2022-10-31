@@ -3,7 +3,6 @@ import logging
 from logging.config import dictConfig
 import sys
 import os
-import gzip
 import argparse
 
 from callingcardstools.ReadParser import ReadParser
@@ -100,23 +99,23 @@ def main(args = None):
         logging.info(msg)
 
         determined_out = {
-            'r1': gzip.open(f"{args.split_key}_R1.fq.gz", "wt"), #pylint:disable=W1514
-            'r2': gzip.open(f"{args.split_key}_R2.fq.gz", "wt")  #pylint:disable=W1514
+            'r1': open(f"{args.split_key}_R1.fq.gz", "w"), #pylint:disable=W1514
+            'r2': open(f"{args.split_key}_R2.fq.gz", "w")  #pylint:disable=W1514
         }
     # elif the split_key is in barcode_details, create/open a fq output file for
     # each of the keys in barcode[components][split_key]
     else:
         determined_out = {
-            'r1': {tf:gzip.open(f"{tf}_R1.fq.gz", "wt") for tf in\
+            'r1': {tf:open(f"{tf}_R1.fq.gz", "w") for tf in\
                 rp.barcode_dict['components'][args.split_key]['map'].values()}, #pylint:disable=W1514
-            'r2': {tf:gzip.open(f"{tf}_R2.fq.gz", "wt") for tf in\
+            'r2': {tf:open(f"{tf}_R2.fq.gz", "w") for tf in\
                 rp.barcode_dict['components'][args.split_key]['map'].values()}  #pylint:disable=W1514
         }
     # create/open undetermined read output -- these are reads which do not 
     # match barcode expectations
     undetermined_out = {
-        'r1': gzip.open("undetermined_R1.fq.gz", "wt"), #pylint:disable=W1514
-        'r2': gzip.open("undetermined_R2.fq.gz", "wt")  #pylint:disable=W1514
+        'r1': open("undetermined_R1.fq.gz", "w"), #pylint:disable=W1514
+        'r2': open("undetermined_R2.fq.gz", "w")  #pylint:disable=W1514
     }
 
     # iterate over reads, split reads whose barcode components match expectation 
