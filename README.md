@@ -1,9 +1,3 @@
-# System Dependencies
-
-[Bedtools](https://github.com/arq5x/bedtools2). 
-Download and install following their instructions. It must be 
-available in your `$PATH`
-
 # General use
 
 Once you have bedtools in your path, you can install like so:

@@ -6,10 +6,12 @@ RUN  apt-get install -y --no-install-recommends \
     dirmngr \
     wget \
 	build-essential \
-    python \
-	python-setuptools \
-	python-dev \
-	python-pip
+    python3.9 \
+	python3-pip
 
 # Clean up
-RUN apt-get autoremove -y && autoclean -y
+RUN apt-get autoremove -y
+
+RUN pip install --upgrade pip
+
+RUN pip install callingcardstools
