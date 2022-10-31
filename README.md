@@ -1,9 +1,3 @@
-# System Dependencies
-
-[Bedtools](https://github.com/arq5x/bedtools2). 
-Download and install following their instructions. It must be 
-available in your `$PATH`
-
 # General use
 
 Once you have bedtools in your path, you can install like so:
@@ -12,22 +6,10 @@ Once you have bedtools in your path, you can install like so:
 pip install callingcardstools
 ```
 
-There is currently one entry point (command line script):
+To start using the command line tools, see the help message with:
 
 ```
-macs_peak_caller
-```
-
-This will be available in your `$PATH` after you install the package.
-
-Example usage:
-
-```
-macs_peak_caller \
-    -e human/TAG_AY53-1_50k_downsampled_human_map_sort_SUBSET.ccf \
-    -t ttaa_subset_99_rows.tsv \
-    -a ref_subset_500_plus_chrm.bed \
-    -b TAG_background_SUBSET.ccf
+callingcardstools --help
 ```
 
 # Development Installation
