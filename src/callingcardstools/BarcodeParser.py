@@ -48,12 +48,17 @@ class BarcodeParser:
         return self._barcode_details_json
     @barcode_details_json.setter
     def barcode_details_json(self, new_barcode_details_json):
+        required_keys = {'r1', 'r2', 'batch'}
+        
         # check that barcode json exists
         if not os.path.exists(new_barcode_details_json):
             raise FileNotFoundError(f"Invalid Path: {new_barcode_details_json}")
         # open json, read in as dict
         with open(new_barcode_details_json, 'r') as f1: #pylint:disable=W1514
             barcode_dict = json.load(f1)
+        # check keys
+        if not len(required_keys - set(barcode_dict)) == 0:
+            raise KeyError(f'the following keys are required: {required_keys}')
         # update the barcode_dict attribute
         logging.info("Updating the barcode dict to reflect the new barcode details json...")
         self.barcode_dict = barcode_dict
@@ -206,8 +211,6 @@ class BarcodeParser:
             # if this is a compound component (eg the tf for yeast), 
             # construct the sequence from the components. Else, extract the 
             # sequence from the input component dict for the given key
-            if k == 'tf':
-                logging.debug('here!')
             query_seq = \
                 "".join([component_dict[x] for x in v.get('components', None)])\
                  if v.get('components', None) else component_dict[k]

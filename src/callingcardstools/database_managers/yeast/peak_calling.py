@@ -86,14 +86,14 @@ def hypergeometric_pval_factory(total_bg_hops:int, total_expr_hops:int) -> Calla
 def call_peaks_with_background(grouped_df: pd.DataFrame, 
                                total_hops_dict:dict,
                                poisson_pseudocount:float,
-                               group_field:str="sample") -> pd.DataFrame:
+                               group_field:str="batch_id") -> pd.DataFrame:
     """_summary_
 
     Args:
         grouped_df (pd.DataFrame): _description_
         total_hops_dict (dict): _description_
         poisson_pseudocount (float): _description_
-        group_field (str, optional): _description_. Defaults to "sample".
+        group_field (str, optional): _description_. Defaults to "batch_id".
 
     Raises:
         KeyError: _description_

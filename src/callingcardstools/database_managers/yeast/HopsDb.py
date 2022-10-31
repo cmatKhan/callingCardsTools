@@ -95,7 +95,7 @@ class HopsDb(DatabaseApi):
                        fk_table     = regions_fk_table,
                        fk_keys      = [fk_field])
 
-    def create_aggregate_view(self, qbed_tbl:str, regions_tbl:str) -> bool:
+    def create_aggregate_view(self, qbed_tbl:str, regions_tbl:str, clean:bool=False) -> bool:
         """For each background and experiment table, create a view where the hops are 
         aggregated over the regions provided in the regions table
 
@@ -124,11 +124,13 @@ class HopsDb(DatabaseApi):
         # create the views
         cur = self.con.cursor()
         viewname = regions_tbl + '_' +  qbed_tbl
-        drop_view_sql = f'DROP VIEW IF EXISTS "main"."{viewname}";'
-        self.db_execute(cur,drop_view_sql)
+        
+        if clean:
+            drop_view_sql = f'DROP VIEW IF EXISTS "main"."{viewname}";'
+            self.db_execute(cur,drop_view_sql)
 
         create_view_sql = \
-            " ".join([f"CREATE VIEW {viewname} AS",
+            " ".join([f"CREATE VIEW IF NOT EXISTS {viewname} AS",
             "SELECT r.chr as chr,r.start as start,r.end as end, count(*) as hops, batch_id, name",
             f"FROM {regions_tbl} as r",
             f"LEFT JOIN {qbed_tbl} as x",
@@ -140,7 +142,7 @@ class HopsDb(DatabaseApi):
 
         return True
     
-    def _regions_background_expr_sql(self, **kwargs)->str:
+    def _regions_background_expr_sql(self, regions_tblname:str, background_tblname:str, experiment_tblname:str)->str:
         """_summary_
 
         Note that the keyword arguments must remain the same as the expected 
@@ -149,7 +151,6 @@ class HopsDb(DatabaseApi):
         Args:
             regions (str): _description_
             background (str): _description_
-            experiment (str): _description_
 
         Raises:
             AttributeError: _description_
@@ -159,12 +160,13 @@ class HopsDb(DatabaseApi):
         """
         try:
             hop_views = {
-                'background': kwargs['regions'] + '_' + kwargs['background'],
-                'experiment': kwargs['regions'] + '_' + kwargs['experiment']
+                'background': regions_tblname + '_' + background_tblname,
+                'experiment': regions_tblname + '_' + experiment_tblname
             }
         except KeyError as exp:
-            raise f'_regions_background_sql requires that regions,background,experiment '\
-                f'be passed as a named argument' from exp
+            raise 'regions_background_sql requires that '+\
+                'regions,background,experiment '+\
+                'be passed as a named argument' from exp
 
         # check that the views are in the database
         tbl_list = self.list_tables(self.con)
@@ -292,19 +294,34 @@ class HopsDb(DatabaseApi):
         self.con.commit()
 
 
-    def add_batch_qc(self, batch:str, barcode_details_json:str,id_to_bc_map_path:str = None,split_char = "(") -> int:
+    def add_batch_qc(self, barcode_details:BarcodeParser,id_to_bc_map_path:str = None,split_char = "x") -> int:
+        """_summary_
 
-        bp = BarcodeParser(barcode_details_json)
-    
-        tfs = bp.barcode_dict['components']['tf']['map'].values()
+        Args:
+            barcode_details (BarcodeDetails): _description_
+            id_to_bc_map_path (str, optional): _description_. Defaults to None.
+            split_char (str, optional): _description_. Defaults to "x".
+
+        Returns:
+            int: _description_
+        """
+        # extract data from the barcode_details
+        tfs = barcode_details.barcode_dict['components']['tf']['map'].values()
+        batch = barcode_details.barcode_dict['batch']
+
         replicates = []
         for x in tfs:
             try:
                 replicates.append(x.split(split_char)[1].replace(')', ''))
             except IndexError:
                 replicates.append('none')
-
-        df = pd.DataFrame({'batch': [batch for x in tfs], 'tf': tfs, 'replicate': replicates })
+        
+        # create df with nrow == len(tfs). batch is repeated for each record. 
+        # records is either split from the tf name, or 'none'
+        df = pd.DataFrame(
+            {'batch': [batch for x in tfs], 
+            'tf': tfs, 
+            'replicate': replicates })
 
         # add the data
         df.to_sql('batch',
@@ -316,9 +333,17 @@ class HopsDb(DatabaseApi):
         # qc tables
 
         if id_to_bc_map_path:
-            self.add_read_qc(batch,barcode_details_json,id_to_bc_map_path)
+            self.add_read_qc(batch,barcode_details,id_to_bc_map_path)
     
-    def _update_qc_table(self, tablename, id_col, id_value, update_dict):
+    def _update_qc_table(self, tablename:str, id_col:str, id_value:str, update_dict:dict) -> None:
+        """_summary_
+
+        Args:
+            tablename (str): _description_
+            id_col (str): _description_
+            id_value (str): _description_
+            update_dict (dict): _description_
+        """
         
         for record in update_dict:
             sql = f"UPDATE {tablename} SET tally = {record.get('tally')} "\
@@ -407,6 +432,17 @@ class HopsDb(DatabaseApi):
         return pd.DataFrame(output_dict)
     
     def _summarize_tf_to_r1_transposon(self,id_to_bc_df:pd.DataFrame, r1_primer:str, r2_transposon:str, r1_transposon:str) -> pd.DataFrame:
+        """_summary_
+
+        Args:
+            id_to_bc_df (pd.DataFrame): _description_
+            r1_primer (str): _description_
+            r2_transposon (str): _description_
+            r1_transposon (str): _description_
+
+        Returns:
+            pd.DataFrame: _description_
+        """
         
         r1_trans_df = id_to_bc_df[id_to_bc_df.r1_primer == r1_primer]
         r1_trans_df = r1_trans_df[r1_trans_df.r2_transposon == r2_transposon]
@@ -438,10 +474,17 @@ class HopsDb(DatabaseApi):
         
         return pd.DataFrame(output_dict)
 
-    def add_read_qc(self, batch:str, barcode_details_json:str, id_to_bc_map_path:str):
-        
-        bp = BarcodeParser(barcode_details_json)
-        
+    def add_read_qc(self, batch:str, barcode_details:BarcodeParser, id_to_bc_map_path:str) -> None:
+        """_summary_
+
+        Args:
+            batch (str): _description_
+            barcode_details_json (BarcodeParser): _description_
+            id_to_bc_map_path (str): _description_
+
+        Raises:
+            FileNotFoundError: _description_
+        """
         if not os.path.exists(id_to_bc_map_path):
             raise FileNotFoundError(f'{id_to_bc_map_path} DNE')
         if not id_to_bc_map_path.endswith('tsv'):
@@ -454,14 +497,14 @@ class HopsDb(DatabaseApi):
 
         id_to_bc_df = pd.read_csv(id_to_bc_map_path, sep = '\t')
 
-        tf_to_bc_dict = {v: k for k,v in bp.barcode_dict['components']['tf']['map'].items()}
+        tf_to_bc_dict = {v: k for k,v in barcode_details.barcode_dict['components']['tf']['map'].items()}
         
         # TODO  address hardcoding
         # possibly extend BarcodeParser with organism specific settings
         r1_primer_indices = [0,5]
         r2_transposon_indicies = [5,13]
 
-        r1_transposon = bp.barcode_dict['components']['r1_transposon']['map'][0]
+        r1_transposon = barcode_details.barcode_dict['components']['r1_transposon']['map'][0]
 
         for record in batch_records:
             #TODO address hardcoding in extracting from records
@@ -495,11 +538,33 @@ class HopsDb(DatabaseApi):
                     v.to_dict(orient='records'))
 
     def consolidate_tables(self,table_class:Literal['background','experiment']) -> bool:
+        """_summary_
+
+        Args:
+            table_class (Literal[&#39;background&#39;,&#39;experiment&#39;]): _description_
+
+        Raises:
+            NotImplementedError: _description_
+
+        Returns:
+            bool: _description_
+        """
         # take all tables which start with the prefix 'background_' and collapse them 
         # into a single table indexed by the batch_id column
         raise NotImplementedError
     
-    def _get_passing_batch_ids(self, batch_id, **kwargs) -> list:
+    def _get_passing_batch_ids(self, batch_id:str, **kwargs) -> list:
+        """_summary_
+
+        Args:
+            batch_id (str): _description_
+
+        Raises:
+            NotImplementedError: _description_
+
+        Returns:
+            list: _description_
+        """
         raise NotImplementedError()
 
     def peak_caller(self,replicate_handling:Literal['separate','sum']='separate',poisson_pseudocount:float = 0.2, if_exists:str = 'fail', *args, **kwargs) -> None:
@@ -529,7 +594,10 @@ class HopsDb(DatabaseApi):
                 'appropriate peak calling method')
          
         # create the tablename 
-        join_sql = self._regions_background_expr_sql(**kwargs)
+        join_sql = self._regions_background_expr_sql(
+            kwargs.get('regions'), 
+            kwargs.get('background'), 
+            kwargs.get('experiment'))
 
         quant_df = pd.read_sql_query(join_sql, self.con)
 
@@ -591,7 +659,5 @@ class HopsDb(DatabaseApi):
         # same name doesn't already exist
         index_col_string = self.index_col_string_dict['qbed']+',"batch_id"'
         self.index_table(sig_tablename, index_col_string)
-
-
 
         return True

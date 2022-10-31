@@ -27,6 +27,7 @@ class DatabaseApi():
     """An object to aid in creating,modifying and using calling cards data from a database backend"""
 
     _db_loc = ""
+    _db_timeout=1200
     _con = ""
 
     _chr_map_table = "chr_map"
@@ -36,7 +37,7 @@ class DatabaseApi():
     _standard_chr_format = 'ucsc'
 
     _required_fields = {
-        'qbed': ['chr', 'start', 'end', 'depth', 'strand', 'annotation', 'batch_id'],
+        'qbed': ['chr', 'start', 'end', 'depth', 'strand', 'batch_id'],
         'bed6': ["chr", "start", "end", "name", "score", "strand"],
         'bed3': ["chr", "start", "end"],
         _chr_map_table: [_standard_chr_format, 'seqlength']
@@ -55,7 +56,7 @@ class DatabaseApi():
     _index_col_string_dict = {
         'bed3': ','.join(['"chr"', '"start" ASC', '"end" ASC']),
         'bed6': ','.join(['"chr"', '"start" ASC', '"end" ASC', '"strand"']),
-        'qbed': ','.join(['"chr"', '"start" ASC', '"end" ASC', '"strand"', '"sample"'])
+        'qbed': ','.join(['"chr"', '"start" ASC', '"end" ASC', '"strand"', '"batch_id"'])
     }
 
     def __init__(self, db_path: str, validate: bool = True) -> None:
@@ -84,12 +85,20 @@ class DatabaseApi():
 
     @property
     def db_loc(self):
-        """filepath to the database (sqlite) or address of database"""
+        """filepath to the database (sqlite) or address of database. Default to 20 minutes"""
         return self._db_loc
 
     @db_loc.setter
     def db_loc(self, new_db_loc):
         self._db_loc = new_db_loc
+    
+    @property
+    def db_timeout(self):
+        """Set the connection timeout limit before an error is thrown. see sqlite3.connection docs"""
+        return self._db_timeout
+    @db_timeout.setter
+    def db_timeout(self, num_secs):
+        self._db_timeout = num_secs
 
     @property
     def con(self):
@@ -212,6 +221,33 @@ class DatabaseApi():
             raise
 
         return [x[0] for x in res.description]
+    
+    def get_batch_id(self,batch:str,tf:str,replicate:str) -> int:
+        """_summary_
+
+        Args:
+            batch (str): _description_
+            tf (str): _description_
+            replicate (str): _description_
+
+        Raises:
+            ValueError: _description_
+
+        Returns:
+            int: _description_
+        """
+
+        sql = f"SELECT id FROM batch WHERE batch = '{batch}' "\
+            f"AND tf = '{tf}' AND replicate = '{replicate}'"
+        
+        cur = self.con.cursor()
+        
+        res = self.db_execute(cur,sql).fetchall()
+
+        if len(res) > 1:
+            raise ValueError('More than 1 record returned')
+        
+        return res[0]['id']
 
     def count_hops_factory(self, tbl: str) -> Callable[[], int]:
         """count number of rows (hops) in a given region of a table
@@ -247,7 +283,7 @@ class DatabaseApi():
             return res.fetchall()
         return hops
 
-    def get_total_hops(self, tbl: str, sample: str = None) -> int:
+    def get_total_hops(self, tbl: str, batch_id: str = None) -> int:
         """Get the total number of hops for a given table.
 
         Total hops is defined as the number of rows in given background/experiment 
@@ -269,8 +305,8 @@ class DatabaseApi():
 
         sql = f"SELECT COUNT(*) as total FROM {tbl}"
 
-        if sample:
-            sql = " ".join([sql, f"WHERE sample = '{sample}'"])
+        if batch_id:
+            sql = " ".join([sql, f"WHERE batch_id = '{batch_id}'"])
 
         return int(pd.read_sql_query(sql, self.con).total)
 
@@ -325,14 +361,14 @@ class DatabaseApi():
             # if memory, create a database in memory
             if db_path == ":memory:":
                 self.db_loc = ":memory:"
-                self.con = sqlite.connect(db_path)  # pylint: disable=E1101
+                self.con = sqlite.connect(db_path,timeout=self.db_timeout)  # pylint: disable=E1101
                 # see https://docs.python.org/3/library/sqlite.html#connection-objects
                 #con.row_factory = lambda cursor, row: row[0]
                 self.con.row_factory = sqlite.Row  # pylint: disable=E1101
             # else, check the path and validate
             else:
                 self.db_loc = db_path
-                self.con = sqlite.connect(db_path)  # pylint: disable=E1101
+                self.con = sqlite.connect(db_path,timeout=self.db_timeout)  # pylint: disable=E1101
                 # see https://docs.python.org/3/library/sqlite.html#connection-objects
                 #con.row_factory = lambda cursor, row: row[0]
                 self.con.row_factory = sqlite.Row  # pylint: disable=E1101

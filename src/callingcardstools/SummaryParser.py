@@ -1,3 +1,4 @@
+#pylint:disable=W1203
 # standard library
 import os
 import logging 
@@ -20,17 +21,17 @@ class SummaryParser():
     _grouping_fields = {'chr', 'insert_start', 'insert_stop', 'strand'}
 
     _qbed_col_order = \
-        ['chr', 'insert_start', 'insert_stop', 'depth', 'strand', 'annotation']
+        ['chr', 'start', 'end', 'depth', 'strand']
     
     _summary = None
 
-    def __init__(self,summary_csv_path:str)->None:
+    def __init__(self,summary:str or pd.DataFrame)->None:
         """_summary_
 
         Args:
-            summary_csv_path (str): _description_
+            summary (str or pd.DataFrame): _description_
         """
-        self.summary = summary_csv_path
+        self.summary = summary
     
         
         # switcher = {
@@ -68,12 +69,19 @@ class SummaryParser():
         """_summary_"""
         return self._summary
     @summary.setter
-    def summary(self, summary_csv_path:str):
-        # check genome and index paths
-        for input_path in [summary_csv_path]:
-            if not os.path.exists(input_path):
-                raise FileNotFoundError(f"Input file DNE: {input_path}")
-        summary = pd.read_csv(summary_csv_path, dtype = self.summary_columns)
+    def summary(self, summary:str or pd.DataFrame):
+        # check input
+        if isinstance(summary, str):
+            # check genome and index paths
+            if not os.path.exists(summary):
+                raise FileNotFoundError(f"Input file DNE: {summary}")
+            summary = pd.read_csv(summary, dtype = self.summary_columns)
+        elif isinstance(summary, pd.DataFrame):
+            logging.info(f'passed a dataframe to SummaryParser')
+        else:
+            raise IOError(f'{summary} is not a data type recognized '+\
+                'as a summary by SummaryParser')
+
         if 'depth' not in summary.columns:
             summary['depth'] = 1
 
@@ -119,7 +127,7 @@ class SummaryParser():
                 f"The expected summary columns are "\
                     f"{','.join(self.summary_columns)} in that order")
 
-    def to_qbed(self, annotation:str) -> pd.DataFrame:
+    def to_qbed(self) -> pd.DataFrame:
         """_summary_
 
         Args:
@@ -131,36 +139,25 @@ class SummaryParser():
         Returns:
             pd.DataFrame: _description_
         """
-
-        annote_list = ['tf', 'insert_seq', 'bc']
-        if annotation not in annote_list:
-            raise AttributeError(f"annotation must be one of {','.join(annote_list)}")
-
         local_grouping_fields = self.grouping_fields
-        local_grouping_fields.add(annotation)
 
         return self.summary\
             .query(self.query_string)\
-            [['chr', 'insert_start', 'insert_stop', 'depth', 'strand',annotation]]\
+            [['chr', 'insert_start', 'insert_stop', 'depth', 'strand']]\
             .groupby(list(local_grouping_fields))['depth']\
         .agg(['sum'])\
         .reset_index()\
-        .rename(columns={'sum':'depth', annotation: 'annotation'})[self.qbed_col_order]
-
-    def write_split(self, prefix:str, annotation:str) -> None:
+        .rename(columns={'sum':'depth', 'insert_start':'start', 'insert_stop': 'end'})[self.qbed_col_order]
+    
+    def write_qbed(self,output_path:str)->None:
         """_summary_
 
         Args:
-            prefix (str): _description_
-            annotation (str): _description_
+            output_path (str): _description_
         """
-        qbed = self.to_qbed(annotation).groupby('annotation')
-
-        # output each grouped sheet with the name of the group in the filename
-        for grouping,group_df in qbed:
-            grouping = 'other' if grouping == '*' else grouping
-            group_name = grouping if type(grouping) is str else "_".join(grouping)
-            group_df.to_csv(prefix + "_" + group_name + ".qbed",
+        if not output_path[-4:] in ['.tsv', 'txt']:
+            logging.warning(f"output path {output_path} does not end with tsv or txt")
+        self.to_qbed().to_csv(output_path,
                             sep = "\t",
                             header = None,
                             index = False)

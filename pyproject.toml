@@ -20,7 +20,7 @@ pysam = "^0.19.1"
 Cython = "^0.29.30"
 biopython = "^1.79"
 scipy = "^1.8.1"
-pysqlite3-binary = "^0.4.7"
+pysqlite3-binary = "^0.4.6"
 SQLAlchemy = "^1.4.41"
 edlib = "^1.3.9"
 
@@ -68,12 +68,7 @@ executionEnvironments = [
 ]
 
 [tool.poetry.scripts]
-barcode_table_to_json = "callingcardstools.bin:barcode_table_to_json.main"
-map_novo_spack = "callingcardstools.bin:map_novo.main"
-legacy_split_fastq = "callingcardstools.bin:legacy_split_fastq.main"
-legacy_makeccf = "callingcardstools.bin:legacy_makeccf.main"
-cc_tagBam = "callingcardstools.bin:cc_tagBam.main"
-parse_fastq = "callingcardstools.bin:parse_fastq.main"
+callingcardstools = "callingcardstools:__main__.main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

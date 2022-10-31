@@ -28,8 +28,8 @@ def parse_args(args=None):
 						help = 'old pipeline barcode table', 
 						required=True)
     parser.add_argument('-r',
-	                    '--run_number',
-						help = 'run_number -- prefix of output json',
+	                    '--batch',
+						help = 'batch name, eg the run number like run_1234',
 						required=True)
 
     return parser.parse_args(args)
@@ -54,6 +54,7 @@ def main(args=None):
 				.to_dict('tight')['data']} 
 
 		barcode_dict['components']['tf']['map'] = tf_map
+		barcode_dict['batch'] = args.batch
 		with open(f"{args.run_number}_barcode_details.json", 'w') as f2:
 			json_object = json.dumps(barcode_dict, indent=4)
 			f2.write(json_object)

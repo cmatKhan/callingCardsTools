@@ -1,8 +1,6 @@
+#pylint:disable=W1203
 # standard library
-#import cProfile
-import sys
 import os
-import argparse
 import tempfile
 import logging
 # outside dependencies
@@ -10,17 +8,14 @@ import pysam
 import pandas as pd
 # from memory_profiler import profile
 # local dependencies
-from callingcardstools.AlignmentTagger import AlignmentTagger
-from callingcardstools.StatusFlags import StatusFlags
+from .AlignmentTagger import AlignmentTagger
+from .StatusFlags import StatusFlags
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',
-    datefmt='%H:%M:%S',
-    stream=sys.stdout
-)
+__all__ =['tag_bam']
 
-def run(bampath, fasta_path, barcode_details_json,
+logging.getLogger(__name__).addHandler(logging.NullHandler())
+
+def tag_bam(bampath, fasta_path, barcode_details_json,
         mapq_threshold = 0, out_suffix = "_tagged.bam", nthreads=5):
     """Iterate over a bam file, set tags and output updated bam with read groups 
     added to the header, tags added to the reads. Also output a summary of the 
@@ -48,7 +43,7 @@ def run(bampath, fasta_path, barcode_details_json,
         # create temp file in temp dir -- note that temp dir is destroyed 
         # when this context ends
         bampath_tmp = os.path.join(temp_dir, "tmp_tagged.bam")
-        # create the path to store the (permenant) output bam
+        # create the path to store the (permanent) output bam
         bampath_out = os.path.splitext(os.path.basename(bampath))[0] + out_suffix
         summary_out = os.path.splitext(bampath_out)[0] + "_summary.csv"
 
@@ -68,7 +63,6 @@ def run(bampath, fasta_path, barcode_details_json,
         
         read_group_set = set()
         read_summary = []
-        read_obj_list = []
         # until_eof will include unmapped reads, also
         for read in input_bamfile.fetch(until_eof=True):
             tagged_read = at.tag_read(read)
@@ -157,69 +151,5 @@ def run(bampath, fasta_path, barcode_details_json,
     # after the index is created
     print("indexing updated bam...")
     pysam.index(bampath_out)
-
-    # write out summary
-    print("writing summary...")
-    pd.DataFrame(read_summary).to_csv(summary_out, index = False)
-    
-    print("done!")
-    return 0
-
-def parse_args(args=None):
-    """parse command line arguments for tagBam
-
-    Args:
-        args (_type_, optional): _description_. Defaults to None.
-
-    Returns:
-        _type_: _description_
-    """
-    Description = ""
-    Epilog = ""
-
-    parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
-    parser.add_argument("--bam",
-                         help="path to the input bam file")
-    parser.add_argument("--fasta",
-                        help="Note that an index .fai file must exist in the same path",
-                        default='False')
-    parser.add_argument("--barcode_details",
-                         help = "")
-    parser.add_argument("--mapq_threshold",
-                         help = "", required=False)
-    # parser.add_argument("--out_suffix",
-    #                      help = "")
-
-    return parser.parse_args(args)
-
-def main(args=None):
-    """_summary_
-
-    Args:
-        args (_type_, optional): _description_. Defaults to None.
-
-    Raises:
-        FileNotFoundError: _description_
-    """
-   args = parse_args(args)
-
-    # Check inputs
-    input_path_list = [args.bam,
-                       args.fasta,
-                       args.fasta + '.fai',
-                       args.barcode_details]
-    for input_path in input_path_list:
-        if not os.path.exists(input_path):
-            raise FileNotFoundError("Input file DNE: %s" %input_path)
-
-    # loop over the reads in the bam file and add the read group (header and tag)
-    # and the XI and XZ tags
-    # with cProfile.Profile() as pr:
-    run(args.bam,
-        args.fasta,
-        args.barcode_details,
-        int(args.mapq_threshold))
-    # pr.print_stats()
-
-if __name__ == "__main__":
-    sys.exit(main())
+    logging.info(f'{bampath_out} complete')
+    return pd.DataFrame(read_summary) 
