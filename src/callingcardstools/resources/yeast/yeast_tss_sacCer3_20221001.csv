@@ -1,0 +1,210 @@
+File Name,Download Link,Description
+ScerArrestconsensusClusters.txt,Download,Core promoter data obtained from Saccharomyces cerevisiae under cell division arrest
+ScerDDconsensusClusters.txt,Download,Core promoter data obtained from Saccharomyces cerevisiae under DNA damage
+ScerDSAconsensusClusters.txt,Download,Core promoter data obtained from Saccharomyces cerevisiae after Diauxia shift
+ScerGalconsensusClusters.txt,Download,Core promoter data obtained from Saccharomyces cerevisiae with Galactose as carbon source
+ScerGlcconsensusClusters.txt,Download,Core promoter data obtained from Saccharomyces cerevisiae under 16% glucose concentration
+ScerH2O2consensusClusters.txt,Download,Core promoter data obtained from Saccharomyces cerevisiae under oxidative stress
+ScerHSconsensusClusters.txt,Download,Core promoter data obtained from Saccharomyces cerevisiae after 30 heat shock replcate 1
+ScerNaClconsensusClusters.txt,Download,Core promoter data obtained from Saccharomyces cerevisiae under osmotic stress
+ScerYPDconsensusClusters.txt,Download,Core promoter data obtained from Saccharomyces cerevisiae in log phase under YPD medium
+Genome,,
+Saccharomyces_cerevisiae.R64-1-1.92.gff3,Download,Annotations for Saccharomyces cerevisiae from SGD
+Saccharomyces_cerevisiae_Lin.gff,Download,Revised annotations for Saccharomyces cerevisiae by Zhenguo Lin`s lab
+genome.fa,Download,Reference genome sequence for Saccharomyces cerevisiae from SGD
+ctss,,
+ScerArrest.1.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae under cell division arrest replicate 1
+ScerArrest.2.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae under cell division arrest replicate 2
+ScerDD.1.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae under DNA damage replicate 1
+ScerDD.2.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae under DNA damage replicate 2
+ScerDSA.1.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae after Diauxia shift replicate 1
+ScerDSA.2.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae after Diauxia shift replicate 2
+ScerGal.1.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae with Galactose as carbon source replicate 1
+ScerGal.2.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae with Galactose as carbon source replicate 2
+ScerGlc.1.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae under 16% glucose concentration replicate 1
+ScerGlc.2.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae under 16% glucose concentration replicate 2
+ScerH2O2.1.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae under oxidative stress replicate 1
+ScerH2O2.2.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae under oxidative stress replicate 2
+ScerHS.1.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae after 30 heat shock replcate 1
+ScerHS.2.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae after 30 heat shock replcate 2
+ScerNaCl.1.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae under osmotic stress replicate 1
+ScerNaCl.2.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae under osmotic stress replicate 2
+ScerYPD.1.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae in log phase under YPD medium replicate 1
+ScerYPD.2.ctss,Download,Raw TSS data obtained from Saccharomyces cerevisiae in log phase under YPD medium replicate 2
+other_tracks,,
+Doris_et_al_2018,,
+GSM3189539_WT-37C-1_tss-seq-spikenorm-minus.bw,Download,Minus Strand TSS-seq of wild type after an 80 minute shift from 30C to 37C from Doris et al. 2018
+GSM3189539_WT-37C-1_tss-seq-spikenorm-plus.bw,Download,Plus Strand TSS-seq of wild type after an 80 minute shift from 30C to 37C from Doris et al. 2018
+GSM3189539_WT-37C-1_tss-seq-spikenorm.bw,Download,Merged TSS-seq of wild type after an 80 minute shift from 30C to 37C from Doris et al. 2018
+GSM3189540_WT-37C-2_tss-seq-spikenorm-minus.bw,Download,Minus Strand TSS-seq of wild type after an 80 minute shift from 30C to 37C from Doris et al. 2018
+GSM3189540_WT-37C-2_tss-seq-spikenorm-plus.bw,Download,Plus Strand TSS-seq of wild type after an 80 minute shift from 30C to 37C from Doris et al. 2018
+GSM3189540_WT-37C-2_tss-seq-spikenorm.bw,Download,Merged TSS-seq of wild type after an 80 minute shift from 30C to 37C from Doris et al. 2018
+GSM3189541_spt6-1004-37C-1_tss-seq-spikenorm-minus.bw,Download,Minus Strand TSS-seq of spt6-1004 mutant at 37C from Doris et al. 2018
+GSM3189541_spt6-1004-37C-1_tss-seq-spikenorm-plus.bw,Download,Plus Strand TSS-seq of spt6-1004 mutant at 37C from Doris et al. 2018
+GSM3189541_spt6-1004-37C-1_tss-seq-spikenorm.bw,Download,Merged TSS-seq of spt6-1004 mutant at 37C from Doris et al. 2018
+GSM3189542_spt6-1004-37C-2_tss-seq-spikenorm-minus.bw,Download,Minus StrandTSS-seq of spt6-1004 mutant at 37C from Doris et al. 2018
+GSM3189542_spt6-1004-37C-2_tss-seq-spikenorm-plus.bw,Download,Plus Strand TSS-seq of spt6-1004 mutant at 37C from Doris et al. 2018
+GSM3189542_spt6-1004-37C-2_tss-seq-spikenorm.bw,Download,Merged TSS-seq of spt6-1004 mutant at 37C from Doris et al. 2018
+GSM3189543_WT-37C-1_tfiib-chipnexus-libsizenorm-midpoints.bw,Download,TFIIB CHIP-nexus of wild type fom Doris et al. 2018
+GSM3189543_WT-37C-1_tfiib-chipnexus-libsizenorm-protection.bw,Download,TFIIB CHIP-nexus of wild type fom Doris et al. 2018
+GSM3189543_WT-37C-1_tfiib-chipnexus-libsizenorm.bw,Download,TFIIB CHIP-nexus of wild type fom Doris et al. 2018
+GSM3189544_WT-37C-2_tfiib-chipnexus-libsizenorm-midpoints.bw,Download,TFIIB CHIP-nexus of wild type fom Doris et al. 2018
+GSM3189544_WT-37C-2_tfiib-chipnexus-libsizenorm-protection.bw,Download,TFIIB CHIP-nexus of wild type fom Doris et al. 2018
+GSM3189544_WT-37C-2_tfiib-chipnexus-libsizenorm.bw,Download,TFIIB CHIP-nexus of wild type fom Doris et al. 2018
+GSM3189545_spt6-1004-37C-1_tfiib-chipnexus-libsizenorm-midpoints.bw,Download,TFIIB CHIP-nexus of spt6-1004 mutant fom Doris et al. 2018
+GSM3189545_spt6-1004-37C-1_tfiib-chipnexus-libsizenorm-protection.bw,Download,TFIIB CHIP-nexus of spt6-1004 mutant fom Doris et al. 2018
+GSM3189545_spt6-1004-37C-1_tfiib-chipnexus-libsizenorm.bw,Download,TFIIB CHIP-nexus of spt6-1004 mutant fom Doris et al. 2018
+GSM3189546_spt6-1004-37C-2_tfiib-chipnexus-libsizenorm-midpoints.bw,Download,TFIIB CHIP-nexus of spt6-1004 mutant fom Doris et al. 2018
+GSM3189546_spt6-1004-37C-2_tfiib-chipnexus-libsizenorm-protection.bw,Download,TFIIB CHIP-nexus of spt6-1004 mutant fom Doris et al. 2018
+GSM3189546_spt6-1004-37C-2_tfiib-chipnexus-libsizenorm.bw,Download,TFIIB CHIP-nexus of spt6-1004 mutant fom Doris et al. 2018
+GSM3189547_WT-37C-1-netseq-libsizenorm-5end.bw,Download,NET-seq of wild type from Doris et al. 2018
+GSM3189548_WT-37C-2-netseq-libsizenorm-5end.bw,Download,NET-seq of wild type from Doris et al. 2018
+GSM3189549_spt6-1004-30C-1-netseq-libsizenorm-5end.bw,Download,NET-seq of spt6-1004 mutant at 30C from Doris et al. 2018
+GSM3189550_spt6-1004-30C-2-netseq-libsizenorm-5end.bw,Download,NET-seq of spt6-1004 mutant at 30C from Doris et al. 2018
+GSM3189551_spt6-1004-37C-1-netseq-libsizenorm-5end.bw,Download,NET-seq of spt6-1004 mutant at 37C from Doris et al. 2018
+GSM3189552_spt6-1004-37C-2-netseq-libsizenorm-5end.bw,Download,NET-seq of spt6-1004 mutant at 37C from Doris et al. 2018
+GSM3189553_YPD-1_rnapii-chipnexus-libsizenorm-midpoints.bw,Download,Spt6 ChIP-nexus of wild type rom Doris et al. 2018
+GSM3189553_YPD-1_rnapii-chipnexus-libsizenorm-protection.bw,Download,Spt6 ChIP-nexus of wild type rom Doris et al. 2018
+GSM3189553_YPD-1_rnapii-chipnexus-libsizenorm.bw,Download,Spt6 ChIP-nexus of wild type rom Doris et al. 2018
+GSM3189554_YPD-2_rnapii-chipnexus-libsizenorm-midpoints.bw,Download,Spt6 ChIP-nexus of wild type rom Doris et al. 2018
+GSM3189554_YPD-2_rnapii-chipnexus-libsizenorm-protection.bw,Download,Spt6 ChIP-nexus of wild type rom Doris et al. 2018
+GSM3189554_YPD-2_rnapii-chipnexus-libsizenorm.bw,Download,Spt6 ChIP-nexus of wild type rom Doris et al. 2018
+GSM3189555_YPD-1_spt6-chipnexus-libsizenorm-midpoints.bw,Download,Rpb1 ChIP-nexus of wild type rom Doris et al. 2018
+GSM3189555_YPD-1_spt6-chipnexus-libsizenorm-protection.bw,Download,Rpb1 ChIP-nexus of wild type rom Doris et al. 2018
+GSM3189555_YPD-1_spt6-chipnexus-libsizenorm.bw,Download,Rpb1 ChIP-nexus of wild type rom Doris et al. 2018
+GSM3189556_YPD-2_spt6-chipnexus-libsizenorm-midpoints.bw,Download,Rpb1 ChIP-nexus of wild type rom Doris et al. 2018
+GSM3189556_YPD-2_spt6-chipnexus-libsizenorm-protection.bw,Download,Rpb1 ChIP-nexus of wild type rom Doris et al. 2018
+GSM3189556_YPD-2_spt6-chipnexus-libsizenorm.bw,Download,Rpb1 ChIP-nexus of wild type rom Doris et al. 2018
+GSM3189557_WT-37C-1-mnase-midpoint-spikenorm.bw,Download,MNase-seq of wild type from Doris et al. 2018
+GSM3189557_WT-37C-1-mnase-midpoint_smoothed-spikenorm.bw,Download,MNase-seq of wild type from Doris et al. 2018
+GSM3189557_WT-37C-1-mnase-wholefrag-spikenorm.bw,Download,MNase-seq of wild type from Doris et al. 2018
+GSM3189558_spt6-1004-37C-1-mnase-midpoint-spikenorm.bw,Download,MNase-seq of spt6-1004 mutant from Doris et al. 2018
+GSM3189558_spt6-1004-37C-1-mnase-midpoint_smoothed-spikenorm.bw,Download,MNase-seq of spt6-1004 mutant from Doris et al. 2018
+GSM3189558_spt6-1004-37C-1-mnase-wholefrag-spikenorm.bw,Download,MNase-seq of spt6-1004 mutant from Doris et al. 2018
+GSM3189559_spt6-1004-37C-2-mnase-midpoint-spikenorm.bw,Download,MNase-seq of spt6-1004 mutant from Doris et al. 2018
+GSM3189559_spt6-1004-37C-2-mnase-midpoint_smoothed-spikenorm.bw,Download,MNase-seq of spt6-1004 mutant from Doris et al. 2018
+GSM3189559_spt6-1004-37C-2-mnase-wholefrag-spikenorm.bw,Download,MNase-seq of spt6-1004 mutant from Doris et al. 2018
+H3-Methylation,,
+Kirmizis_2007_Rap1_mutant_histone_H3R2A.merge.bw,Download,Rap1 mutant methylation at histone H3R2A from Kirmizis 2017
+Kirmizis_2007_Rap1_wildtype_histone_H3.merge.bw,Download,Rap1 wildtype methylation at histone H3R2A from Kirmizis 2017
+Kirmizis_2007_Sir2_mutant_histone_H3R2A.merge.bw,Download,Sir2 mutant methylation at histone H3R2A from Kirmizis 2017
+Kirmizis_2007_Sir2_wildtype_histone_H3.merge.bw,Download,Sir2 wildtype methylation at histone H3R2A from Kirmizis 2017
+Kirmizis_2007_histone_H3K4me1.merge.bw,Download,Histone methylation at H3R2me1 from Kirmizis 2007
+Kirmizis_2007_histone_H3K4me2.merge.bw,Download,Histone methylation at H3R2me2 from Kirmizis 2007
+Kirmizis_2007_histone_H3K4me3.merge.bw,Download,Histone methylation at H3R2me3 from Kirmizis 2007
+Kirmizis_2007_histone_H3R2me2a.merge.bw,Download,Histone methylation at H3R2me2a from Kirmizis 2007
+Nucleosome_Occupancy,,
+Field_2009_PMID_19252487_GAL.bw,Download,Nuclesome occupancy data obtained from Saccharomyces cerevisiae in YPGal condition from Field 2009
+Field_2009_PMID_19252487_YPD.bw,Download,Nuclesome occupancy data obtained from Saccharomyces cerevisiae in YPD condition from Field 2009
+PWM-predicted_binding_site,,
+Grant_2011_PMID_21330290.README,Download,
+SGD_PWM_predicted_binding_sites_p0.00001.gff3,Download,PWM predicted binding site p0.00001 from Grant 2011
+SGD_PWM_predicted_binding_sites_p0.0001.gff3,Download,PWM predicted binding site p0.0001 from Grant 2011
+SGD_PWM_predicted_binding_sites_p0.001.gff3,Download,PWM predicted binding site p0.001 from Grant 2011
+Prediction_of_DNA_structural_features,,
+Zhou_2013_PMID_23703209.README,Download,
+Zhou_2013_minor.bw,Download,Prediction of DNA structural features-minor from Zhou 2013
+Zhou_2013_propel.bw,Download,Prediction of DNA structural features-propel from Zhou 2013
+Zhou_2013_roll.bw,Download,Prediction of DNA structural features-roll from Zhou 2013
+Zhou_2013_twist.bw,Download,Prediction of DNA structural features-twist from Zhou 2013
+TATA_elements,,
+Rhee_2012_PMID_22258509.README,Download,
+Rhee_2012_TATA_elements_V64.gff3,Download,TATA elements from Rhee 2012
+TFBS_using_ChIP-chip,,
+Venters_2011_PMID_21329885.README,Download,Transcription factor binding sites from Venters 2011
+Venters_2011_PMID_21329885_V53toV64_FDR5_gff3_unmapped_files.tgz,Download,Transcription factor binding sites from Venters 2011
+Venters_2011_PMID_21329885_V53toV64_gff3_unmapped_files.tgz,Download,Transcription factor binding sites from Venters 2011
+Venters_2011_PMID_21329885_V64_FDR5_gff3_files.tgz,Download,Transcription factor binding sites from Venters 2011
+Venters_2011_PMID_21329885_V64_FDR_gff3_files.tgz,Download,Transcription factor binding sites from Venters 2011
+Venters_2011_PMID_21329885_V64_gff3_files.tgz,Download,Transcription factor binding sites from Venters 2011
+Venters_2011_PMID_21329885_V64_FDR5_gff3_files,,
+Venters_2011_25.gff3,Download,Transcription factor binding sites from Venters 2011
+Venters_2011_37.gff3,Download,Transcription factor binding sites from Venters 2011
+TL-seq_and_TATL-seq_study_of_5UTRs,,
+Arribere_2013_GSE39074_TATL-SeqCombined.bw,Download,TSS data from Arribere 2013
+Arribere_2013_GSM955198_TL-SeqPlusTAP.bw,Download,TSS data from Arribere 2013
+Arribere_2013_GSM955199_TL-SeqMinusTAP.bw,Download,TSS data from Arribere 2013
+Arribere_2013_PMID_23580730.README,Download,
+TSS,,
+Malabat_2015.CTSS.normalized.minus.bw,Download,
+Malabat_2015.CTSS.normalized.plus.bw,Download,
+Malabat_2015_YPD.bw,Download,TSS data obtained in YPD condition from Malabat 2015
+Pelechano_2013 _Galactose.bw,Download,TSS data obtained in YPGal condition from Pelechano 2013
+Pelechano_2013 _YPD.bw,Download,TSS data obtained in YPD condition from Pelechano 2013
+Pelechano_2013.gal.CTSS.minus.normalized.bw,Download,
+Pelechano_2013.gal.CTSS.plus.normalized.bw,Download,
+Pelechano_2013.ypd.CTSS.minus.normalized.bw,Download,
+Pelechano_2013.ypd.CTSS.plus.normalized.bw,Download,
+TSS-seq,,
+TSS-sequencing.CTSS.bw,Download,TSS data from TSS sequencing
+Transcriptional_regulator_mapping,,
+MacIsaac_2006_ChIP_chip_TFBSs_V52toV64_unmapped.txt,Download,Transcriptional regulator mapping by CHIP-seq from Maclsaac 2006
+MacIsaac_2006_ChIP_chip_TFBSs_V64.gff3,Download,Transcriptional regulator mapping by CHIP-seq from Maclsaac 2006
+MacIsaac_2006_PMID_16522208.README,Download,
+Waern_2013_RNA_seq,,
+Waern_2013_AlphaFactor.gff3,Download,RNA-seq data obtained under YPD condition with Alpha factor from Waern 2013
+Waern_2013_Benomyl.gff3,Download,RNA-seq data obtained under Benomyl condition from Waern 2013
+Waern_2013_Calcofluor.gff3,Download,RNA-seq data obtained under Calcofluor condition from Waern 2013
+Waern_2013_CongoRed.gff3,Download,RNA-seq data obtained under Congo Red condition from Waern 2013
+Waern_2013_DNADamage.gff3,Download,RNA-seq data obtained under DNA Damage condition from Waern 2013
+Waern_2013_GrapeJuice.gff3,Download,RNA-seq data obtained under Grape Juice condition from Waern 2013
+Waern_2013_HeatShock.gff3,Download,RNA-seq data obtained under Heat Shock condition from Waern 2013
+Waern_2013_HighCalcium.gff3,Download,RNA-seq data obtained under High Calcium condition from Waern 2013
+Waern_2013_Hydroxyurea.gff3,Download,RNA-seq data obtained under Hydroxyurea condition from Waern 2013
+Waern_2013_LowNitrogen.gff3,Download,RNA-seq data obtained under Low Nitrogen condition from Waern 2013
+Waern_2013_LowPhosphate.gff3,Download,RNA-seq data obtained under Low Phosphatee condition from Waern 2013
+Waern_2013_OxidativeStress.gff3,Download,RNA-seq data obtained under Oxidative Stress condition from Waern 2013
+Waern_2013_PMID_23390610.README,Download,
+Waern_2013_Salt.gff3,Download,RNA-seq data obtained under Salt condition from Waern 2013
+Waern_2013_ScGlycerolMedia.gff3,Download,RNA-seq data obtained under ScGlycerol Media from Waern 2013
+Waern_2013_ScMedia.gff3,Download,RNA-seq data obtained under Sc Media from Waern 2013
+Waern_2013_Sorbitol.gff3,Download,RNA-seq data obtained under Sorbitol condition from Waern 2013
+Waern_2013_StationaryPhase.gff3,Download,RNA-seq data obtained in Stationary Phase from Waern 2013
+location_of_TFIIS_RNA_Pol_II_and_III,,
+Ghavi-Helm_2008_Dst1_RNA_PolIII_SC-L_16C_ChIP_chip_V64.bw,Download,Dst1 mutant RNA PolIII data from Ghavi-Helm 2008
+Ghavi-Helm_2008_Dst1_RNA_PolII_SC-L_16C_ChIP_chip_V64.bw,Download,Dst1 mutant RNA PolII data from Ghavi-Helm 2008
+Ghavi-Helm_2008_PMID_18628399.README,Download,
+Ghavi-Helm_2008_WT_RNA_PolIII_YPD_16C_ChIP_chip_V64.bw,Download,Wildtype RNA PolIII data from Ghavi-Helm 2008
+Ghavi-Helm_2008_WT_RNA_PolIII_YPD_30C_ChIP_chip_V64.bw,Download,Wildtype RNA PolIII data from Ghavi-Helm 2008
+Ghavi-Helm_2008_WT_RNA_PolII_YPD_16C_ChIP_chip_V64.bw,Download,Wildtype RNA PolII data from Ghavi-Helm 2008
+Ghavi-Helm_2008_WT_RNA_PolII_YPD_30C_ChIP_chip_V64.bw,Download,Wildtype RNA PolII data from Ghavi-Helm 2008
+Ghavi-Helm_2008_WT_TFIIS_SDMPA_30C_ChIP_chip_V64.bw,Download,Wildtype TFIIS data from Ghavi-Helm 2008
+Ghavi-Helm_2008_WT_TFIIS_SD_30C_ChIP_chip_V64.bw,Download,Wildtype TFIIS data from Ghavi-Helm 2008
+Ghavi-Helm_2008_WT_TFIIS_YPD_30C_ChIP_chip_V64.bw,Download,Wildtype TFIIS data from Ghavi-Helm 2008
+Ghavi-Helm_2008_dst1D_RNA_PolIII_YPD_16C_ChIP_chip_V64.bw,Download,dst1D mutant RNA PolIII data from Ghavi-Helm 2008
+Ghavi-Helm_2008_dst1D_RNA_PolII_YPD_16C_ChIP_chip_V64.bw,Download,dst1D mutant RNA PolII data from Ghavi-Helm 2008
+Ghavi-Helm_2008_dst1_E291A_RNA_PolIII_SC-L_16C_ChIP_chip_V64.bw,Download,dst1 mutant RNA PolIII data from Ghavi-Helm 2008
+Ghavi-Helm_2008_dst1_E291A_RNA_PolII_SC-L_16C_ChIP_chip_V64.bw,Download,dst1 mutant RNA PolII data from Ghavi-Helm 2008
+Ghavi-Helm_2008_dst1_R200A_RNA_PolIII_SD-L_16C_ChIP_chip_V64.bw,Download,dst1 mutant RNA PolIII data from Ghavi-Helm 2008
+Ghavi-Helm_2008_dst1_R200A_RNA_PolII_SC-L_16C_ChIP_chip_V64.bw,Download,dst1 mutant RNA PolII data from Ghavi-Helm 2008
+methylated_and_acetylated_histones,,
+Pokholok_2005_Esa1_vs_WCE_YPD_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_Gcn4_vs_WCE_AA_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_Gcn5_vs_WCE_YPD_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_IgG_control_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_PMID_16122420.README.txt,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_histone_H3K14ac_vs_H3_H2O2_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_histone_H3K14ac_vs_H3_YPD_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_histone_H3K14ac_vs_WCE_YPD_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_histone_H3K36me3_vs_H3_YPD_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_histone_H3K4me1_vs_H3_YPD_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_histone_H3K4me2_vs_H3_YPD_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_histone_H3K4me3_vs_H3_YPD_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_histone_H3K9ac_vs_H3_YPD_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_histone_H3_vs_WCE_H2O2_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_histone_H3_vs_WCE_YPD_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_histone_H4_vs_WCE_YPD_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_histone_H4ac_vs_H3_H2O2_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_histone_H4ac_vs_H3_YPD_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_2005_no_antibody_control_YPD_ChIP_chip_V64.bw,Download,Histone modification data fro Pokholok 2005
+Pokholok_et_al_data.sacCer3.xlsx,Download,Histone modification data fro Pokholok 2005
+nucleosome_organization,,
+Mavrich_2008_PMID_18550805.README,Download,
+Mavrich_2008_PMID_18550805_V64_track_files.zip,Download,Nucleosome organization data from Mavrich 2008
+Mavrich_2008_PMID_18550805_V64_track_files,,
+Mavrich_2008_H3H4_nucleosome_positions_V56toV64_unmapped.txt,Download,Nucleosome organization data from Mavrich 2008
+Mavrich_2008_H3H4_nucleosome_positions_V64.gff3,Download,Nucleosome organization data from Mavrich 2008
+Mavrich_2008_H3H4_nucleosome_positions_WC_V56toV64_unmapped.txt,Download,Nucleosome organization data from Mavrich 2008
+Mavrich_2008_H3H4_nucleosome_positions_WC_V64.gff3,Download,Nucleosome organization data from Mavrich 2008
+pre-initiaton complexes,,
+Rhee_2012_PMID_22258509.README,Download,

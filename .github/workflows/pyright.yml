@@ -1,0 +1,13 @@
+name: Test workflow
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Pyright Type Checking
+    defaults:
+      run:
+        working-directory: ./CallingCardsTools
+    steps:
+    - uses: jakebailey/pyright-action@v1

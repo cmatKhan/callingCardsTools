@@ -1,0 +1,44 @@
+site_name: "callingCardsTools Documentation"
+site_description: "A collection of objects and functions to work with calling cards sequencing tools"
+site_author: "Chase Mateusiak"
+site_url: "https://cmatkhan.github.io/callingCardsTools/"
+repo_url: "https://github.com/cmatKhan/callingCardsTools"
+repo_name: "callingCardsTools"
+edit_uri: "edit/master/docs/"
+watch: ['src']
+
+theme:
+  name: material
+
+plugins:
+- search
+- autorefs
+- section-index
+- mkdocstrings:
+    handlers:
+          python:
+            paths: [src]  # search packages in the src folder
+            docstring_style: 'google'
+            merge_init_into_class: True
+
+nav:
+- Home:
+  - Overview: home/index.md
+  - Contributing: home/contributing.md
+  - Changelog: home/changelog.md
+  - License: home/license.md
+- "File Format Specs":
+  - qBed: "configure/qbed.md"
+- Configuration:
+  - chr_map: 'configure/chr_map.md'
+- Code:
+  - BarcodeParser: 'code/BarcodeParser'
+  - ReadParser: 'code/ReadParser.md'
+  - AlignmentTagger: 'code/AlignmentTagger.md'
+  - DatabaseApi: 'code/DatabaseApi.md'
+
+markdown_extensions:
+    - smarty
+    - toc:
+        permalink: True
+    - sane_lists

@@ -1,5 +1,10 @@
 .venv
 .vscode
-docs
 dist
 *temp*
+htmlcov
+site
+*pyc
+__pycache__/
+*.pytest_cache
+*.log

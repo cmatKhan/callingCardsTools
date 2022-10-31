@@ -1,0 +1,25 @@
+#!/bin/bash
+
+#SBATCH -n 8
+ #SBATCH -N 1
+#SBATCH --mem=30000
+#SBATCH -o novo_map.log
+#SBATCH -e novo_map.err
+#SBATCH -J novo_map
+
+module use /opt/htcf/modules
+ml novoalign
+eval $(spack load --sh samtools@1.13)
+
+output_dir="$2"
+
+read fastq_file r1_trim_seq tf_name < <(sed -n ${SLURM_ARRAY_TASK_ID}p "$1")
+
+novoalign \
+	-o SAM \
+	-d /scratch/mblab/chasem/calling_cards/nf_pipeline/yeast_rob_genome/refactored_names_genome/sacCer3_plasmids_minus_Adh1.nix \
+	-f ${fastq_file} \
+	-5 ${r1_trim_seq} \
+	-n 102 2> ${output_dir}/${tf_name}_novoalign.log |\
+samtools view -q 10 |\
+samtools sort --with_index -O b -o ${output_dir}/${tf_name}_novoalign_sorted.bam -

@@ -3,7 +3,13 @@ name = "callingCardsTools"
 version = "0.0.0"
 description = "A collection of objects and functions to work with calling cards sequencing tools"
 authors = ["chase mateusiak <chase.mateusiak@gmail.com>"]
-exclude = ['Dockerfile', '*temp_*']
+license = "MIT"
+readme = "README.md"
+homepage = "https://cmatkhan.github.io/callingCardsTools/"
+repository = "https://github.com/cmatKhan/callingCardsTools"
+documentation = "https://cmatkhan.github.io/callingCardsTools/"
+exclude = ['Dockerfile', '*temp_*','docs', 'site', 'tests', 'src/callingcardstools/old']
+include = ["src/callingcardstools/resources"]
 
 [tool.poetry.dependencies]
 # note: this is required for scipy
@@ -12,21 +18,57 @@ pandas = "^1.4.3"
 numpy = "^1.23.1"
 pysam = "^0.19.1"
 Cython = "^0.29.30"
-pybedtools = "^0.9.0"
-bx-python = "^0.8.13"
 biopython = "^1.79"
 scipy = "^1.8.1"
+pysqlite3-binary = "^0.4.6"
+SQLAlchemy = "^1.4.41"
+edlib = "^1.3.9"
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
 ipykernel = "^6.15.1"
 autopep8 = "^1.6.0"
 flake8 = "^4.0.1"
 docutils = "^0.19"
+mkdocs = "^1.3.1"
+mkdocs-material = "^8.3.9"
+mkdocstrings = {extras = ["python"], version = "^0.19.0"}
+handler = "^1.3.0"
+pytest-cov = "^3.0.0"
+pipenv = "^2022.9.4"
+pyright = "^1.1.269"
+pytest = "^7.1.3"
+memory-profiler = "^0.60.0"
+bx = "^0.3.0"
+mkdocs-section-index = "^0.3.4"
+
+[tool.pyright]
+include = ["src/callingcardstools"]
+exclude = ["**/node_modules",
+    "**/__pycache__",
+    "src/experimental",
+    "src/typestubs"
+]
+ignore = ["src/old"]
+defineConstant = { DEBUG = true }
+stubPath = "src/stubs"
+venvPath = "."
+venv = ".venv"
+
+reportMissingImports = true
+reportMissingTypeStubs = false
+
+pyripythonVersion = "3.9"
+pythonPlatform = "Linux"
+
+executionEnvironments = [
+  { root = "src/web", pythonVersion = "3.5", pythonPlatform = "Windows", extraPaths = [ "src/service_libs" ] },
+  { root = "src/sdk", pythonVersion = "3.0", extraPaths = [ "src/backend" ] },
+  { root = "src/tests", extraPaths = ["src/tests/e2e", "src/sdk" ]},
+  { root = "src" }
+]
 
 [tool.poetry.scripts]
-hello_world = "callingcardstools:hello_world"
-macs_peak_caller = "callingcardstools.bin:macs_peak_caller.main"
+callingcardstools = "callingcardstools:__main__.main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
