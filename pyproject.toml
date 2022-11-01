@@ -8,7 +8,7 @@ readme = "README.md"
 homepage = "https://cmatkhan.github.io/callingCardsTools/"
 repository = "https://github.com/cmatKhan/callingCardsTools"
 documentation = "https://cmatkhan.github.io/callingCardsTools/"
-exclude = ['Dockerfile', '*temp_*','docs', 'site', 'tests', 'src/callingcardstools/old']
+exclude = ['Dockerfile', '*temp_*','docs', 'site', 'tests', 'src/callingcardstools/old', .git,.venv,.github]
 include = ["src/callingcardstools/resources"]
 
 [tool.poetry.dependencies]

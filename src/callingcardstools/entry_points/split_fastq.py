@@ -43,6 +43,11 @@ def parse_args(args=None):
                                 "This will be used to create the passing "+\
                                     "output fastq filenames",
 						required=True)
+    parser.add_argument('-s',
+	                    '--split_suffix',
+						help = 'append this after the tf name and before _R1.fq in the output fastq files',
+						required=True,
+                        default = "split")
     parser.add_argument("-l",
 	                    "--log_level",
                         help="the desired log level (default warning).",
