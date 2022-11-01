@@ -1,10 +1,10 @@
 from typing import Literal
 import logging
+import warnings
 from difflib import SequenceMatcher
 from pysqlite3.dbapi2 import Connection
-from callingcardstools.database_managers.yeast import HopsDb as yeast_db
 
-__all__ = ['remove_suffix', 'convert_logger_level', 'database_switcher']
+__all__ = ['remove_suffix', 'convert_logger_level', 'database_switcher','deprecated']
 
 def database_switcher(organism:Literal['yeast','mammal'], db_path:str) -> Connection:
 	"""_summary_
@@ -180,3 +180,20 @@ def get_best_match(query, corpus, step=4, flex=3, case_sensitive=False, verbose=
     pos_left, pos_right, match_value = adjust_left_right_positions()
 
     return corpus[pos_left: pos_right].strip(), match_value
+
+def deprecated(message:str):
+    """cite: https://stackoverflow.com/a/48632082/9708266 
+
+    Args:
+        message (str): _description_
+    """
+    def deprecated_decorator(func):
+        def deprecated_func(*args, **kwargs):
+            warnings.warn(
+                "{} is a deprecated function. {}".format(func.__name__, message),
+                category=DeprecationWarning,
+                stacklevel=2)
+            warnings.simplefilter('default', DeprecationWarning)
+            return func(*args, **kwargs)
+        return deprecated_func
+    return deprecated_decorator

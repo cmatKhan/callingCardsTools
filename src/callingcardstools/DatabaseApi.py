@@ -6,6 +6,8 @@ import logging
 from typing import Callable, Literal
 import warnings
 
+from .utils import deprecated
+
 import pysqlite3 as sqlite
 from pysqlite3.dbapi2 import ProgrammingError #pylint: disable=E0611
 import pandas as pd
@@ -607,20 +609,74 @@ class DatabaseApi():
                 self.index_table(
                     tablename,
                     self.index_col_string_dict[table_format])
+                # standardize the chromosomes if there is a column called chr
+                if self.chr_map_table in self.list_tables(self.con) and 'chr' in df.columns:
+                    df = self.standardize_chr_format_df(df)
+        
         # add the data
         df.to_sql(tablename,
                   con=self.con,
                   if_exists='append',
                   index=False)
-        # standardize the chromosomes if there is a column called chr
-        if self.chr_map_table in self.list_tables(self.con) and 'chr' in df.columns:
-            print("Standardizing chr names...")
-            self.standardize_chr_format(tablename)
         
         return True
+    
+    def standardize_chr_format_df(self,df:pd.DataFrame) -> pd.DataFrame:
+        """standardize chr name format outside of the df
 
+        Args:
+            df (pd.DataFrame): _description_
+
+        Raises:
+            AttributeError: _description_
+
+        Returns:
+            pd.DataFrame: _description_
+        """
+
+        chr_map_df = pd.read_sql_query(
+            f'select * from {self.chr_map_table}',
+            self.con)
+
+        chr_map_dict = {k: v for k, v in chr_map_df.to_dict('list').items() if k != 'id'}
+
+        current_unique_chr_names = set(df.chr.unique())
+
+        # loop over colnames in chr_map_df. HALT if the current naming
+        # convention is discovered
+        curr_chrom_format = -1
+        for format, map_chr_names in chr_map_dict.items():
+            # check if all levels in the current chr_map_df[naming_convention]
+            # contain the `df[chrom_colname]`.unique() levels
+            if current_unique_chr_names - set(map_chr_names) == set():
+                curr_chrom_format = format
+                break
+        # if the current chromosome naming convention is not intuited above,
+        # raise an error
+        if curr_chrom_format == -1:
+            raise AttributeError("Chromosome names are not " +
+                                    "recognized in a recognized format. Unique " +
+                                    "chr names which cause error are: %s."
+                                    % ",".join(current_unique_chr_names))
+        elif curr_chrom_format != self.standard_chr_format:
+            tmp_df = \
+                pd.merge(
+                    df,
+                    chr_map_df[[curr_chrom_format,self.standard_chr_format]], 
+                    how='left', 
+                    left_on='chr', 
+                    right_on=curr_chrom_format)\
+                .drop('chr',axis=1)\
+                .rename(columns={self.standard_chr_format:'chr'})
+            
+            return tmp_df[df.columns]
+        else:
+            return df
+
+    # DEPRECATED!
     def standardize_chr_format(self, table: str) -> None:  # pylint: disable=E1101
-        """Use the chr_map table to standardize all 'chr' columns to the same naming format
+        """DEPRECATED! use standardize_chr_format_df prior to sending to database.
+        Use the chr_map table to standardize all 'chr' columns to the same naming format
 
         Args:
             table (str): name of the table to standardize
