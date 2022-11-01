@@ -4,6 +4,7 @@ import re
 import os
 from typing import Callable, Literal
 import logging
+import warnings
 # local
 from callingcardstools.BarcodeParser import BarcodeParser
 from callingcardstools.DatabaseApi import DatabaseApi
@@ -12,6 +13,9 @@ from .peak_calling import call_peaks_with_background
 import pandas as pd
 import numpy as np
 import edlib
+
+# TODO switch to SQLalchemy and remove this
+warnings.simplefilter(action='ignore', category=UserWarning)
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 

@@ -135,6 +135,8 @@ def main(args=None):
 		args.genome,
 		args.barcode_details,
 		int(args.mapq_threshold))
+    
+    aln_summary_df.to_csv("summary.csv",index=False)
 
     logging.info('connecting to database...')
     db = database_switcher(args.organism,args.database)
@@ -163,7 +165,7 @@ def main(args=None):
         'qbed',
         table_type='experiment',
         tablename_suffix = args.tf,
-        drop = True,
+        drop = False,
         fk_tablelist=['batch'])
 	
     experiment_tblname = 'experiment_'+args.tf
@@ -171,7 +173,10 @@ def main(args=None):
     if args.organism == 'yeast':
         db.create_aggregate_view('experiment_'+args.tf,args.regions_tblname)
 	
+    # TODO CRITICAL replace is set so that when there are replicates, the repeated 
+    # calls to the same TF update the table 
     db.peak_caller(
+        if_exists = 'append',
 		regions    = args.regions_tblname,
 		background = args.background_tblname,
 		experiment = experiment_tblname)

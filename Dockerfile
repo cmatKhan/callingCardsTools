@@ -14,8 +14,12 @@ RUN apt-get autoremove -y
 
 RUN pip install --upgrade pip
 
-RUN wget https://github.com/cmatKhan/callingCardsTools/archive/refs/tags/v0.0.10.tar.gz
+#RUN wget https://github.com/cmatKhan/callingCardsTools/archive/refs/tags/v0.0.10.tar.gz
 
-RUN pip install v0.0.10.tar.gz
+#RUN pip install v0.0.10.tar.gz
 
-RUN rm v0.0.10.tar.gz
+#RUN rm v0.0.10.tar.gz
+
+COPY dist/callingCardsTools-0.0.13.tar.gz .
+
+RUN pip install callingCardsTools-0.0.13.tar.gz

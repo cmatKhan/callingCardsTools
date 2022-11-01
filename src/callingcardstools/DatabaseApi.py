@@ -4,11 +4,15 @@ import sys
 import re
 import logging
 from typing import Callable, Literal
+import warnings
 
 import pysqlite3 as sqlite
 from pysqlite3.dbapi2 import ProgrammingError #pylint: disable=E0611
 import pandas as pd
 import numpy as np
+
+# TODO switch to SQLalchemy and remove this
+warnings.simplefilter(action='ignore', category=UserWarning)
 
 __all__ = ['DatabaseApi']
 
