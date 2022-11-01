@@ -325,11 +325,13 @@ class HopsDb(DatabaseApi):
         
         # by row, check if the entry already exists. if it does, then insert. 
         # else, skip
+        add_id_map = False
         insert_sql = "INSERT INTO batch (batch,tf,replicate) VALUES ('%s','%s','%s')"
         for idx,row in df.iterrows():
             try:
                 self.get_batch_id(row['batch'], row['tf'], row['replicate'])
             except IndexError:
+                add_id_map = True
                 cur = self.con.cursor()
                 self.db_execute(cur,insert_sql %(row['batch'], row['tf'], row['replicate']))
                 self.con.commit()
@@ -337,7 +339,7 @@ class HopsDb(DatabaseApi):
         # note that a trigger creates which creates default entries in all other 
         # qc tables
 
-        if id_to_bc_map_path:
+        if id_to_bc_map_path and add_id_map:
             self.add_read_qc(batch,barcode_details,id_to_bc_map_path)
     
     def _update_qc_table(self, tablename:str, id_col:str, id_value:str, update_dict:dict) -> None:
