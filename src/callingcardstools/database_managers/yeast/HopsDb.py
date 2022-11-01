@@ -517,34 +517,35 @@ class HopsDb(DatabaseApi):
 
         for record in batch_records:
             #TODO address hardcoding in extracting from records
-            tf_seq = tf_to_bc_dict[record['tf']]
-            r1_primer = tf_seq[r1_primer_indices[0]:r1_primer_indices[1]]
-            r2_transposon = tf_seq[r2_transposon_indicies[0]:r2_transposon_indicies[1]]
-            
-            # TODO there is a lot of repeated code in each of the summarize 
-            # fucntions -- unify
-            qc_summaries = {
-                'qc_r1_to_r2_tf': self._summarize_r1_primer(
-                    id_to_bc_df, 
-                    r1_primer, 
-                    r2_transposon),
-                'qc_r2_to_r1_tf': self._summarize_r2_transposon(
-                    id_to_bc_df, 
-                    r1_primer, 
-                    r2_transposon),
-                'qc_tf_to_transposon': self._summarize_tf_to_r1_transposon(
-                    id_to_bc_df, 
-                    r1_primer,
-                    r2_transposon,
-                    r1_transposon)
-            }
+            if not record['tf'] == 'undetermined':
+                tf_seq = tf_to_bc_dict[record['tf']]
+                r1_primer = tf_seq[r1_primer_indices[0]:r1_primer_indices[1]]
+                r2_transposon = tf_seq[r2_transposon_indicies[0]:r2_transposon_indicies[1]]
+                
+                # TODO there is a lot of repeated code in each of the summarize 
+                # fucntions -- unify
+                qc_summaries = {
+                    'qc_r1_to_r2_tf': self._summarize_r1_primer(
+                        id_to_bc_df, 
+                        r1_primer, 
+                        r2_transposon),
+                    'qc_r2_to_r1_tf': self._summarize_r2_transposon(
+                        id_to_bc_df, 
+                        r1_primer, 
+                        r2_transposon),
+                    'qc_tf_to_transposon': self._summarize_tf_to_r1_transposon(
+                        id_to_bc_df, 
+                        r1_primer,
+                        r2_transposon,
+                        r1_transposon)
+                }
 
-            for k,v in qc_summaries.items(): 
-                self._update_qc_table(
-                    k, 
-                    'batch_id', 
-                    record['id'], 
-                    v.to_dict(orient='records'))
+                for k,v in qc_summaries.items(): 
+                    self._update_qc_table(
+                        k, 
+                        'batch_id', 
+                        record['id'], 
+                        v.to_dict(orient='records'))
 
     def consolidate_tables(self,table_class:Literal['background','experiment']) -> bool:
         """_summary_
