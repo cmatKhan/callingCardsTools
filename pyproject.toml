@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "callingCardsTools"
-version = "0.0.2"
+version = "0.0.3"
 description = "A collection of objects and functions to work with calling cards sequencing tools"
 authors = ["chase mateusiak <chase.mateusiak@gmail.com>"]
 license = "MIT"
@@ -8,7 +8,7 @@ readme = "README.md"
 homepage = "https://cmatkhan.github.io/callingCardsTools/"
 repository = "https://github.com/cmatKhan/callingCardsTools"
 documentation = "https://cmatkhan.github.io/callingCardsTools/"
-exclude = ['Dockerfile', '*temp_*','docs', 'site', 'tests', 'src/callingcardstools/old', .git,.venv,.github]
+exclude = ['Dockerfile', '*temp_*','docs', 'site', 'tests', 'src/callingcardstools/old', '.git','.venv','.github']
 include = ["src/callingcardstools/resources"]
 
 [tool.poetry.dependencies]
