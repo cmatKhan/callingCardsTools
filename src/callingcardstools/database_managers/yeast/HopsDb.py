@@ -306,7 +306,8 @@ class HopsDb(DatabaseApi):
             int: _description_
         """
         # extract data from the barcode_details
-        tfs = barcode_details.barcode_dict['components']['tf']['map'].values()
+        tfs = set(barcode_details.barcode_dict['components']['tf']['map'].values())
+        tfs = tfs.add('undetermined')
         batch = barcode_details.barcode_dict['batch']
 
         replicates = []
