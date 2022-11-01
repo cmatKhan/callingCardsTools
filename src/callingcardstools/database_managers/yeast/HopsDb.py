@@ -306,8 +306,7 @@ class HopsDb(DatabaseApi):
             int: _description_
         """
         # extract data from the barcode_details
-        tfs = set(barcode_details.barcode_dict['components']['tf']['map'].values())
-        tfs = tfs.add('undetermined')
+        tfs = list(barcode_details.barcode_dict['components']['tf']['map'].values())
         batch = barcode_details.barcode_dict['batch']
 
         replicates = []
@@ -317,6 +316,9 @@ class HopsDb(DatabaseApi):
             except IndexError:
                 replicates.append('none')
         
+        tfs.append('undetermined')
+        replicates.append('none')
+
         # create df with nrow == len(tfs). batch is repeated for each record. 
         # records is either split from the tf name, or 'none'
         df = pd.DataFrame(
