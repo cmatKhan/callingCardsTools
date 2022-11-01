@@ -45,7 +45,9 @@ def main(args=None):
 		sys.exit()
 	
 	if tool == '--version':
-		print("calligncardstools version: "+cct_version)
+		print("callingcardstools "+cct_version)
+	elif tool == '--help':
+		print(help_str)
 	elif tool == 'split_fastq':
 		split_fastq(sys.argv[2:])
 	elif tool == 'legacy_split_fastq':
@@ -53,8 +55,7 @@ def main(args=None):
 	elif tool == 'process_alignments':
 		process_alignments(sys.argv[2:])
 	else:
-		print(f"{sys.argv[1]} not recognized! Try callingcardstools "\
-			f"--help for a list of available tools")
+		print(f"{sys.argv[1]} not recognized! Try callingcardstools --help")
 
 if __name__ == "__main__":
     sys.exit(main())

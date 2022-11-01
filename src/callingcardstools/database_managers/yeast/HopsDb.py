@@ -322,12 +322,17 @@ class HopsDb(DatabaseApi):
             {'batch': [batch for x in tfs], 
             'tf': tfs, 
             'replicate': replicates })
-
-        # add the data
-        df.to_sql('batch',
-                  con=self.con,
-                  if_exists='append',
-                  index=False)
+        
+        # by row, check if the entry already exists. if it does, then insert. 
+        # else, skip
+        insert_sql = "INSERT INTO batch (batch,tf,replicate) VALUES ('%s','%s','%s')"
+        for idx,row in df.iterrows():
+            try:
+                self.get_batch_id(row['batch'], row['tf'], row['replicate'])
+            except IndexError:
+                cur = self.con.cursor()
+                self.db_execute(cur,insert_sql %(row['batch'], row['tf'], row['replicate']))
+                self.con.commit()
         
         # note that a trigger creates which creates default entries in all other 
         # qc tables
@@ -344,7 +349,6 @@ class HopsDb(DatabaseApi):
             id_value (str): _description_
             update_dict (dict): _description_
         """
-        
         for record in update_dict:
             sql = f"UPDATE {tablename} SET tally = {record.get('tally')} "\
                 f"WHERE {id_col} = {id_value} AND "\

@@ -100,27 +100,27 @@ def main(args = None):
     # read goes into a file with that name
     if args.split_key not in rp.barcode_dict['components']:
         msg = f"{args.split_key} not found in barcode_dict['components']. "\
-            f"all output is directed to {args.split_key}_R1,2.fq"
+            f"all output is directed to {args.split_key}_{args.split_suffix}_R1,2.fq"
         logging.info(msg)
 
         determined_out = {
-            'r1': open(f"{args.split_key}_R1.fq", "w"), #pylint:disable=W1514
-            'r2': open(f"{args.split_key}_R2.fq", "w")  #pylint:disable=W1514
+            'r1': open(f"{args.split_key}_{args.split_suffix}_R1.fq", "w"), #pylint:disable=W1514
+            'r2': open(f"{args.split_key}_{args.split_suffix}_R2.fq", "w")  #pylint:disable=W1514
         }
     # elif the split_key is in barcode_details, create/open a fq output file for
     # each of the keys in barcode[components][split_key]
     else:
         determined_out = {
-            'r1': {tf:open(f"{tf}_R1.fq", "w") for tf in\
+            'r1': {tf:open(f"{tf}_{args.split_suffix}_R1.fq", "w") for tf in\
                 rp.barcode_dict['components'][args.split_key]['map'].values()}, #pylint:disable=W1514
-            'r2': {tf:open(f"{tf}_R2.fq", "w") for tf in\
+            'r2': {tf:open(f"{tf}_{args.split_suffix}_R2.fq", "w") for tf in\
                 rp.barcode_dict['components'][args.split_key]['map'].values()}  #pylint:disable=W1514
         }
     # create/open undetermined read output -- these are reads which do not 
     # match barcode expectations
     undetermined_out = {
-        'r1': open("undetermined_R1.fq", "w"), #pylint:disable=W1514
-        'r2': open("undetermined_R2.fq", "w")  #pylint:disable=W1514
+        'r1': open(f"undetermined_{args.split_suffix}_R1.fq", "w"), #pylint:disable=W1514
+        'r2': open(f"undetermined_{args.split_suffix}_R2.fq", "w")  #pylint:disable=W1514
     }
 
     # iterate over reads, split reads whose barcode components match expectation 
