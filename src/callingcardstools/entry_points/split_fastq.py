@@ -46,7 +46,6 @@ def parse_args(args=None):
     parser.add_argument('-n',
 	                    '--split_suffix',
 						help = 'append this after the tf name and before _R1.fq in the output fastq files',
-						required=True,
                         default = "split")
     parser.add_argument("-l",
 	                    "--log_level",
