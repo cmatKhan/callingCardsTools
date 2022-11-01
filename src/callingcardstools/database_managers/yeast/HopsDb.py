@@ -348,7 +348,7 @@ class HopsDb(DatabaseApi):
         # qc tables
 
         if id_to_bc_map_path and add_id_map:
-            self.add_read_qc(batch,barcode_details,id_to_bc_map_path)
+            self.add_read_qc(barcode_details,id_to_bc_map_path,split_char)
     
     def _update_qc_table(self, tablename:str, id_col:str, id_value:str, update_dict:dict) -> None:
         """_summary_
@@ -488,13 +488,14 @@ class HopsDb(DatabaseApi):
         
         return pd.DataFrame(output_dict)
 
-    def add_read_qc(self, batch:str, barcode_details:BarcodeParser, id_to_bc_map_path:str) -> None:
+    def add_read_qc(self,barcode_details:BarcodeParser, id_to_bc_map_path:str, split_char:str='x') -> None:
         """_summary_
 
         Args:
             batch (str): _description_
             barcode_details_json (BarcodeParser): _description_
             id_to_bc_map_path (str): _description_
+            split_char (str): the character on which to split the TF from the replicate in the barcode_details
 
         Raises:
             FileNotFoundError: _description_
@@ -503,15 +504,16 @@ class HopsDb(DatabaseApi):
             raise FileNotFoundError(f'{id_to_bc_map_path} DNE')
         if not id_to_bc_map_path.endswith('tsv'):
             logging.warning('%s does not end with tsv' %id_to_bc_map_path) #pylint:disable=W1201,C0209
-
+        
+        batch = barcode_details.barcode_dict['batch']
         batch_sql = f"SELECT * FROM batch WHERE batch = '{batch}'"
-        cur = self.con.cursor()
 
+        cur = self.con.cursor()
         batch_records = self.db_execute(cur,batch_sql).fetchall()
 
         id_to_bc_df = pd.read_csv(id_to_bc_map_path, sep = '\t')
 
-        tf_to_bc_dict = {v: k for k,v in barcode_details.barcode_dict['components']['tf']['map'].items()}
+        tf_to_bc_dict = {v.split(split_char)[0]: k for k,v in barcode_details.barcode_dict['components']['tf']['map'].items()}
         
         # TODO  address hardcoding
         # possibly extend BarcodeParser with organism specific settings
