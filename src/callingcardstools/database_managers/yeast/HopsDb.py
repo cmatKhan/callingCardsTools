@@ -609,72 +609,74 @@ class HopsDb(DatabaseApi):
             raise KeyError(f'The combination of tables {kwargs} '\
                 'does not match any expected combinations -- cannot find an '
                 'appropriate peak calling method')
-         
-        # create the tablename 
-        join_sql = self._regions_background_expr_sql(
-            kwargs.get('regions'), 
-            kwargs.get('background'), 
-            kwargs.get('experiment'))
 
-        quant_df = pd.read_sql_query(join_sql, self.con)
-
-        total_hops_dict = \
-            {'background': self.get_total_hops(kwargs.get('background'))}
-        
-        # group by batch_id (replicates)
-        batch_grouped_df = quant_df.groupby('batch_id')
-        # add total hops for each replicate to the total_hop_dict
-        for group,df in batch_grouped_df:
-            total_hops_dict[group] = \
-                self.get_total_hops(kwargs.get('experiment'),group)
-        
-        if replicate_handling == 'separate': 
-            # call peaks
-            output_df = \
-                call_peaks_with_background(
-                    batch_grouped_df, 
-                    total_hops_dict,poisson_pseudocount)
-            # send the table to the database
-
-        elif replicate_handling == 'sum':
-            passing_batch_ids = \
-                self._get_passing_batch_ids(
-                    quant_df.loc[0,'batch_id'],
-                    kwargs.get('include_unreviewed', False))
-            summed_passing_replicate_df = \
-                quant_df[quant_df.batch_id in passing_batch_ids]
-            summed_passing_replicate_df['group'] = \
-                ['all'] * len(summed_passing_replicate_df)
-            summed_passing_replicate_df = \
-                summed_passing_replicate_df\
-                    .groupby('group')
-                    # SUM OVER POSITIONS!
+        # TODO handle undetermined case better! 
+        if kwargs.get('experiment') != 'undetermined':
             
-            # extract the max hops for a given passing replicate
-            remove_keys = [k for k in total_hops_dict if k in passing_batch_ids]
-            max_expr_hops = max([total_hops_dict.pop(k) for k in remove_keys])
-            total_hops_dict['all'] = max_expr_hops
+            # create the tablename 
+            join_sql = self._regions_background_expr_sql(
+                kwargs.get('regions'), 
+                kwargs.get('background'), 
+                kwargs.get('experiment'))
 
-            # call peaks
-            output_df = call_peaks_with_background(
-                summed_passing_replicate_df, 
-                total_hops_dict, 
-                poisson_pseudocount)
-        else:
-            raise IOError(f'replicate handling method '\
-                f'{replicate_handling} not recognized.')
-        
-        sig_tablename = kwargs.get('regions') + '_' + kwargs.get('background')+ \
-                    "_" + kwargs.get('experiment') + replicate_handling + "_sig"
-        output_df.to_sql(sig_tablename,
-            con=self.con,
-            if_exists=if_exists,
-            index=False)
+            quant_df = pd.read_sql_query(join_sql, self.con)
 
-        
-        # index the table note that the index is create only if one with the 
-        # same name doesn't already exist
-        index_col_string = self.index_col_string_dict['qbed']+',"batch_id"'
-        self.index_table(sig_tablename, index_col_string)
+            total_hops_dict = \
+                {'background': self.get_total_hops(kwargs.get('background'))}
+            
+            # group by batch_id (replicates)
+            batch_grouped_df = quant_df.groupby('batch_id')
+            # add total hops for each replicate to the total_hop_dict
+            for group,df in batch_grouped_df:
+                total_hops_dict[group] = \
+                    self.get_total_hops(kwargs.get('experiment'),group)
+            
+            if replicate_handling == 'separate': 
+                # call peaks
+                output_df = \
+                    call_peaks_with_background(
+                        batch_grouped_df, 
+                        total_hops_dict,poisson_pseudocount)
+                # send the table to the database
 
-        return True
+            elif replicate_handling == 'sum':
+                passing_batch_ids = \
+                    self._get_passing_batch_ids(
+                        quant_df.loc[0,'batch_id'],
+                        kwargs.get('include_unreviewed', False))
+                summed_passing_replicate_df = \
+                    quant_df[quant_df.batch_id in passing_batch_ids]
+                summed_passing_replicate_df['group'] = \
+                    ['all'] * len(summed_passing_replicate_df)
+                summed_passing_replicate_df = \
+                    summed_passing_replicate_df\
+                        .groupby('group')
+                        # SUM OVER POSITIONS!
+                
+                # extract the max hops for a given passing replicate
+                remove_keys = [k for k in total_hops_dict if k in passing_batch_ids]
+                max_expr_hops = max([total_hops_dict.pop(k) for k in remove_keys])
+                total_hops_dict['all'] = max_expr_hops
+
+                # call peaks
+                output_df = call_peaks_with_background(
+                    summed_passing_replicate_df, 
+                    total_hops_dict, 
+                    poisson_pseudocount)
+            else:
+                raise IOError(f'replicate handling method '\
+                    f'{replicate_handling} not recognized.')
+            
+            sig_tablename = kwargs.get('regions') + '_' + kwargs.get('background')+ \
+                        "_" + kwargs.get('experiment') + '_' + replicate_handling + "_sig"
+
+            output_df.to_sql(sig_tablename,
+                con=self.con,
+                if_exists=if_exists,
+                index=False)
+
+            
+            # index the table note that the index is create only if one with the 
+            # same name doesn't already exist
+            index_col_string = self.index_col_string_dict['qbed']+',"batch_id"'
+            self.index_table(sig_tablename, index_col_string)
