@@ -3,6 +3,7 @@ import logging
 import warnings
 from difflib import SequenceMatcher
 from pysqlite3.dbapi2 import Connection
+from callingcardstools.database_managers.yeast import HopsDb as yeast_db
 
 __all__ = ['remove_suffix', 'convert_logger_level', 'database_switcher','deprecated']
 

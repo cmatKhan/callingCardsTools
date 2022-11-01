@@ -20,6 +20,6 @@ RUN pip install --upgrade pip
 
 #RUN rm v0.0.10.tar.gz
 
-COPY dist/callingCardsTools-0.0.15.tar.gz .
+COPY dist/callingCardsTools-0.0.16.tar.gz .
 
-RUN pip install callingCardsTools-0.0.15.tar.gz
+RUN pip install callingCardsTools-0.0.16.tar.gz

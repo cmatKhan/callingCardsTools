@@ -6,8 +6,6 @@ import logging
 from typing import Callable, Literal
 import warnings
 
-from .utils import deprecated
-
 import pysqlite3 as sqlite
 from pysqlite3.dbapi2 import ProgrammingError #pylint: disable=E0611
 import pandas as pd
