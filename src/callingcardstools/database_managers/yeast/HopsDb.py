@@ -309,21 +309,26 @@ class HopsDb(DatabaseApi):
         tfs = list(barcode_details.barcode_dict['components']['tf']['map'].values())
         batch = barcode_details.barcode_dict['batch']
 
+        parsed_tfs = []
         replicates = []
         for x in tfs:
             try:
-                replicates.append(x.split(split_char)[1].replace(')', ''))
+                tf = x.split(split_char)[0].replace(')', '')
+                rep = x.split(split_char)[1].replace(')', '')
             except IndexError:
-                replicates.append('none')
+                tf = x
+                rep = 'none'
+            parsed_tfs.append(tf)
+            replicates.append(rep)
         
-        tfs.append('undetermined')
+        parsed_tfs.append('undetermined')
         replicates.append('none')
 
         # create df with nrow == len(tfs). batch is repeated for each record. 
         # records is either split from the tf name, or 'none'
         df = pd.DataFrame(
-            {'batch': [batch for x in tfs], 
-            'tf': tfs, 
+            {'batch': [batch for x in parsed_tfs], 
+            'tf': parsed_tfs, 
             'replicate': replicates })
         
         # by row, check if the entry already exists. if it does, then insert. 
