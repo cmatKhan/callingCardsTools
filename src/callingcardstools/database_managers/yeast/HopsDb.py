@@ -672,14 +672,13 @@ class HopsDb(DatabaseApi):
                     f'{replicate_handling} not recognized.')
             
             sig_tablename = kwargs.get('regions') + '_' + kwargs.get('background')+ \
-                        "_" + kwargs.get('experiment') + '_' + replicate_handling + "_sig"
+                         "_" + kwargs.get('experiment') + '_' + replicate_handling + "_sig"
 
             output_df.to_sql(sig_tablename,
                 con=self.con,
                 if_exists=if_exists,
                 index=False)
-
-            
+ 
             # index the table note that the index is create only if one with the 
             # same name doesn't already exist
             index_col_string = self.index_col_string_dict['qbed']+',"batch_id"'

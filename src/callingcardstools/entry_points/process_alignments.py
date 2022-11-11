@@ -1,7 +1,6 @@
 #pylint:disable=W1203
 import logging
 from logging.config import dictConfig
-from re import U
 import sys
 import os
 import argparse

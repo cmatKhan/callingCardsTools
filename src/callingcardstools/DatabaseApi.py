@@ -310,7 +310,12 @@ class DatabaseApi():
         sql = f"SELECT COUNT(*) as total FROM {tbl}"
 
         if batch_id:
-            sql = " ".join([sql, f"WHERE batch_id = '{batch_id}'"])
+            sql = " ".join([sql, f"WHERE batch_id = {batch_id}"])
+        
+        total_hops = int(pd.read_sql_query(sql, self.con).total)
+        
+        if total_hops == 0:
+            raise ValueError(f'Total hops for {tbl}: {batch_id} equal to 0')
 
         return int(pd.read_sql_query(sql, self.con).total)
 

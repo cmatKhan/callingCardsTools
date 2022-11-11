@@ -19,6 +19,11 @@ def poisson_pval_factory(total_bg_hops:int, total_expr_hops:int, pseudocount:flo
     total_bg_hops = float(total_bg_hops)
     total_expr_hops = float(total_expr_hops)
     hop_ratio = total_expr_hops / total_bg_hops
+    # bg_hops / total_bg_hops -> fraction of total hops within region in background (control)
+    # when multiplying by total_expr_hops, gives E[expr_hops] in 'background model'
+    # goal: compare actual expr hops to poisson with mean = E[expr_hops]
+    # (expr_hops/total_expr_hops) / (bg_hops/total_bg_hops) -- this gives ratio 
+    # of fraction of reads (fold change) in expr to background
     def pval(bg_hops,expr_hops):
         """With the total_bg_hops and total_expr_hops set by the factory 
         function wrapper, this return function acts as a pvalue calculator.
@@ -28,14 +33,15 @@ def poisson_pval_factory(total_bg_hops:int, total_expr_hops:int, pseudocount:flo
             expr_hops (int): True to scale the random variable by the hop_ratio
 
         Returns:
-            float: A pvalue for the region
+            dict: keys pval and fold_change
         """
         # usage: scistat.poisson.cdf(x,mu)
         # where X are the experimental hops,
         # and mu is the background hops * (total_expr_hops/total_background_hops)
         mu = (bg_hops * hop_ratio)+pseudocount
         x  = expr_hops + pseudocount
-        return 1-scistat.poisson.cdf(x, mu)
+        fold_change =  (expr_hops/total_expr_hops)/(bg_hops/total_bg_hops)
+        return {'pval': 1-scistat.poisson.cdf(x, mu), 'fold_change':fold_change}
     return pval
 
 
@@ -51,7 +57,7 @@ def add_pvalues(poisson_pval:Callable[[int,int],float],
         Callable[[pd.Series],float]: A function which returns any number of pvalues
     """
     def calculate_pvalues(row:pd.Series):
-        poisson = poisson_pval(row['bg_hops'],row['expr_hops'])
+        poisson = poisson_pval(row['bg_hops'],row['expr_hops'])['pval']
         hypergeom = hypergeom_pval(row['bg_hops'], row['expr_hops'])
         
         return poisson,hypergeom
