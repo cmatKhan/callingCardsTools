@@ -55,7 +55,7 @@ def main(args=None):
 
 		barcode_dict['components']['tf']['map'] = tf_map
 		barcode_dict['batch'] = args.batch
-		with open(f"{args.run_number}_barcode_details.json", 'w') as f2:
+		with open(f"{args.batch}_barcode_details.json", 'w') as f2:
 			json_object = json.dumps(barcode_dict, indent=4)
 			f2.write(json_object)
 

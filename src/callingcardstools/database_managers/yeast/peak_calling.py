@@ -40,7 +40,7 @@ def poisson_pval_factory(total_bg_hops:int, total_expr_hops:int, pseudocount:flo
         # and mu is the background hops * (total_expr_hops/total_background_hops)
         mu = (bg_hops * hop_ratio)+pseudocount
         x  = expr_hops + pseudocount
-        fold_change =  (expr_hops/total_expr_hops)/(bg_hops/total_bg_hops)
+        fold_change =  1#(expr_hops/total_expr_hops)/(bg_hops/total_bg_hops)
         return {'pval': 1-scistat.poisson.cdf(x, mu), 'fold_change':fold_change}
     return pval
 
