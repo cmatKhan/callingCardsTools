@@ -4,6 +4,7 @@ import sqlite3
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
+
 def test_sig_hop_aggregate(tmp_path):
 
     create_hop_tbl_sql = {
@@ -25,7 +26,7 @@ def test_sig_hop_aggregate(tmp_path):
 
     db_path = os.path.join(tmp_path, "hopsdb.sqlite")
 
-    con = sqlite3.connect(db_path) #pylint: disable=E1101
+    con = sqlite3.connect(db_path)  # pylint: disable=E1101
 
     cur = con.cursor()
 
@@ -35,7 +36,7 @@ def test_sig_hop_aggregate(tmp_path):
     tablename = 'qbed'
     sig_hop_agg_sql = f"""SELECT DISTINCT(chr) as chr,
                          MIN(start) as start, 
-	                     MAX(end) as stop,
+                         MAX(end) as stop,
                          SUM(hops) as hops
                         FROM (
                             SELECT t1.*, SUM(group_flag) over (ORDER BY chr,start) as grp
@@ -53,18 +54,20 @@ def test_sig_hop_aggregate(tmp_path):
 
     query = cur.execute(sig_hop_agg_sql)
     cols = [column[0] for column in query.description]
-    actual = pd.DataFrame.from_records(data = query.fetchall(), columns = cols)
+    actual = pd.DataFrame.from_records(data=query.fetchall(), columns=cols)
 
     expected = pd.DataFrame(
-        {'chr': ['chr1', 'chr1', 'chr2'], 'start': [1,4,6], 'stop': [4,6,10], 'hops': [20,5,10]}
+        {'chr': ['chr1', 'chr1', 'chr2'], 'start': [1, 4, 6],
+            'stop': [4, 6, 10], 'hops': [20, 5, 10]}
     )
 
     assert_frame_equal(actual, expected)
 
+
 def test_rtree():
-    con = sqlite3.connect(":memory:")#pylint: disable=E1101
+    con = sqlite3.connect(":memory:")  # pylint: disable=E1101
     # see https://docs.python.org/3/library/sqlite3.html#connection-objects
-    # set row factory to sqlite3.Row to return iterable dictionary 
+    # set row factory to sqlite3.Row to return iterable dictionary
     # objects per row where the keys are field names
     con.row_factory = lambda cursor, row: row[0]
     cur = con.cursor()
@@ -94,13 +97,13 @@ def test_rtree():
 
     rtree_query = """SELECT id FROM demo_index
  WHERE maxY>=35.0 AND minY<=35.0;"""
-  
+
     cur.execute(rtree_create)
     cur.execute(rtree_fill)
     x = cur.execute(rtree_query).fetchall()
 
-    # not necessary here, just for demo and posterity purposes 
-    # reset row_factory                  
+    # not necessary here, just for demo and posterity purposes
+    # reset row_factory
     con.row_factory = None
 
     assert x[0] == 28281

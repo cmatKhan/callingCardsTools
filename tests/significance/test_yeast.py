@@ -2,7 +2,6 @@
 import os
 from sys import exc_info
 
-from memory_profiler import profile
 import cProfile
 import pysqlite3 as sqlite3
 import pandas as pd

@@ -28,5 +28,6 @@
     },
     "match_allowance": {
         "r1_transposon": 1
-    }
+    },
+    "batch": "run_1234"
 }
