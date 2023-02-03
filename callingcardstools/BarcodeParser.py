@@ -1,15 +1,16 @@
 
+# pylint:disable=W1201,W1203,C0209
 """An object which parses a barcode string extracted from a read according 
 to a barcode_details json file. Note that all sequences are cast to upper"""
-import os
 import json
 import logging
+import os
 from math import inf as infinity
 from typing import Literal
+import random
 
 # outside package
-from edlib import align  # pylint: disable=E0611
-
+from edlib import align  # pylint:disable=E0611
 
 __all__ = ['BarcodeParser']
 
@@ -24,7 +25,7 @@ class BarcodeParser:
     # class properties --------------------------------------------------------
     _key_dict = {
         "components": "components",
-        "insert_seqs": "insert_seqs",
+        "insert_seq": "insert_seq",
         "match_allowance": "match_allowance",
     }
 
@@ -73,10 +74,13 @@ class BarcodeParser:
         # if that works, update the barcode_details_json path
         logging.info("Success! Setting the barcode details json path")
         self._barcode_details_json = new_barcode_details_json
+        # and update some properties
+        self.max_r1 = self.__get_max_r1()
+        self.max_mismatches = self.__calculate_max_mismatches()
 
     @property
     def key_dict(self):
-        """A dictionary which describes the defined fields of a valid
+        """A dictionary which describes the defined fields of a valid 
         barcode dict json file"""
         return self._key_dict
 
@@ -125,13 +129,13 @@ class BarcodeParser:
         """Extract the insertion sequence length from the barcode dictionary"""
         try:
             insert_seq_length = \
-                len(self.barcode_dict[self.key_dict['insert_seqs']][0])
+                len(self.barcode_dict[self.key_dict['insert_seq']][0])
         except (KeyError, IndexError):
             insert_seq_length = 1
         return insert_seq_length
 
     @property
-    def insert_seqs(self):
+    def insert_seq(self):
         """Getter for the insert seq sequence from the barcode details json. 
         Returns upper case.
 
@@ -139,8 +143,8 @@ class BarcodeParser:
             AttributeError: Raised if the current barcode details json does 
             not have an insert seq key
         """
-        if self.key_dict['insert_seqs'] in self.barcode_dict:
-            return self.barcode_dict[self.key_dict['insert_seqs']]
+        if self.key_dict['insert_seq'] in self.barcode_dict:
+            return self.barcode_dict[self.key_dict['insert_seq']]
         else:
             raise AttributeError(f'Current barcode details '
                                  f'{self.barcode_details_json} does not '
@@ -152,7 +156,62 @@ class BarcodeParser:
                 in self.barcode_dict['components'].items()
                 if v.get('bam_tag', None)}
 
+    @property
+    def max_r1(self):
+        if self.max_r1 < 0:
+            raise AttributeError('Max R1 not set')
+        return self._max_r1
+
+    @max_r1.setter
+    def max_r1(self, new_max_r1):
+        """getting for the maximum index on the r1 barcode strand"""
+        if new_max_r1 < 0:
+            raise ValueError(
+                'Max R1 is invalid. Check the barcode details json')
+        self._max_r1 = new_max_r1
+
+    @property
+    def max_mismatches(self):
+        """maximum number of mismatches allowed in a barcode"""
+        return self._max_mismatches
+
+    @max_mismatches.setter
+    def max_mismatches(self, new_max_mismatches):
+        self._max_mismatches = new_max_mismatches
+
+    @property
+    def annotation_tags(self):
+        """iterate over the component dictionaries and extract the bam tags"""
+        annotation_tag_list = []
+        for comp, comp_dict in self.barcode_dict['components'].items():
+            if comp_dict.get('annotation', None):
+                if comp_dict.get('bam_tag', None):
+                    annotation_tag_list.append(comp_dict.get('bam_tag'))
+                else:
+                    # TODO check this condition in barcodeparser constructor
+                    raise KeyError(f'Component {comp} has annotation set '
+                                   f'to true, but no bam_tag. If annotation '
+                                   f'is true, the bam_tag field must be set')
+        return annotation_tag_list
+
     # private methods ---------------------------------------------------------
+    def __check_bam_tags(self):
+        """check the tags set by the user in barcode_details.json against 
+        the list of restricted bam tags -- error if a restricted bam tag is 
+        used"""
+        # TODO implement
+        raise NotImplementedError
+
+    def __get_max_r1(self):
+        max_r1 = -1
+        for k, v in self.barcode_dict['r1'].items():
+            if v['index'][1] > max_r1:
+                max_r1 = v['index'][1]
+        if max_r1 == -1:
+            raise ValueError('Maximum index on the r1 barcode not found!')
+
+        return max_r1
+
     def __check_component_keys(self, barcode_dict) -> bool:
         """_summary_
 
@@ -198,16 +257,78 @@ class BarcodeParser:
         # return true if no errors are raised
         return True
 
+    def __calculate_max_mismatches(self) -> int:
+        """either extract or calculate the maximum number of mismatches allowed 
+        in a given read's barcode. If not provided, the max is the sum of 
+        the match_allowances for each component. These are 0 if not set in 
+        barcode zeroes. This allows the user to allow a number of mismatches 
+        in each component, but to set a value less that the sum of those 
+        allowances in the max_mismatch attribute to avoid a barcode with too 
+        many total mismatches.
+
+        Raises:
+            TypeError: if the extracted or calculated max_mismatch value is not 
+            an integer
+
+        Returns:
+            int: an integer describing the total number of allowable mismatches 
+            between a barcode and a set of barcode components.
+        """
+        max_mismatch = self.barcode_dict.get('max_mismatch', None)
+
+        component_mismatch_sum = sum([
+            self.barcode_dict['components'][k].get('match_allowance', 0)
+            for k in self.barcode_dict['components'].keys()])
+        if max_mismatch:
+            if max_mismatch > component_mismatch_sum:
+                logging.info('max_mismatch in barcode_details: '
+                             f'{max_mismatch} which is greater than the sum '
+                             f'of component mismatch allowances: '
+                             f'{component_mismatch_sum}')
+        if not max_mismatch:
+            max_mismatch = component_mismatch_sum
+        if not isinstance(max_mismatch, int):
+            raise TypeError('max_mismatch must be an integer. '
+                            'check barcode_details.__get_max_mismatches()')
+        return max_mismatch
+
     # public methods ----------------------------------------------------------
+    # TODO docstring
+    def decompose_barcode(self, barcode: str):
+        component_dict = {}
+        for end in ['r1', 'r2']:
+            for component in self.barcode_dict[end].keys():
+                # extract the start/end indicies of a given barcode component.
+                # adjust if the indicies are from r2 under the assumption that
+                # the sequence is created by appending the r1 seq to the r2 seq
+                seq_start = self.barcode_dict[end][component]['index'][0] \
+                    if end == 'r1' \
+                    else \
+                    self.barcode_dict[end][component]['index'][0]+self.max_r1
+                seq_end = self.barcode_dict[end][component]['index'][1] \
+                    if end == 'r1' \
+                    else \
+                    self.barcode_dict[end][component]['index'][1]+self.max_r1
+
+                # get the component subsequence out of the barcode
+                subseq = barcode[seq_start:seq_end]
+
+                # add the component: best_match_dict key value pair to the
+                # barcode_breakdown dict
+                component_dict.setdefault("_".join([end, component]), subseq)
+
+        return self.component_check(component_dict)
+
     def component_check(self, component_dict: dict) -> dict:
         """Determine if the barcode passes (True) or fails (False) given the 
         edit distances between it and the expected components, and the 
         allowable edit distance between a given component and the actual value.
 
         Args:
-            component_edit_dist_dict (dict): A dictionary where the keys are 
-            barcode components and the values are the minimum edit distance 
-            of a given barcode against the corresponding allowable components
+            component_dict (dict): a dictionary where the keys are component 
+            names and the values are the actual sequences, eg
+            {'r1_primer': 'TGATA', 'r1_transposon': 'AATTCACTACGTCAACA', 
+            'r2_transposon': 'ACCTGCTT', 'r2_restriction': 'TCGAGCGCCCGG'}
 
         Returns:
             dict: A dict of structure {"pass": Boolean, True if the barcode 
@@ -235,21 +356,43 @@ class BarcodeParser:
             # get the match information for the given component
             component_check_dict[k] = \
                 self.get_best_match(
-                    query_seq,
-                    target_dict,
-                    v.get('match_type', 'edit_distance'))
+                query_seq,
+                target_dict,
+                v.get('match_type', 'edit_distance'))
             if v.get('bam_tag', None):
                 component_check_dict[k]['bam_tag'] = v.get('bam_tag')
 
+        # figure out if the barcode passes based on edit distance allowances
         passing = True
+        total_mismatches = 0
         for k, v in component_check_dict.items():
+            # if the total_mismatches exceed the maximum number of mismatches
+            # in a given barcode, set the passing value to false and exit the
+            # loop
+            if total_mismatches > self.max_mismatches:
+                passing = False
+                logging.debug('total_mismatches = {total_mismatches}; '
+                              + 'max_mismatches = {self.max_mismatches}')
+                break
+            # else, for a given component, extract the mismatch tolerance
             match_allowance = \
-                self.barcode_dict[self.key_dict['match_allowance']].get(
-                    k, 0)
+                self.barcode_dict['components'][k]\
+                    .get('match_allowance', 0)
+            # if the edit dist exceeds the match_allowance, set the barcode to
+            # failing and break the loop
             if v['dist'] > match_allowance and \
                     self.barcode_dict['components']\
-                        .get(k, {}).get('require', True):
+                        .get(k, {})\
+                        .get('require', True):
                 passing = False
+                break
+            # if we reach this point, add the edit dist to the total_mismatch
+            # note that if this is 0 it won't change anything, and move on to
+            # the next component
+            else:
+                if self.barcode_dict['components'].get(k, {}).get('require', True): # noqa
+                    logging.debug(f'incrementing total mismatches b/c of {v}')
+                    total_mismatches = total_mismatches+v['dist']
 
         return {'passing': passing, 'details': component_check_dict}
 
@@ -277,12 +420,26 @@ class BarcodeParser:
         """
 
         # if the match_type is edit_distance, then return a dict with the
-        # value of the component map as the key, and the edit distance
-        # as the value
+        # keys query, with the query sequence, name, with the component
+        # to which the query best matched, and edit_dist, with the edit
+        # distance between query and the best match
         if match_type == 'edit_distance':
-            d = {align(query, k)['editDistance']: v for k,
-                 v in component_dict.items()}
-            return {'name': d[min(d)], 'dist': min(d)}
+            # iterate over the component dict and align strings. dictionary
+            # is one where the key is the edit_distance and the value is a
+            # list of elements which have that edit distance compared to the
+            # query
+            d = {}
+            for k, v in component_dict.items():  # pylint:disable=C0103
+                d.setdefault(align(query, k)['editDistance'], []).append(v)
+            # if the minimum edit distance is 0, then the first and only
+            # element in the list os the correct one. Else, select an element
+            # with the minimum element distance at random, if there are more
+            # than 1 possibility with an a given edit distance
+            element_selector = 0 if min(d) == 0 \
+                else random.randrange(0, len(d.get(min(d))), 1)
+            return {'query': query,
+                    'name': d[min(d)][element_selector],
+                    'dist': min(d)}
         # if the match type is greedy, return the first exact match. same
         # return structure as above, where the matched value is the key and
         # the edit distance is 0. If none are found, value is "*" and the
@@ -292,3 +449,6 @@ class BarcodeParser:
                 if k in query:
                     return {'name': v, 'dist': 0}
             return {'name': "*", 'dist': infinity}
+        else:
+            raise IOError(
+                '%s is not a recognized match_type argument' % match_type)

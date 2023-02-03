@@ -21,13 +21,13 @@
                            "require": false,
                            "bam_tag": "RS"},
         "tf":             {"components": ["r1_primer", "r2_transposon"],
-                           "map": {"TGATAACCTGTTT": "RIM101", "TACTCCAGAGGGG":"RTG1",
-                           "CCTGCACGCACGC":"ERT1","TCGTCTACGGCGT":"MTH1",
-                           "AACGCTTTTTCTA":"MET32"},
-                           "bam_tag": "TF"}
-    },
-    "match_allowance": {
-        "r1_transposon": 1
+                           "map": {"TGATAACCTGTTT": "RIM101", 
+                                   "TACTCCAGAGGGG":"RTG1",
+                                   "CCTGCACGCACGC":"ERT1", 
+                                   "TCGTCTACGGCGT":"MTH1",
+                                   "AACGCTTTTTCTA":"MET32"},
+                            "bam_tag": "TF",
+                            "match_allowance": 1}
     },
     "batch": "run_1234"
 }

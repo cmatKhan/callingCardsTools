@@ -24,7 +24,6 @@ def tag_bam(bampath, fasta_path, barcode_details_json,
     Args:
         fasta_path (str): Path to a fasta file
         bampath (str): path to the alignment file (bam)
-        barcode_length (int): Expected length of the barcode
         insertion_length (int): Expected length of the insertion sequence
         barcode_details_json (str): Path to the barcode details json file
         mapq_threshold (int, optional): mapq threshold below which to label a 
