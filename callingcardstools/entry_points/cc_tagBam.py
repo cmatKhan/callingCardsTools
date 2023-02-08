@@ -11,7 +11,7 @@ import pandas as pd
 # from memory_profiler import profile
 # local dependencies
 from callingcardstools.AlignmentTagger import AlignmentTagger
-from callingcardstools.StatusFlags import StatusFlags
+from callingcardstools.QcStatusCoding.StatusFlags import StatusFlags
 
 logging.basicConfig(
     level=logging.INFO,

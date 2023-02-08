@@ -8,7 +8,7 @@ from callingcardstools import BarcodeParser
 from callingcardstools import SummaryParser
 from callingcardstools import tag_bam
 
-__all__ = ['parse_args', 'process_alignments']
+__all__ = ['parse_args', 'tag_alignments']
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -16,13 +16,13 @@ logging.getLogger(__name__).addHandler(logging.NullHandler())
 def parse_args(subparser, script_desc, common_args):
 
     parser = subparser.add_parser(
-        'process_alignments',
+        'tag_alignments',
         help=script_desc,
-        prog='process_alignments',
+        prog='tag_alignments',
         parents=[common_args]
     )
 
-    parser.set_defaults(func=process_alignments)
+    parser.set_defaults(func=tag_alignments)
 
     parser.add_argument("-a",
                         "--alignment",
@@ -82,17 +82,10 @@ def parse_args(subparser, script_desc, common_args):
                         default=10,
                         type=int)
 
-    parser.add_argument("-l",
-                        "--log_level",
-                        help="the desired log level (default warning).",
-                        choices=("critical", "error",
-                                 "warning", "info", "debug"),
-                        default="warning")
-
     return subparser
 
 
-def process_alignments(args: argparse.Namespace) -> None:
+def tag_alignments(args: argparse.Namespace):
 
     # Check inputs
     input_path_list = [args.alignment,

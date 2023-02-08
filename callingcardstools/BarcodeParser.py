@@ -32,6 +32,8 @@ class BarcodeParser:
     _barcode_dict = {}
     _barcode_details_json = ""
     _barcode = ""
+    # TODO rename this: this is the maximum endpoint of an r1 component in the
+    # barcode string of a given read
     _max_r1 = -1
     _restricted_bam_tags = {'XS', 'XI', 'XE', 'XZ'}
 
@@ -158,8 +160,6 @@ class BarcodeParser:
 
     @property
     def max_r1(self):
-        if self.max_r1 < 0:
-            raise AttributeError('Max R1 not set')
         return self._max_r1
 
     @max_r1.setter
@@ -301,6 +301,8 @@ class BarcodeParser:
                 # extract the start/end indicies of a given barcode component.
                 # adjust if the indicies are from r2 under the assumption that
                 # the sequence is created by appending the r1 seq to the r2 seq
+                # note that max_r1 is the maximum r1 barcode endpoint in the
+                # barcode sequence
                 seq_start = self.barcode_dict[end][component]['index'][0] \
                     if end == 'r1' \
                     else \
@@ -390,7 +392,7 @@ class BarcodeParser:
             # note that if this is 0 it won't change anything, and move on to
             # the next component
             else:
-                if self.barcode_dict['components'].get(k, {}).get('require', True): # noqa
+                if self.barcode_dict['components'].get(k, {}).get('require', True):  # noqa
                     logging.debug(f'incrementing total mismatches b/c of {v}')
                     total_mismatches = total_mismatches+v['dist']
 
@@ -418,6 +420,10 @@ class BarcodeParser:
             always 0 or infinty if match is greedy depending on if exact 
             match is found or not. If not, return is 'name': '*', 'dist': inf}
         """
+        # if no match found, these are the default values. Note that if
+        # the match type is not recognized, this function errors
+        component_name = "*"
+        dist = infinity
 
         # if the match_type is edit_distance, then return a dict with the
         # keys query, with the query sequence, name, with the component
@@ -437,18 +443,22 @@ class BarcodeParser:
             # than 1 possibility with an a given edit distance
             element_selector = 0 if min(d) == 0 \
                 else random.randrange(0, len(d.get(min(d))), 1)
-            return {'query': query,
-                    'name': d[min(d)][element_selector],
-                    'dist': min(d)}
+            # set name and dist
+            component_name = d[min(d)][element_selector]
+            dist = min(d)
         # if the match type is greedy, return the first exact match. same
         # return structure as above, where the matched value is the key and
         # the edit distance is 0. If none are found, value is "*" and the
         # edit distance is infinity
         elif match_type == 'greedy':
             for k, v in component_dict.items():
+                # set name and dist and break the for loop
                 if k in query:
-                    return {'name': v, 'dist': 0}
-            return {'name': "*", 'dist': infinity}
+                    component_name = v
+                    dist = 0
+                    break
         else:
             raise IOError(
                 '%s is not a recognized match_type argument' % match_type)
+
+        return {'query': query, 'name': component_name, 'dist': dist}

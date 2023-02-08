@@ -9,7 +9,7 @@ import pandas as pd
 # from memory_profiler import profile
 # local dependencies
 from .AlignmentTagger import AlignmentTagger
-from .StatusFlags import StatusFlags
+from .QcStatusCoding.StatusFlags import StatusFlags
 
 __all__ =['tag_bam']
 

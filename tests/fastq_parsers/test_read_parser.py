@@ -43,8 +43,8 @@ def test_barcode_extractor_process(yeast_barcode_details, yeast_reads):
 
     actual = rp.parse()
 
-    assert actual['bc_check']['pass'] == False
-    assert actual['bc_check']['tf'] == 'MIG2_5'
+    assert actual['status']['passing'] == False
+    assert actual['status']['details']['tf']['name'] == 'MTH1'
 
     # actual = be.process_read(r1,r2)
     # expected_r1_primer = "TCAGT"

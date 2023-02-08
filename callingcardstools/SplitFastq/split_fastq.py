@@ -15,9 +15,9 @@ logging.getLogger(__name__).addHandler(logging.NullHandler())
 def parse_args(subparser, script_desc, common_args):
 
     parser = subparser.add_parser(
-        'legacy_split_fastq',
+        'split_fastq',
         help=script_desc,
-        prog='legacy_split_fastq',
+        prog='split_fastq',
         parents=[common_args]
     )
 

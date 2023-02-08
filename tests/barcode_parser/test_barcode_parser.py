@@ -26,7 +26,8 @@ def test_yeast_barcode_check1(yeast_barcode_details):
             'r1_transposon': {'query': 'AATTCACTACGTCAACA',
                               'name': 'AATTCACTACGTCAACA',
                               'dist': 0, 'bam_tag': 'RT'},
-            'r2_restriction': {'name': 'TaqAI',
+            'r2_restriction': {'query': 'TCGANCNCGTAA',
+                               'name': 'TaqAI',
                                'dist': 0,
                                'bam_tag': 'RS'},
             'tf': {'query': 'TGATAACCTGTTT',
@@ -52,9 +53,18 @@ def test_yeast_barcode_check2(yeast_barcode_details):
     expected = {
         'passing': True,
         'details': {
-            'r1_transposon': {'query': 'AATTCACTACGTCAACA', 'name': 'AATTCACTACGTCAACA', 'dist': 0, 'bam_tag': 'RT'},
-            'r2_restriction': {'name': '*', 'dist': infinity, 'bam_tag': 'RS'},
-            'tf': {'query': 'TGATAACCTGTTT', 'name': 'RIM101', 'dist': 0, 'bam_tag': 'TF'}
+            'r1_transposon': {'query': 'AATTCACTACGTCAACA',
+                              'name': 'AATTCACTACGTCAACA',
+                              'dist': 0,
+                              'bam_tag': 'RT'},
+            'r2_restriction': {'query': 'TCGGGCGCCCGG',
+                               'name': '*',
+                               'dist': infinity,
+                               'bam_tag': 'RS'},
+            'tf': {'query': 'TGATAACCTGTTT',
+                   'name': 'RIM101',
+                   'dist': 0,
+                   'bam_tag': 'TF'}
         }
     }
 
@@ -78,7 +88,10 @@ def test_yeast_barcode_check3(yeast_barcode_details):
                               'name': 'AATTCACTACGTCAACA',
                               'dist': 0,
                               'bam_tag': 'RT'},
-            'r2_restriction': {'name': 'Hpall', 'dist': 0, 'bam_tag': 'RS'},
+            'r2_restriction': {'query': 'TCGAGCGCCCGG',
+                               'name': 'Hpall',
+                               'dist': 0,
+                               'bam_tag': 'RS'},
             'tf': {'query': 'TGATAACCTGCTT',
                    'name': 'RIM101',
                    'dist': 1,  # match allowance set to 1 for tf in test barcode details # noqa
@@ -116,7 +129,8 @@ def test_yeast_barcode_check4(yeast_barcode_details):
                               'name': 'AATTCACTACGTCAACA',
                               'dist': 0,
                               'bam_tag': 'RT'},
-            'r2_restriction': {'name': 'Hpall',
+            'r2_restriction': {'query': 'TCGAGCGCCCGG',
+                               'name': 'Hpall',
                                'dist': 0,
                                'bam_tag': 'RS'},
             'tf': {'query': 'TGATAACCTGCTT',
@@ -130,25 +144,29 @@ def test_yeast_barcode_check4(yeast_barcode_details):
 
     assert actual == expected
 
+
 def test_constructor(mouse_barcode_details):
-	bp = BarcodeParser(mouse_barcode_details)
-	assert bp.barcode_dict['tf'] == ''
+    bp = BarcodeParser(mouse_barcode_details)
+    assert bp.barcode_dict['tf'] == ''
+
 
 def test_barcode_breakdown(mouse_barcode_details, mouse_barcodes):
 
-	bp = BarcodeParser(mouse_barcode_details)
-	assert bp.decompose_barcode(mouse_barcodes.get('dist0')).get('passing') == True
-	
-	pb_dist1 = bp.decompose_barcode(mouse_barcodes.get('pb_dist1'))
-	assert pb_dist1.get('passing') == False
-	assert pb_dist1.get('details').get('r1_pb').get('dist') == 1
-    
-	# note: turns out not actually an error -- this was part of debugging
-	# which needs to be removed. It ended up showing that current behavior 
-	# is correct
-	error_bc = bp.decompose_barcode(mouse_barcodes.get('error'))
-	assert error_bc.get('details').get('r1_lrt2').get('dist') == 2
+    bp = BarcodeParser(mouse_barcode_details)
+    assert bp.decompose_barcode(
+        mouse_barcodes.get('dist0')).get('passing') == True
+
+    pb_dist1 = bp.decompose_barcode(mouse_barcodes.get('pb_dist1'))
+    assert pb_dist1.get('passing') == False
+    assert pb_dist1.get('details').get('r1_pb').get('dist') == 1
+
+    # note: turns out not actually an error -- this was part of debugging
+    # which needs to be removed. It ended up showing that current behavior
+    # is correct
+    error_bc = bp.decompose_barcode(mouse_barcodes.get('error'))
+    assert error_bc.get('details').get('r1_lrt2').get('dist') == 2
+
 
 def test_annotation_tag_list(mouse_barcode_details):
-	bp = BarcodeParser(mouse_barcode_details)
-	assert bp.annotation_tags == ['ST']
+    bp = BarcodeParser(mouse_barcode_details)
+    assert bp.annotation_tags == ['ST']

@@ -26,9 +26,9 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         'split_fastq': 'parse a (possibly multiplexed) batch of reads into '
         'expected barcode file(s), and a set of undetermined reads',
 
-        'legacy_split_fastq': 'yeast cc_tools 3.0 version of parse_fastq'
+        'legacy_split_fastq': 'yeast cc_tools 3.0 version of parse_fastq',
 
-        'process_alignments: add read and alignment data to a'
+        'process_alignments': 'add read and alignment data to a '
         'sqlite database for downstream QC and analysis',
 
         'parse_bam': 'Iterate over the reads in an alignment file (bam) and '
@@ -73,11 +73,11 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         script_descriptions['split_fastq'],
         common_args)
 
-    # subparsers = process_alignments.parse_args(
-    #     subparsers,
-    #     script_descriptions['process_alignments'],
-    #     common_args
-    # )
+    subparsers = process_alignments.parse_args(
+        subparsers,
+        script_descriptions['process_alignments'],
+        common_args
+    )
 
     subparsers = parse_bam.parse_args(
         subparsers,

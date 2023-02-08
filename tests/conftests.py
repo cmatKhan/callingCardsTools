@@ -7,7 +7,6 @@ from callingcardstools.BarcodeParser import BarcodeParser
 from callingcardstools.AlignmentTagger import AlignmentTagger
 from callingcardstools.SummaryParser import SummaryParser
 from callingcardstools.ReadParser import ReadParser
-from callingcardstools.PackageResources import yeast
 
 # yeast fixtures ---------------------------------------------------------------
 
@@ -43,10 +42,8 @@ def yeast_readtagger():
     """
 
     setup = {
+        "barcode_details_json": "tests/test_data/yeast/barcode_details.json",
         "fasta_path": "tests/test_data/yeast/NC_001133.9_1_60000.fasta",
-        "fasta_index_path": "tests//test_data/yeast/NC_001133.9_1_60000.fasta.fai",
-        "barcode_length":  34,
-        "insertion_length": 1
     }
 
     rt = AlignmentTagger(**setup)
