@@ -1,5 +1,6 @@
 # pylint:disable=W0640,W0108,C0114
 from typing import Callable
+from sqlalchemy import create_engine
 
 import pandas as pd
 import scipy.stats as scistat
@@ -108,8 +109,8 @@ def hypergeometric_pval_factory(
     return pval
 
 
-def call_peaks_with_background(grouped_df: pd.DataFrame,
-                               total_hops_dict: dict,
+def call_peaks_with_background(qbed_df: pd.DataFrame,
+                               con: SQLiteConnection,
                                poisson_pseudocount: float,
                                group_field: str = "batch_id") -> pd.DataFrame:
     """_summary_

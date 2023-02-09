@@ -5,9 +5,11 @@ import re
 import logging
 from typing import Callable, Literal
 import warnings
+from pathlib import Path, PosixPath
 
+from sqlalchemy import create_engine
 import pysqlite3 as sqlite
-from pysqlite3.dbapi2 import ProgrammingError #pylint: disable=E0611
+from pysqlite3.dbapi2 import ProgrammingError  # pylint: disable=E0611
 import pandas as pd
 import numpy as np
 
@@ -19,7 +21,7 @@ __all__ = ['DatabaseApi']
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 # https://github.com/pandas-dev/pandas/issues/14553#issuecomment-778599042
-# class for SqlUpsert. Also consider SQLalchemy or that sql package i sent to 
+# class for SqlUpsert. Also consider SQLalchemy or that sql package i sent to
 # daniel
 
 # discovered the 'row_factory' attribute in writing this. The connection
@@ -27,11 +29,56 @@ logging.getLogger(__name__).addHandler(logging.NullHandler())
 # see https://docs.python.org/3/library/sqlite.html#connection-objects
 # self.con.row_factory = lambda cursor, row: row[0]
 
+
+class DatabaseAPINew():
+
+    def __init__(self, db_loc: PosixPath, ) -> None:
+        
+        # get absolute path
+        db_loc = db_loc.resolve()
+        # check that the parent dir exists
+        if not os.path.exists(db_loc.parent):
+            raise FileNotFoundError(f"Parent directory of {db_loc} "
+                                    "does not exist")
+
+        self.engine = create_engine(f'sqlite:///{db_loc}', echo=True)
+
+    @property
+    def engine(self):
+        return self._engine
+
+    @engine.setter
+    def engine(self, new_engine):
+        self._engine = new_engine
+
+    def add_chr_map(self, df: pd.DataFrame) -> None:
+        """Add a chr_map table to the database.
+
+        Args:
+            df (pd.DataFrame): A dataframe with columns 'ucsc' and 'seqlength'
+        """
+        
+
+    def add_background(self, df: pd.DataFrame) -> None:
+        """Add a background table to the database.
+
+        Args:
+            df (pd.DataFrame): A dataframe with columns 'chr', 'start', 'end', 'depth', 'strand', 'batch_id'
+        """
+
+    def add_regions(self, df: pd.DataFrame) -> None:
+        """Add a regions table to the database.
+
+        Args:
+            df (pd.DataFrame): A dataframe with columns 'chr', 'start', 'end'
+        """
+
+
 class DatabaseApi():
     """An object to aid in creating,modifying and using calling cards data from a database backend"""
 
     _db_loc = ""
-    _db_timeout=1200
+    _db_timeout = 1200
     _con = ""
 
     _chr_map_table = "chr_map"
@@ -46,11 +93,14 @@ class DatabaseApi():
         'bed3': ["chr", "start", "end"],
         _chr_map_table: [_standard_chr_format, 'seqlength']
     }
-    _required_fields['qbed_dtypes'] = {k: v for k, v in zip(_required_fields['qbed'],
-                                       ['str', 'int', 'int', 'int', 'str', 'int', 'int'])}
-    _required_fields['bed6_dtypes'] = {k: v for k, v in zip(_required_fields['qbed'],
-                                       ['str', 'int', 'int', 'str', 'float', 'str'])}
-    
+    _required_fields['qbed_dtypes'] = \
+        {k: v for k, v in zip(_required_fields['qbed'],
+                              ['str', 'int', 'int', 'int',
+                              'str', 'int', 'int'])}
+    _required_fields['bed6_dtypes'] = \
+        {k: v for k, v in zip(_required_fields['qbed'],
+                              ['str', 'int', 'int', 'str', 'float', 'str'])}
+
     _table_types_dict = {
         'bed3': {'regions'},
         'qbed': {'background', 'experiment', 'ttaa'},
@@ -78,7 +128,8 @@ class DatabaseApi():
     def __del__(self):
         try:
             # attempt commit prior to deleting
-            logging.info("Attempting to commit any changes before deleting hopsdb object")
+            logging.info("Attempting to commit any changes before "
+                         "deleting hopsdb object")
             self.con.commit()
         except AttributeError as err:
             logging.info(f"connection not valid -- nothing commited: {err}")
@@ -89,17 +140,20 @@ class DatabaseApi():
 
     @property
     def db_loc(self):
-        """filepath to the database (sqlite) or address of database. Default to 20 minutes"""
+        """filepath to the database (sqlite) or address of database.
+         Default to 20 minutes"""
         return self._db_loc
 
     @db_loc.setter
     def db_loc(self, new_db_loc):
         self._db_loc = new_db_loc
-    
+
     @property
     def db_timeout(self):
-        """Set the connection timeout limit before an error is thrown. see sqlite3.connection docs"""
+        """Set the connection timeout limit before an error is thrown.
+         see sqlite3.connection docs"""
         return self._db_timeout
+
     @db_timeout.setter
     def db_timeout(self, num_secs):
         self._db_timeout = num_secs
@@ -115,7 +169,8 @@ class DatabaseApi():
 
     @property
     def chr_map_table(self):
-        """name of the table which stores the mapping between chr naming conventions"""
+        """name of the table which stores the mapping between
+         chr naming conventions"""
         return self._chr_map_table
 
     @property
@@ -125,29 +180,32 @@ class DatabaseApi():
 
     @property
     def standard_chr_format(self):
-        """A field in the chr_map_table to use as the standard chr naming format for all tables"""
+        """A field in the chr_map_table to use as the standard
+         chr naming format for all tables"""
         return self._standard_chr_format
 
     @property
     def required_fields(self):
-        """A dict which describes the required fields for various table formats. Currently defined: qBed, bed6, chr_map"""
+        """A dict which describes the required fields for various table
+         formats. Currently defined: qBed, bed6, chr_map"""
         return self._required_fields
-    
+
     @property
     def table_types_dict(self):
-        """A dictionary with keys as table_format defined in keys of required_fields 
-        and values a list of type_types. Note that the setter adds keys and values, 
-        and does not remove any. Hence the default init set is always there"""
+        """A dictionary with keys as table_format defined in keys of
+         required_fields and values a list of type_types. Note that 
+         the setter adds keys and values, and does not remove any. 
+         Hence the default init set is always there"""
         return self._table_types_dict
 
     @table_types_dict.setter
     def table_types_dict(self, new_dict):
         # iterate over the keys and values in new_dict
-        for k,v in new_dict.items():
+        for k, v in new_dict.items():
             # if a given new key already exists, extract the values
             curr_tables = self.table_types_dict.get(k, None)
             if curr_tables:
-                # if they key exists, then add the new tables and update the 
+                # if they key exists, then add the new tables and update the
                 # types_dict attribute
                 self._table_types_dict[k] = curr_tables.add(v)
             else:
@@ -160,7 +218,7 @@ class DatabaseApi():
         return self._index_col_string_dict
 
     @staticmethod
-    def db_execute(cur: sqlite.Cursor, sql: str) -> int: #pylint: disable=E1101
+    def db_execute(cur: sqlite.Cursor, sql: str) -> int:  # pylint: disable=E1101
         """A convenience wrapper to execute a given command. Has error handling. 
 
         Args:
@@ -204,7 +262,7 @@ class DatabaseApi():
         return [x[0] for x in table_list if x[0] != "sqlite_sequence"]
 
     @staticmethod
-    def list_fields(con: sqlite.Connection, tablename: str) -> list: #pylint: disable=E1101
+    def list_fields(con: sqlite.Connection, tablename: str) -> list:  # pylint: disable=E1101
         """Given a connection and a tablename, list all fields in the table
 
         Args:
@@ -225,8 +283,8 @@ class DatabaseApi():
             raise
 
         return [x[0] for x in res.description]
-    
-    def get_batch_id(self,batch:str,tf:str,replicate:str) -> int:
+
+    def get_batch_id(self, batch: str, tf: str, replicate: str) -> int:
         """_summary_
 
         Args:
@@ -243,14 +301,14 @@ class DatabaseApi():
 
         sql = f"SELECT id FROM batch WHERE batch = '{batch}' "\
             f"AND tf = '{tf}' AND replicate = '{replicate}'"
-        
+
         cur = self.con.cursor()
-        
-        res = self.db_execute(cur,sql).fetchall()
+
+        res = self.db_execute(cur, sql).fetchall()
 
         if len(res) > 1:
             raise ValueError('More than 1 record returned')
-        
+
         return res[0]['id']
 
     def count_hops_factory(self, tbl: str) -> Callable[[], int]:
@@ -311,9 +369,9 @@ class DatabaseApi():
 
         if batch_id:
             sql = " ".join([sql, f'WHERE batch_id = "{batch_id}"'])
-        
+
         total_hops = int(pd.read_sql_query(sql, self.con).total)
-        
+
         if total_hops == 0:
             raise ValueError(f'Total hops for {tbl}: {batch_id} equal to 0')
 
@@ -370,14 +428,16 @@ class DatabaseApi():
             # if memory, create a database in memory
             if db_path == ":memory:":
                 self.db_loc = ":memory:"
-                self.con = sqlite.connect(db_path,timeout=self.db_timeout)  # pylint: disable=E1101
+                self.con = sqlite.connect(
+                    db_path, timeout=self.db_timeout)  # pylint: disable=E1101
                 # see https://docs.python.org/3/library/sqlite.html#connection-objects
                 #con.row_factory = lambda cursor, row: row[0]
                 self.con.row_factory = sqlite.Row  # pylint: disable=E1101
             # else, check the path and validate
             else:
                 self.db_loc = db_path
-                self.con = sqlite.connect(db_path,timeout=self.db_timeout)  # pylint: disable=E1101
+                self.con = sqlite.connect(
+                    db_path, timeout=self.db_timeout)  # pylint: disable=E1101
                 # see https://docs.python.org/3/library/sqlite.html#connection-objects
                 #con.row_factory = lambda cursor, row: row[0]
                 self.con.row_factory = sqlite.Row  # pylint: disable=E1101
@@ -389,9 +449,11 @@ class DatabaseApi():
         try:
             self.con.close()
         except AttributeError as err:
-            logging.info(f"Failed attempt to close database. Likely not a valid DB. Error: {err}")
+            logging.info(
+                f"Failed attempt to close database. Likely not a valid DB. Error: {err}")
         except ProgrammingError as err:
-            logging.info(f"Failed attempt to close database. Likely not a valid DB. Error: {err}")
+            logging.info(
+                f"Failed attempt to close database. Likely not a valid DB. Error: {err}")
 
     def validate(self, con: sqlite.Connection = None) -> bool:  # pylint:disable=E1101
         """A function to validate the database for expected structure/tables,etc
@@ -437,11 +499,11 @@ class DatabaseApi():
 
     # TODO return inserter, updater, etc as an 'overloaded' function (via
     # internal factory function)
-    def new_table(self, tablename: str, col_dict: dict, 
-                  fk_tablelist:list = None, on_delete_cascade:bool = True, 
-                  clean:bool = False) -> Callable[[list, list], int]:
+    def new_table(self, tablename: str, col_dict: dict,
+                  fk_tablelist: list = None, on_delete_cascade: bool = True,
+                  clean: bool = False) -> Callable[[list, list], int]:
         """Create a new table in the database
-        
+
         Args:
             tablename (str): name of the new table
             col_dict (dict): dictionary where the keys are field names and values are data types
@@ -469,9 +531,11 @@ class DatabaseApi():
             if fk_tablelist:
                 for table in fk_tablelist:
                     if table not in self.list_tables(self.con):
-                        raise AttributeError(f"Tables in the foreign key list must exist in the database. {table} DNE.")
+                        raise AttributeError(
+                            f"Tables in the foreign key list must exist in the database. {table} DNE.")
                     elif table+"_id" not in col_dict:
-                        raise AttributeError(f"{table+'_id'} does not exist as a field in col_dict. Foreign key columns must have format <fk_table>_id and exist in col_dict")
+                        raise AttributeError(
+                            f"{table+'_id'} does not exist as a field in col_dict. Foreign key columns must have format <fk_table>_id and exist in col_dict")
                     else:
                         fk_str = f"FOREIGN KEY ({table}_id) REFERENCES {table}(id)"
                         if on_delete_cascade:
@@ -479,18 +543,20 @@ class DatabaseApi():
                         fk_constraints.append(fk_str)
             # turn the fk_constraints list into a sql statement, or an empty string
             # if there is on fk_tablelist
-            fk_sql = ","+",".join(fk_constraints) if len(fk_constraints)>0 else ""
-            
+            fk_sql = "," + \
+                ",".join(fk_constraints) if len(fk_constraints) > 0 else ""
+
             # construct the create table sql
             create_sql = "".join([f"CREATE TABLE {tablename} (",
-            ",".join([f'"{self.pk}" INTEGER PRIMARY KEY AUTOINCREMENT',parsed_col_dict]),
-            fk_sql, ")"])
+                                  ",".join(
+                                      [f'"{self.pk}" INTEGER PRIMARY KEY AUTOINCREMENT', parsed_col_dict]),
+                                  fk_sql, ")"])
             # execute
             cur = self.con.cursor()
             for sql in [drop_sql, create_sql]:
                 self.db_execute(cur, sql)
                 self.con.commit()
-        
+
         def inserter(values: list, columns: list = col_dict.keys()) -> int:
             """new_table() both creates a table, and returns a callable function 
             which takes a list of values and the columns into which to insert. By 
@@ -505,16 +571,16 @@ class DatabaseApi():
             Returns:
                 int: Number of rows affected (I think)
             """
-            # TODO this won't work as stands -- need some way of handling data type 
+            # TODO this won't work as stands -- need some way of handling data type
             # and appropriate quoting
             insert_sql = f"INSERT INTO {tablename} ({','.join(columns)}) "\
-                        f"VALUES ({','.join([str(x) for x in values])})"
+                f"VALUES ({','.join([str(x) for x in values])})"
             # update_sql = " ".join([f"UPDATE {tablename}",])
             logging.debug(f"attempting to insert: {insert_sql}")
             self.db_execute(cur, insert_sql)
             self.con.commit()
         return inserter
-    
+
     def index_table(self, tablename: str, index_col_string: list) -> int:
         """_summary_
 
@@ -531,10 +597,10 @@ class DatabaseApi():
         self.db_execute(cur, index_sql)
         self.con.commit()
 
-    def add_frame(self, df: pd.DataFrame, table_format:str, 
-                  tablename:str = None , table_type: str = None, 
-                  tablename_suffix: str = None, drop: bool = False, 
-                  fk_tablelist:list = None) -> bool:
+    def add_frame(self, df: pd.DataFrame, table_format: str,
+                  tablename: str = None, table_type: str = None,
+                  tablename_suffix: str = None, drop: bool = False,
+                  fk_tablelist: list = None) -> bool:
         """Add a pandas dataframe to the database
 
         Args:
@@ -572,9 +638,9 @@ class DatabaseApi():
 
             if table_format not in self.table_types_dict:
                 expected_tbl_list = [x for sublist in self.table_types_dict.values()
-                                    for x in sublist]
+                                     for x in sublist]
                 raise KeyError(f"table_type {table_type} not recognized. "
-                            f"Available options are {','.join(expected_tbl_list)}")
+                               f"Available options are {','.join(expected_tbl_list)}")
         # verify that the expected columns exist
         if set(self.required_fields[table_format]) - set(df.columns) != set():
             raise AttributeError(f"The format for this type_type is "
@@ -586,7 +652,7 @@ class DatabaseApi():
                 tablename = table_type
             else:
                 tablename = '_'.join([table_type,
-                                    tablename_suffix.removeprefix("_")]).strip()
+                                      tablename_suffix.removeprefix("_")]).strip()
 
         # assign a cursor to the database at cur
         cur = self.con.cursor()
@@ -598,12 +664,13 @@ class DatabaseApi():
                 self.con.commit()
             except sqlite.OperationalError as exc:  # pylint: disable=E1101
                 msg = f"Could not drop table with sql: {drop_sql}. Error: {exc}"
-                logging.critical(msg+" ", exc_info=(sys.exc_info()))  # pylint: disable=W1201
+                logging.critical(
+                    msg+" ", exc_info=(sys.exc_info()))  # pylint: disable=W1201
                 raise
 
         col_dict = {k: "" for k in list(df.columns)}
 
-        # create table - do this to corretly set primary key, foreign keys and 
+        # create table - do this to corretly set primary key, foreign keys and
         # data types, etc.
         if tablename not in self.list_tables(self.con):
             self.new_table(tablename, col_dict, fk_tablelist)
@@ -615,16 +682,16 @@ class DatabaseApi():
                 # standardize the chromosomes if there is a column called chr
                 if self.chr_map_table in self.list_tables(self.con) and 'chr' in df.columns:
                     df = self.standardize_chr_format_df(df)
-        
+
         # add the data
         df.to_sql(tablename,
                   con=self.con,
                   if_exists='append',
                   index=False)
-        
+
         return True
-    
-    def standardize_chr_format_df(self,df:pd.DataFrame) -> pd.DataFrame:
+
+    def standardize_chr_format_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """standardize chr name format outside of the df
 
         Args:
@@ -641,7 +708,8 @@ class DatabaseApi():
             f'select * from {self.chr_map_table}',
             self.con)
 
-        chr_map_dict = {k: v for k, v in chr_map_df.to_dict('list').items() if k != 'id'}
+        chr_map_dict = {k: v for k, v in chr_map_df.to_dict(
+            'list').items() if k != 'id'}
 
         current_unique_chr_names = set(df.chr.unique())
 
@@ -658,20 +726,20 @@ class DatabaseApi():
         # raise an error
         if curr_chrom_format == -1:
             raise AttributeError("Chromosome names are not " +
-                                    "recognized in a recognized format. Unique " +
-                                    "chr names which cause error are: %s."
-                                    % ",".join(current_unique_chr_names))
+                                 "recognized in a recognized format. Unique " +
+                                 "chr names which cause error are: %s."
+                                 % ",".join(current_unique_chr_names))
         elif curr_chrom_format != self.standard_chr_format:
             tmp_df = \
                 pd.merge(
                     df,
-                    chr_map_df[[curr_chrom_format,self.standard_chr_format]], 
-                    how='left', 
-                    left_on='chr', 
+                    chr_map_df[[curr_chrom_format, self.standard_chr_format]],
+                    how='left',
+                    left_on='chr',
                     right_on=curr_chrom_format)\
-                .drop('chr',axis=1)\
-                .rename(columns={self.standard_chr_format:'chr'})
-            
+                .drop('chr', axis=1)\
+                .rename(columns={self.standard_chr_format: 'chr'})
+
             return tmp_df[df.columns]
         else:
             return df
@@ -731,4 +799,4 @@ class DatabaseApi():
                                              self.standard_chr_format, table, curr_chrom_format)
                 # execute swap
                 self.db_execute(cur, sql)
-                self.con.commit() 
+                self.con.commit()
