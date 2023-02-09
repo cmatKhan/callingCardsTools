@@ -6,9 +6,9 @@ import tempfile
 
 import pysam
 
-from callingcardstools.AlignmentTagger import AlignmentTagger
+from callingcardstools.Alignment.AlignmentTagger import AlignmentTagger
 from callingcardstools.QcStatusCoding.StatusFlags import StatusFlags
-from callingcardstools.QcStatusCoding.create_status_coder import create_status_coder
+from callingcardstools.QcStatusCoding.create_status_coder import create_status_coder # noqa
 from .ReadRecords import ReadRecords
 
 __all__ = ['parse_bam']
@@ -16,7 +16,7 @@ __all__ = ['parse_bam']
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 
-def parse_args(subparser, script_description, common_args) -> argparse.ArgumentParser:
+def parse_args(subparser, script_description, common_args) -> argparse.ArgumentParser: # noqa
 
     parser = subparser.add_parser(
         'parse_bam',
@@ -122,11 +122,11 @@ def parse_bam(args: argparse.Namespace) -> None:
     logging.info(f"qc_output: {qc_output}")
 
     # open the bam file
-    bam_in = pysam.AlignmentFile(args.input)  # pylint:disable=E0602
+    bam_in = pysam.AlignmentFile(args.input)  # pylint:disable=E1101
 
     # open output files for tagged bam reads
     output_bam_dict = \
-        {k: pysam.AlignmentFile(v, "wb", header=bam_in.header)
+        {k: pysam.AlignmentFile(v, "wb", header=bam_in.header)  
             for k, v in output_bampath_dict.items()}
 
     # create an AlignmentTagger object
@@ -141,7 +141,8 @@ def parse_bam(args: argparse.Namespace) -> None:
         qc_tmp_file = os.path.join(tmp_dir, "tmp_qc.tsv")
         # instantiate ReadRecords object to handle creating qbed, qc files
         read_records = ReadRecords(qbed_tmp_file, qc_tmp_file)
-        # create a status coder object to handle adding status codes to the reads
+        # create a status coder object to handle adding status codes
+        # to the reads
         status_coder = create_status_coder(at.insert_seq, args.mapq_threshold)
         logging.info("iterating over bam file...")
         for read in bam_in.fetch():
@@ -153,7 +154,8 @@ def parse_bam(args: argparse.Namespace) -> None:
                 tagged_read = at.tag_read(read)
                 # eval the read based on quality expectations, get the status
                 status = status_coder(tagged_read['read'])
-                # add the barcode status flag to status if the barcode is failing
+                # add the barcode status flag to status if the barcode
+                # is failing
                 if not tagged_read['barcode_details']['passing']:
                     status = status + StatusFlags.BARCODE.flag()
                 # add the data to the qbed and qc records

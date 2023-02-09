@@ -2,7 +2,7 @@ import os
 import gzip
 import logging
 
-from .BarcodeParser import BarcodeParser
+from ..BarcodeParser import BarcodeParser
 from Bio import SeqIO
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())

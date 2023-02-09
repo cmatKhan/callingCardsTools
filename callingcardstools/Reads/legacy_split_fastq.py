@@ -252,7 +252,29 @@ def filter_reads(read1fn, read2fn, barcodefn, output, hammp, hammt):
             r2_bcp_filehandle_dict[key].close()
 
 
-def parse_args(subparser, script_desc, common_args):
+def parse_args(
+        subparser: argparse.ArgumentParser,
+        script_desc: str,
+        common_args: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    """This is intended to be used as a subparser for a parent parser passed 
+    from __main__.py. This is the 'legacy' split fastq method from the 
+    original Mitra lab pipeline. This method is not recommended for use.
+
+    Args:
+        subparser (argparse.ArgumentParser): See __main__.py -- this is the 
+        subparser for the parent parser in __main__.py
+        script_desc (str): Description of this script, which is set in 
+        __main__.py. The description is set in __main__.py so that all of 
+        the script descriptions are together in one spot and it is easier to 
+        write a unified cmd line interface
+        common_args (argparse.ArgumentParser): These are the common arguments 
+        for all scripts in callingCardsTools, for instance logging level
+
+    Returns:
+        argparse.ArgumentParser: The subparser with the this additional 
+        cmd line tool added to it -- intended to be gathered in __main__.py 
+        to create a unified cmd line interface for the package
+    """
 
     parser = subparser.add_parser(
         'legacy_split_fastq',

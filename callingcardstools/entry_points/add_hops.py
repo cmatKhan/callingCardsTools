@@ -7,7 +7,7 @@ import logging
 
 from pysqlite3.dbapi2 import connection
 
-from callingcardstools.database_managers.yeast import hopsdb as yeast_db
+from callingcardstools.Database.yeast import hopsdb as yeast_db
 
 def database_manager(organism:literal['yeast','mammal'], db_path:str) -> connection:
 	"""_summary_

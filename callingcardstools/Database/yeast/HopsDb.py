@@ -7,7 +7,7 @@ import logging
 import warnings
 # local
 from callingcardstools.BarcodeParser import BarcodeParser
-from callingcardstools.DatabaseApi import DatabaseApi
+from callingcardstools.Database.DatabaseApi import DatabaseApi
 from .peak_calling import call_peaks_with_background
 # outside
 import pandas as pd

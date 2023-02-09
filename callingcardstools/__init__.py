@@ -1,10 +1,10 @@
 from .BarcodeParser import *
-from .ReadParser import *
-from .AlignmentTagger import *
+from .Reads.ReadParser import *
+from .Alignment.AlignmentTagger import *
 from .QcStatusCoding import *
 from .SummaryParser import *
-from . import database_managers
-from .tag_bam import *
+from . import Database
+from .Alignment.yeast.tag_bam import *
 from . import utils
 
 __all__ = ["BarcodeParser",
@@ -13,6 +13,6 @@ __all__ = ["BarcodeParser",
            "StatusFlags",
            "QcStatusCoding",
            "SummaryParser",
-           'database_managers',
+           'Database',
            'tag_bam',
            'utils']

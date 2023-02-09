@@ -10,7 +10,7 @@ import pysam
 import pandas as pd
 # from memory_profiler import profile
 # local dependencies
-from callingcardstools.AlignmentTagger import AlignmentTagger
+from callingcardstools.Alignment.AlignmentTagger import AlignmentTagger
 from callingcardstools.QcStatusCoding.StatusFlags import StatusFlags
 
 logging.basicConfig(

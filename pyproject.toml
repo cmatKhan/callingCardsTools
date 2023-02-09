@@ -8,8 +8,8 @@ readme = "README.md"
 homepage = "https://cmatkhan.github.io/callingCardsTools/"
 repository = "https://github.com/cmatKhan/callingCardsTools"
 documentation = "https://cmatkhan.github.io/callingCardsTools/"
-exclude = ['Dockerfile', '*temp_*','docs', 'site', 'tests', '.git','.venv','.github']
-include = ["callingcardstools/resources"]
+exclude = ['Dockerfile', '*temp_*','docs', 'site', 'tests', '.git','.venv','.github', 'Resources/yeast/README.md']
+include = ["callingcardstools/Resources"]
 
 [tool.poetry.dependencies]
 # note: this is required for scipy

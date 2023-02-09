@@ -8,7 +8,7 @@ import pysqlite3 as sqlite3
 import pandas as pd
 from pandas.testing import assert_frame_equal, assert_series_equal
 
-from callingcardstools.database_managers.yeast import HopsDb as _yeast_hopsdb
+from callingcardstools.Database.yeast import HopsDb as _yeast_hopsdb
 from callingcardstools.Resources import Resources
 from .conftests import *
 

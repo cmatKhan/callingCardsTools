@@ -1,18 +1,41 @@
-# pylint:disable=C0206
+# pylint:disable=C0206,W1514
 import logging
 import os
 import argparse
 
 from Bio import SeqIO
 
-from callingcardstools.ReadParser import ReadParser
+from callingcardstools.Reads.ReadParser import ReadParser
 
 __all__ = ['parse_args', 'split_fastq']
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 
-def parse_args(subparser, script_desc, common_args):
+def parse_args(
+        subparser: argparse.ArgumentParser,
+        script_desc: str,
+        common_args: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    """This is intended to be used as a subparser for a parent parser passed 
+    from __main__.py. It adds the arguments required to iterate over yeast 
+    reads and demultiplex the fastq into separate files based on the TFs 
+    in the barcode details file.
+
+    Args:
+        subparser (argparse.ArgumentParser): See __main__.py -- this is the 
+        subparser for the parent parser in __main__.py
+        script_desc (str): Description of this script, which is set in 
+        __main__.py. The description is set in __main__.py so that all of 
+        the script descriptions are together in one spot and it is easier to 
+        write a unified cmd line interface
+        common_args (argparse.ArgumentParser): These are the common arguments 
+        for all scripts in callingCardsTools, for instance logging level
+
+    Returns:
+        argparse.ArgumentParser: The subparser with the this additional 
+        cmd line tool added to it -- intended to be gathered in __main__.py 
+        to create a unified cmd line interface for the package
+    """
 
     parser = subparser.add_parser(
         'split_fastq',
@@ -47,6 +70,11 @@ def parse_args(subparser, script_desc, common_args):
                         help='append this after the tf name and before _R1.fq '
                         'in the output fastq files',
                         default="split")
+    parser.add_argument('-o',
+                        '--output_prefix',
+                        help='a path to a directory where the output files '
+                        'will be output',
+                        default=".")
 
     return subparser
 
@@ -57,7 +85,8 @@ def split_fastq(args: argparse.Namespace):
     logging.info('checking input...')
     input_path_list = [args.read1,
                        args.read2,
-                       args.barcode_details]
+                       args.barcode_details,
+                       args.output_prefix]
     for input_path in input_path_list:
         if not os.path.exists(input_path):
             raise FileNotFoundError("Input file DNE: %s" % input_path)
@@ -82,27 +111,37 @@ def split_fastq(args: argparse.Namespace):
     # for each of the keys in barcode[components][split_key]
     else:
         determined_out = {
-            'r1': {tf: open(f"{tf}_{args.split_suffix}_R1.fq", "w") for tf in
-                   rp.barcode_dict['components'][args.split_key]['map'].values()},  # pylint:disable=W1514 # noqa
-            'r2': {tf: open(f"{tf}_{args.split_suffix}_R2.fq", "w") for tf in\
-                   rp.barcode_dict['components'][args.split_key]['map'].values()}  # pylint:disable=W1514 # noqa
+            'r1': {tf: open(os.path.join(
+                args.output_prefix,
+                f"{tf}_{args.split_suffix}_R1.fq"), "w") for tf in
+                   rp.barcode_dict['components'][args.split_key]['map'].values()},  # noqa
+            'r2': {tf: open(os.path.join(
+                args.output_prefix,
+                f"{tf}_{args.split_suffix}_R2.fq"), "w") for tf in
+                   rp.barcode_dict['components'][args.split_key]['map'].values()}  # noqa
         }
     # create/open undetermined read output -- these are reads which do not
     # match barcode expectations
     undetermined_out = {
-        'r1': open(f"undetermined_{args.split_suffix}_R1.fq", "w"),  # pylint:disable=W1514 # noqa
-        'r2': open(f"undetermined_{args.split_suffix}_R2.fq", "w")  # pylint:disable=W1514 # noqa 
+        'r1': open(os.path.join(
+            args.output_prefix,
+            f"undetermined_{args.split_suffix}_R1.fq"), "w"),
+        'r2': open(os.path.join(
+                args.output_prefix,
+                f"undetermined_{args.split_suffix}_R2.fq"), "w")
     }
 
-    # iterate over reads, split reads whose barcode components 
-    # match expectation into the appropriate file, and reads which don't 
+    # iterate over reads, split reads whose barcode components
+    # match expectation into the appropriate file, and reads which don't
     # fulfill barcode expecations into undetermined.fq
     # also record each read and barcode details into the id_to_bc.csv file.
-    # note that this will be pretty big (measured in GBs, not as big as R1, 
+    # note that this will be pretty big (measured in GBs, not as big as R1,
     # but close)
     logging.info('opening id to barcode map...')
     additional_components = ['tf', 'restriction_enzyme']
-    with open("id_bc_map.tsv", "w") as id_bc_map:  # pylint:disable=W1514
+    with open(os.path.join(
+                args.output_prefix,
+                "id_bc_map.tsv"), "w") as id_bc_map:  # pylint:disable=W1514
         id_bc_map.write(
             "\t".join(['id'] + list(rp.components) + additional_components))
         id_bc_map.write("\n")

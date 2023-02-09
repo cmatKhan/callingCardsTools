@@ -1,12 +1,18 @@
-from callingcardstools.QcStatusCoding import create_status_coder
+from argparse import Namespace
+from callingcardstools.QcStatusCoding.create_status_coder import create_status_coder # noqa
+from callingcardstools.Alignment.yeast.process_alignments import tag_alignments as yeast_tag_alignments  # noqa
 from .conftests import *
 
+import pysam
 
-def test_yeast_constructor(yeast_readtagger):
+
+def test_constructor(yeast_readtagger):
     assert yeast_readtagger.is_open() == True
 
 
-def test_read_tagger_yeast(yeast_readtagger, yeast_bamfile, yeast_bp):
+def test_aln_tagging_yeast(yeast_readtagger, yeast_bamfile, yeast_bp):
+
+    bam = pysam.AlignmentFile(yeast_bamfile, "rb")
 
     rt = yeast_readtagger
 
@@ -138,7 +144,7 @@ def test_read_tagger_yeast(yeast_readtagger, yeast_bamfile, yeast_bp):
          'insert_seq': '*'}]
 
     actual = []
-    for read in yeast_bamfile.fetch():
+    for read in bam.fetch():
         tagged_read = rt.tag_read(read)
         status_coder = create_status_coder(
             mapq_threshold=10,
@@ -161,3 +167,16 @@ def test_read_tagger_yeast(yeast_readtagger, yeast_bamfile, yeast_bp):
         actual.append(summary_dict)
     assert 2 == 2
     #assert actual == expected
+
+
+def test_tag_bam(yeast_bamfile,yeast_fasta,yeast_barcode_details):
+    ns = Namespace(
+        alignment=str(yeast_bamfile),
+        genome=str(yeast_fasta),
+        barcode_details=str(yeast_barcode_details),
+        mapq_threshold=10
+    )
+
+    output = yeast_tag_alignments(ns)
+
+    assert 2 == 2

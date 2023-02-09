@@ -3,7 +3,7 @@ import pandas as pd
 
 from ..conftests import *
 from callingcardstools.Resources import Resources
-from callingcardstools.database_managers.yeast import HopsDb as yeast_HopsDb
+from callingcardstools.Database.yeast import HopsDb as yeast_HopsDb
 
 
 @pytest.fixture

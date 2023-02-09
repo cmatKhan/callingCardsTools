@@ -5,9 +5,9 @@ import logging
 from logging.config import dictConfig
 from importlib.metadata import version
 
-from .SplitFastq import legacy_split_fastq, split_fastq
-from .mammals import parse_bam
-from .ProcessAlignments import process_alignments
+from .Reads import legacy_split_fastq, split_fastq
+from .Alignment.mammals import parse_bam
+from .Alignment.yeast import process_alignments
 
 
 def parse_args() -> Callable[[list], argparse.Namespace]:
@@ -85,7 +85,7 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         common_args
     )
 
-    # return the top level parser to be used in the main method below ----------
+    # return the top level parser to be used in the main method below
     return parser
 
 
@@ -130,12 +130,13 @@ def main(args=None) -> None:
         }
     }
     dictConfig(log_config)
-# log the cmd line arguments at the debug level
+    # log the cmd line arguments at the debug level
     logging.debug(sys.argv)
     logging.debug(str(args))
 
     # note that this works b/c the subparser set_defaults function attribute
-    # is set. see https://docs.python.org/3/library/argparse.html#parser-defaults
+    # is set.
+    # see https://docs.python.org/3/library/argparse.html#parser-defaults
     # scroll up from that point to see a usage example
     args.func(args)
 
