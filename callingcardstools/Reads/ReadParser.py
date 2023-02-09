@@ -2,8 +2,9 @@ import os
 import gzip
 import logging
 
-from ..BarcodeParser import BarcodeParser
 from Bio import SeqIO
+
+from callingcardstools.BarcodeParser.BarcodeParser import BarcodeParser
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 

@@ -6,7 +6,7 @@ import logging
 # outside dependencies
 import pysam
 # local dependendecies
-from callingcardstools.BarcodeParser import BarcodeParser
+from callingcardstools.BarcodeParser.BarcodeParser import BarcodeParser
 
 __all__ = ['AlignmentTagger']
 

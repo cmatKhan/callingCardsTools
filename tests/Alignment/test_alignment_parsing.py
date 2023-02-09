@@ -1,6 +1,6 @@
 from argparse import Namespace
 from callingcardstools.QcStatusCoding.create_status_coder import create_status_coder # noqa
-from callingcardstools.Alignment.yeast.process_alignments import tag_alignments as yeast_tag_alignments  # noqa
+from callingcardstools.Alignment.yeast.process_alignments import process_alignments as yeast_process_alignments  # noqa
 from .conftests import *
 
 import pysam
@@ -177,6 +177,6 @@ def test_tag_bam(yeast_bamfile,yeast_fasta,yeast_barcode_details):
         mapq_threshold=10
     )
 
-    output = yeast_tag_alignments(ns)
+    output = yeast_process_alignments(ns)
 
     assert 2 == 2
