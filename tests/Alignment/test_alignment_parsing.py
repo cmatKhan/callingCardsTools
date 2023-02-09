@@ -171,7 +171,7 @@ def test_aln_tagging_yeast(yeast_readtagger, yeast_bamfile, yeast_bp):
 
 def test_tag_bam(yeast_bamfile,yeast_fasta,yeast_barcode_details):
     ns = Namespace(
-        alignment=str(yeast_bamfile),
+        bampath=str(yeast_bamfile),
         genome=str(yeast_fasta),
         barcode_details=str(yeast_barcode_details),
         mapq_threshold=10

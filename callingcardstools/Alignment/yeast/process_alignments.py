@@ -12,7 +12,7 @@ import pandas as pd
 # local dependencies
 from callingcardstools.Alignment.AlignmentTagger import AlignmentTagger
 from callingcardstools.QcStatusCoding.create_status_coder import create_status_coder  # noqa
-from callingcardstools import SummaryParser
+from callingcardstools.Alignment.SummaryParser import SummaryParser
 
 __all__ = ['parse_args', 'process_alignments']
 
@@ -53,8 +53,8 @@ def parse_args(
 
     parser.set_defaults(func=process_alignments)
 
-    parser.add_argument("-a",
-                        "--alignment",
+    parser.add_argument("-i",
+                        "--bampath",
                         help="path to the input bam file",
                         required=True)
 
@@ -109,7 +109,7 @@ def process_alignments(args: argparse.Namespace) -> dict:
         bampath (str): path to the alignment file (bam)
         insertion_length (int): Expected length of the insertion sequence
         barcode_details_json (str): Path to the barcode details json file
-        fasta_path (str): Path to a fasta file
+        genome(str): Path to a fasta file
         mapq_threshold (int, optional): mapq threshold below which to label a
          read as failing. Defaults to 10.
         out_suffix (str, optional): suffix to append to the augmented bam file
@@ -127,7 +127,7 @@ def process_alignments(args: argparse.Namespace) -> dict:
     """
     # Check inputs
     try:
-        input_path_list = [args.alignment,
+        input_path_list = [args.bampath,
                            args.genome,
                            args.genome + '.fai',
                            args.barcode_details]
@@ -175,7 +175,7 @@ def process_alignments(args: argparse.Namespace) -> dict:
             "wb",
             header=input_bamfile.header)
 
-        at = AlignmentTagger(args.barcode_details_json, args.fasta_path)
+        at = AlignmentTagger(args.barcode_details, args.genome)
 
         status_coder = create_status_coder(
             mapq_threshold=mapq_threshold,

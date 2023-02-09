@@ -1,6 +1,6 @@
 from math import inf as infinity
 
-from callingcardstools.BarcodeParser import BarcodeParser
+from callingcardstools.BarcodeParser.BarcodeParser import BarcodeParser
 from .conftests import *
 
 

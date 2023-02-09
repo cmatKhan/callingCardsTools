@@ -3,7 +3,7 @@ import random
 import pytest
 import pathlib
 import pandas as pd
-from callingcardstools.BarcodeParser import BarcodeParser
+from callingcardstools.BarcodeParser.BarcodeParser import BarcodeParser
 from callingcardstools.Alignment.AlignmentTagger import AlignmentTagger
 
 # yeast fixtures --------------------------------------------------------------

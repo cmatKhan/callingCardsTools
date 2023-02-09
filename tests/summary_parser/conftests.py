@@ -1,5 +1,4 @@
 from ..conftests import *
-from callingcardstools.Database.yeast import HopsDb as yeast_HopsDb
 
 @pytest.fixture
 def yeast_summary():
