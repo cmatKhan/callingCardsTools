@@ -85,6 +85,16 @@ def yeast_hops_data():
 
     return file_dict
 
+@pytest.fixture
+def yeast_qbed():
+    """A qbed file for yeast
+
+    Returns:
+        Str: Path to the yeast qbed file
+    """
+    qbed = pathlib.Path("tests/test_data/yeast/run_6177/DAL80.qbed").resolve()
+
+    return qbed
 
 # Mouse fixtures --------------------------------------------------------------
 

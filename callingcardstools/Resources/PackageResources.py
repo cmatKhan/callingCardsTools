@@ -15,7 +15,7 @@ class Resources:
             'barcode_details':
                 pkg_resources.path(yeast, "barcode_details.json"),
             'yeast_db':
-                pkg_resources.path(yeast, "yeast_db.json"),
+                pkg_resources.path(yeast, "yeast.db"),
         }
 
         self._mouse_resources = {
