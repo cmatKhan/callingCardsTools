@@ -8,6 +8,7 @@ from importlib.metadata import version
 from .Reads import legacy_split_fastq, split_fastq
 from .Alignment.mammals import parse_bam
 from .Alignment.yeast import process_alignments
+from .PeakCalling import yeast as yeast_call_peaks
 
 
 def parse_args() -> Callable[[list], argparse.Namespace]:
@@ -34,7 +35,9 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         'parse_bam': 'Iterate over the reads in an alignment file (bam) and '
         'separate reads into passing.bam and failing.bam, a '
         'qBed format file of the passing reads, and a qc file which '
-        'allows finer exploration of the barcode and alignment metrics'
+        'allows finer exploration of the barcode and alignment metrics',
+
+        'yeast_call_peaks': 'call peaks from a yeast qbed file'
     }
 
     # common options -- these can be applied to all scripts via the 'parent'---
@@ -82,6 +85,12 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
     subparsers = parse_bam.parse_args(
         subparsers,
         script_descriptions['parse_bam'],
+        common_args
+    )
+
+    subparsers = yeast_call_peaks.parse_args(
+        subparsers,
+        script_descriptions['yeast_call_peaks'],
         common_args
     )
 

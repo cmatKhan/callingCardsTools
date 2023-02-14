@@ -1,6 +1,8 @@
 # pylint:disable=W0640,W0108,C0114,W1203,W0127
 from typing import Callable
 import logging
+import argparse
+import os
 
 import numpy as np
 import sqlalchemy
@@ -238,3 +240,104 @@ def call_peaks(qbed_df: pd.DataFrame,
                                     'expr_hops', 'log2fc', 'poisson_pval',
                                     'hypergeometric_pval']]\
             .rename({'background_hops': 'bg_hops'}, axis=1)
+
+
+def parse_args(
+        subparser: argparse.ArgumentParser,
+        script_desc: str,
+        common_args: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    """This is intended to be used as a subparser for a parent parser passed 
+    from __main__.py. It adds the arguments required call peaks from a yeast 
+    qbed file
+
+    Args:
+        subparser (argparse.ArgumentParser): See __main__.py -- this is the 
+        subparser for the parent parser in __main__.py
+        script_desc (str): Description of this script, which is set in 
+        __main__.py. The description is set in __main__.py so that all of 
+        the script descriptions are together in one spot and it is easier to 
+        write a unified cmd line interface
+        common_args (argparse.ArgumentParser): These are the common arguments 
+        for all scripts in callingCardsTools, for instance logging level
+
+    Returns:
+        argparse.ArgumentParser: The subparser with the this additional 
+        cmd line tool added to it -- intended to be gathered in __main__.py 
+        to create a unified cmd line interface for the package
+    """
+
+    parser = subparser.add_parser(
+        'yeast_call_peaks',
+        help=script_desc,
+        prog='yeast_call_peaks',
+        parents=[common_args]
+    )
+
+    parser.set_defaults(func=main)
+
+    parser.add_argument('-q',
+                        '--qbed',
+                        help='Path to a qbed file',
+                        required=True,
+                        type=str)
+    parser.add_argument('-r',
+                        '--regions',
+                        help='name of the regions -- this must be one of '
+                        'levels in the regions table in yeast_db. Currently '
+                        'one of ["yiming", "not_orf"]',
+                        default='yiming',
+                        type=str)
+    parser.add_argument('-b',
+                        '--background',
+                        help='name of the background to use -- this must be '
+                        'one of ["adh1", "dsir4"]',
+                        default='adh1',
+                        type=str)
+    parser.add_argument('-p',
+                        '--poisson_pseudocount',
+                        help='pseudocount to add to the poisson distribution',
+                        default=0.5,
+                        type=float)
+
+    return subparser
+
+
+def main(args: argparse.Namespace) -> None:
+    """This is the main function for the yeast_call_peaks script. It is 
+    called from __main__.py
+
+    Args:
+        args (argparse.Namespace): The arguments passed from the cmd line
+
+    Raises:
+        FileNotFoundError: If the qbed file does not exist
+        ValueError: If the poisson_pseudocount is not a float
+
+    Returns:
+        None
+    """
+    logging.info(f"Running call_peaks with args: {args}")
+
+    if not os.path.exists(args.qbed):
+        raise FileNotFoundError(f"qbed file {args.qbed} does not exist")
+    else:
+        qbed_df = pd.read_csv(args.qbed, sep='\t')
+        if not qbed_df.shape[1] == 6:
+            raise ValueError('qbed file must have 6 columns')
+        # set colnames
+        qbed_df = qbed_df.set_axis(['chr', 'start', 'end',
+                                    'depth', 'strand', 'annote'],
+                                   axis=1, copy=False)
+
+    if not isinstance(args.poisson_pseudocount, float):
+        raise ValueError('poisson_pseudocount must be a float')
+
+    peaks_df = call_peaks(qbed_df=qbed_df,
+                          regions_sample=args.regions,
+                          background_sample=args.background,
+                          poisson_pseudocount=args.poisson_pseudocount)
+
+    peaks_df\
+        .sort_values(by=['poisson_pval'])\
+        .to_csv(args.qbed+'.sig.tsv',
+                sep='\t', index=False)
