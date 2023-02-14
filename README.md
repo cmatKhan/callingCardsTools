@@ -1,6 +1,4 @@
-# General use
-
-Once you have bedtools in your path, you can install like so:
+# Installation 
 
 ```
 pip install callingcardstools

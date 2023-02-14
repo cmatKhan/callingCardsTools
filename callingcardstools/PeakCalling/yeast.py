@@ -170,22 +170,23 @@ def evaluate_hops_constructor(
 def call_peaks(qbed_df: pd.DataFrame,
                regions_sample: str,
                background_sample: str,
-               poisson_pseudocount: float) -> pd.DataFrame:
-    """_summary_
+               poisson_pseudocount: float = 0.2) -> pd.DataFrame:
+    """Call peaks from a qbed file for yeast
 
     Args:
-        grouped_df (pd.DataFrame): _description_
-        total_hops_dict (dict): _description_
-        poisson_pseudocount (float): _description_
-        group_field (str, optional): _description_. Defaults to "batch_id".
+        qbed_df (pd.DataFrame): A qbed file following the prescribed 
+        qbed format -- at least 6 columns: 
+        chr, start, end, depth,strand,annotation
+        regions_sample (str): name of the regions sample [yiming, not_orf]
+        background_sample (str): name of the background sample [adh1, dsir4]
+        poisson_pseudocount (float, optional): psuedocount to add to the
+         qbed count prior to calculating poissson pvalue. Defaults to 0.2.
 
-    Raises:
-        KeyError: _description_
-        AttributeError: _description_
+        Raises:
+            KeyError: _description_
 
-    Returns:
-        pd.DataFrame: _description_
-    """
+        Returns:
+            pd.DataFrame: _description_"""
     if regions_sample not in {'yiming', 'not_orf'}:
         raise KeyError('regions_sample must be one of "yiming" or "not_orf"')
     if background_sample not in {'adh1', 'dsir4'}:
@@ -215,7 +216,11 @@ def call_peaks(qbed_df: pd.DataFrame,
         regions_full.regions_sample = [regions_sample]*len(regions_full.index)
         regions_full.background_sample = \
             [background_sample]*len(regions_full.index)
-
+        
+        # np.vectorize is a short hand which allows iteration over 
+        # input numpy arrays. In this case, the point is to iterate over
+        # rows of the dataframe, achieved by inputting column 
+        # vectors of the columns of interest -- see the for loop below
         evaluate_hops = np.vectorize(evaluate_hops_constructor(
             qbed_df=qbed_df,
             **total_hops_dict,
