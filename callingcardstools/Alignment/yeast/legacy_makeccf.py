@@ -121,16 +121,46 @@ def make_ccffile(sbamFilename, out_dir):
             os.path.basename(ccf_file), '.ccf'), qc_list[0], qc_list[1]))
 
 
-def parse_args(args=None):
-    parser = argparse.ArgumentParser(description='make_ccffile.py')
+def parse_args(
+        subparser: argparse.ArgumentParser,
+        script_desc: str,
+        common_args: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    """This is intended to be used as a subparser for a parent parser passed 
+    from __main__.py. It adds the arguments required to run the makeccf 
+    script from the original calling cards pipeline
+
+    Args:
+        subparser (argparse.ArgumentParser): See __main__.py -- this is the 
+        subparser for the parent parser in __main__.py
+        script_desc (str): Description of this script, which is set in 
+        __main__.py. The description is set in __main__.py so that all of 
+        the script descriptions are together in one spot and it is easier to 
+        write a unified cmd line interface
+        common_args (argparse.ArgumentParser): These are the common arguments 
+        for all scripts in callingCardsTools, for instance logging level
+
+    Returns:
+        argparse.ArgumentParser: The subparser with the this additional 
+        cmd line tool added to it -- intended to be gathered in __main__.py 
+        to create a unified cmd line interface for the package
+    """
+
+    parser = subparser.add_parser(
+        'legacy_makeccf',
+        help=script_desc,
+        prog='legacy_makeccf',
+        parents=[common_args]
+    )
+
+    parser.set_defaults(func=main)
+    
     parser.add_argument('-s', '--sampath', help='path to sam/bam')
     parser.add_argument('-o', '--outputpath', help='output path')
 
-    return parser.parse_args(args)
+    return subparser
 
 
 def main(args=None):
-    args = parse_args(args)
     if not args.outputpath[-1] == "/":
         args.outputpath = args.outputpath+"/"
     make_ccffile(args.sampath, args.outputpath)

@@ -18,15 +18,19 @@ class ReadRecords():
     """
 
     def __init__(self, qbed_tmpfile, qc_tmpfile):
-        """_summary_
+        """Create a ReadRecords object. This object will write records to
+        a qbed file and a qc file.
 
         Args:
-            qbed_tmpfile (_type_): path to a tmp file for the qbed. intention
+           qbed_tmpfile (_type_): path to a tmp file for the qbed. intention
              is for this to be tmp and then print the grouped/aggregated to
              user output
             qc_tmpfile (_type_): path to a file for the qc records. intention
              is for this to be tmp, and then offer methods to summarize and
              print summary to user output
+
+        Returns:
+            ReadRecords object
         """
         # set qbed fields
         self._qbed_fields = ['chr', 'start', 'end', 'strand', 'annotation']
@@ -110,11 +114,20 @@ class ReadRecords():
             # increment query_id
         self._query_id = self._query_id+1
 
-    def to_qbed(self, output: str = "", barcode_qc: bool = True) -> pd.DataFrame:  # noqa
-        """_summary_
+    def to_qbed(self, output: str, barcode_qc: bool = True) -> pd.DataFrame:  # noqa
+        """Write the qbed tmpfile to a user-specified output file. If no
+        output is specified, the tmpfile will be written to the user-specified
+        output file. If no output is specified, the qbed will be written in
+        the current working directory with the name 'qbed.tsv'.
 
+        Args:
+            output (str): path to output file
+            barcode_qc (bool): Whether to write the barcode qc file. If True,
+                the barcode qc file will be written to the same directory
+                as the qbed file. If False, the barcode qc file will not
+                be written.
         Returns:
-            pd.DataFrame: _description_
+            pd.DataFrame: qbed dataframe
         """
         self._qbed_filehandle.close()
         df = pd.read_csv(
@@ -170,7 +183,14 @@ class ReadRecords():
 
             return df
 
-    def summarize_qc(self, output: str = "") -> None:
+    def summarize_qc(self, output: str ='qc.tsv') -> None:
+        """Write the qc file in tmp to a user-specified output file. 
+        If no output is specified, the qc will be written in the 
+        current working directory with the name 'qc.tsv'.
+
+        Args:
+            output (str): path to output file
+        """
         self._qc_filehandle.close()
         shutil.move(self._qc_file, output)
-        self._qc_filehandle = open(self._qc_file, 'w+')
+        self._qc_filehandle = open(self._qc_file, 'w+')  # pylint: disable=W1514 # noqa

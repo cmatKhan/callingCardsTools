@@ -210,16 +210,22 @@ def call_peaks(qbed_df: pd.DataFrame,
                                          f"background_sample = "
                                          f"'{background_sample}'", con)
 
+        # merge by chr, start, end, name in order to correctly match
+        # regions which have the same chr, start, end, but different names
         regions_full = regions_df.merge(
-            background_agg, on=['chr', 'start', 'end'], how='left')
+            background_agg,
+            left_on=['chr', 'start', 'end', 'name'],
+            right_on=['chr', 'start', 'end',
+                      'associated_feature_systematic_id'],
+            how='left')
         regions_full.background_hops = regions_full.background_hops.fillna(0)
         regions_full.regions_sample = [regions_sample]*len(regions_full.index)
         regions_full.background_sample = \
             [background_sample]*len(regions_full.index)
-        
-        # np.vectorize is a short hand which allows iteration over 
+
+        # np.vectorize is a short hand which allows iteration over
         # input numpy arrays. In this case, the point is to iterate over
-        # rows of the dataframe, achieved by inputting column 
+        # rows of the dataframe, achieved by inputting column
         # vectors of the columns of interest -- see the for loop below
         evaluate_hops = np.vectorize(evaluate_hops_constructor(
             qbed_df=qbed_df,
@@ -243,7 +249,9 @@ def call_peaks(qbed_df: pd.DataFrame,
 
         return regions_full.loc[:, ['chr', 'start', 'end', 'background_hops',
                                     'expr_hops', 'log2fc', 'poisson_pval',
-                                    'hypergeometric_pval']]\
+                                    'hypergeometric_pval',
+                                    'associated_feature_systematic_id',
+                                    'associated_feature_common_name']]\
             .rename({'background_hops': 'bg_hops'}, axis=1)
 
 
@@ -301,7 +309,7 @@ def parse_args(
     parser.add_argument('-p',
                         '--poisson_pseudocount',
                         help='pseudocount to add to the poisson distribution',
-                        default=0.5,
+                        default=0.2,
                         type=float)
 
     return subparser

@@ -16,12 +16,34 @@ __all__ = ['parse_bam']
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 
-def parse_args(subparser, script_description, common_args) -> argparse.ArgumentParser: # noqa
+def parse_args(
+    subparser, 
+    script_description, 
+    common_args) -> argparse.ArgumentParser: # noqa
+    """This is intended to be used as a subparser for a parent parser passed 
+    from __main__.py. It adds the arguments required to iterate over mammals 
+    alignments, set tags and create both a summary and the qbed (quantified 
+    hops file)
 
+    Args:
+        subparser (argparse.ArgumentParser): See __main__.py -- this is the 
+        subparser for the parent parser in __main__.py
+        script_desc (str): Description of this script, which is set in 
+        __main__.py. The description is set in __main__.py so that all of 
+        the script descriptions are together in one spot and it is easier to 
+        write a unified cmd line interface
+        common_args (argparse.ArgumentParser): These are the common arguments 
+        for all scripts in callingCardsTools, for instance logging level
+
+    Returns:
+        argparse.ArgumentParser: The subparser with the this additional 
+        cmd line tool added to it -- intended to be gathered in __main__.py 
+        to create a unified cmd line interface for the package
+    """
     parser = subparser.add_parser(
-        'parse_bam',
+        'process_mammals_bam',
         help=script_description,
-        prog='parse_bam',
+        prog='process_mammals_bam',
         parents=[common_args]
     )
 
@@ -89,6 +111,18 @@ def parse_args(subparser, script_description, common_args) -> argparse.ArgumentP
 
 
 def parse_bam(args: argparse.Namespace) -> None:
+    """This function is called when the subparser for this script is used.
+    It parses the bam file, sets tags, and creates a summary and qbed file
+    
+    Args:
+        args (argparse.Namespace): The arguments passed from the cmd line
+        
+        Raises:
+            FileNotFoundError: If the input file does not exist
+            
+        Returns:
+            None
+    """
     # Check input paths
     logging.info('checking input...')
     input_path_list = [args.input,
@@ -153,11 +187,7 @@ def parse_bam(args: argparse.Namespace) -> None:
                 # parse the barcode, tag the read
                 tagged_read = at.tag_read(read)
                 # eval the read based on quality expectations, get the status
-                status = status_coder(tagged_read['read'])
-                # add the barcode status flag to status if the barcode
-                # is failing
-                if not tagged_read['barcode_details']['passing']:
-                    status = status + StatusFlags.BARCODE.flag()
+                status = status_coder(tagged_read)
                 # add the data to the qbed and qc records
                 read_records\
                     .add_read_info(

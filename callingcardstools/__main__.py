@@ -6,8 +6,9 @@ from logging.config import dictConfig
 from importlib.metadata import version
 
 from .Reads import legacy_split_fastq, split_fastq
-from .Alignment.mammals import parse_bam
-from .Alignment.yeast import process_alignments
+from .Alignment.yeast import legacy_makeccf
+from .Alignment.mammals import process_alignments as process_mammals_bam
+from .Alignment.yeast import process_alignments as process_yeast_bam
 from .PeakCalling import yeast as yeast_call_peaks
 
 
@@ -29,10 +30,16 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
 
         'legacy_split_fastq': 'yeast cc_tools 3.0 version of parse_fastq',
 
-        'process_alignments': 'add read and alignment data to a '
-        'sqlite database for downstream QC and analysis',
+        'legacy_makeccf': 'This function make .ccf files from mapped '
+        '.bam files. ccf files have the following columns: '
+        '[chr,start,end,reads,strand,barcode] but only the first 4 '
+        'columns are required. The genome coordinates are 1-indexed',
 
-        'parse_bam': 'Iterate over the reads in an alignment file (bam) and '
+        'process_yeast_bam': 'Iterate over yeast alignments to produce a '
+        'qBed format file of the passing reads, and a qc file which '
+        'allows finer exploration of the barcode and alignment metrics',
+
+        'process_mammals_bam': 'Iterate over the reads in an alignment file (bam) and '
         'separate reads into passing.bam and failing.bam, a '
         'qBed format file of the passing reads, and a qc file which '
         'allows finer exploration of the barcode and alignment metrics',
@@ -71,20 +78,25 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         script_descriptions['legacy_split_fastq'],
         common_args)
 
+    subparsers = legacy_makeccf.parse_args(
+        subparsers,
+        script_descriptions['legacy_makeccf'],
+        common_args)
+
     subparsers = split_fastq.parse_args(
         subparsers,
         script_descriptions['split_fastq'],
         common_args)
 
-    subparsers = process_alignments.parse_args(
+    subparsers = process_yeast_bam.parse_args(
         subparsers,
-        script_descriptions['process_alignments'],
+        script_descriptions['process_yeast_bam'],
         common_args
     )
 
-    subparsers = parse_bam.parse_args(
+    subparsers = process_mammals_bam.parse_args(
         subparsers,
-        script_descriptions['parse_bam'],
+        script_descriptions['process_mammals_bam'],
         common_args
     )
 

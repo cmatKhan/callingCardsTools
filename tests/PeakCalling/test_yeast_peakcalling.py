@@ -22,12 +22,12 @@ from ..conftests import *  #pylint:disable=W0401,W0614 # noqa
 def test_poisson_pval_factory():
 
     # set up parameters
-    pseudocount = .2
+    pseudocount = 0.2
     total_bg_hops = 103912
     total_expr_hops = 1181
 
-    bg_hops = 36
-    expr_hops = 14
+    bg_hops = 58
+    expr_hops = 1
 
     # create the poisson pval calc function
     pval_calculator = poisson_pval_factory( # noqa
@@ -51,8 +51,8 @@ def test_hypergeometric_pval_factory():
     total_bg_hops = 103912
     total_expr_hops = 1181
 
-    bg_hops = 36
-    expr_hops = 14
+    bg_hops = 58
+    expr_hops = 1
 
     # create the poisson pval calc function
     pval_calculator = hypergeometric_pval_factory( # noqa
@@ -75,19 +75,6 @@ def test_peakcalling(yeast_qbed):
     func_input = {
         'qbed_df': pd.read_csv(
             yeast_qbed,
-            sep='\t',
-            names=['chr', 'start', 'end', 'depth', 'strand', 'annotation']),
-        'regions_sample': 'yiming',
-        'background_sample': 'adh1',
-        'poisson_pseudocount': 0.1}
-
-    call_peaks(**func_input) # noqa
-
-def test_peakcalling_tmp():
-
-    func_input = {
-        'qbed_df': pd.read_csv(
-            '/home/oguzkhan/code/non_nf_cc_dev/callingCardsTools/temp/E0001_PHO2_JP013.ccf',
             sep='\t',
             names=['chr', 'start', 'end', 'depth', 'strand', 'annotation']),
         'regions_sample': 'yiming',

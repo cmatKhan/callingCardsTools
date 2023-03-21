@@ -1,5 +1,5 @@
 from argparse import Namespace
-from callingcardstools.QcStatusCoding.create_status_coder import create_status_coder # noqa
+from callingcardstools.QcStatusCoding.create_status_coder import create_status_coder  # noqa
 from callingcardstools.Alignment.yeast.process_alignments import process_alignments as yeast_process_alignments  # noqa
 from .conftests import *
 
@@ -169,12 +169,13 @@ def test_aln_tagging_yeast(yeast_readtagger, yeast_bamfile, yeast_bp):
     #assert actual == expected
 
 
-def test_tag_bam(yeast_bamfile,yeast_fasta,yeast_barcode_details):
+def test_tag_bam(yeast_bamfile, yeast_fasta, yeast_barcode_details, tmpdir):
     ns = Namespace(
         bampath=str(yeast_bamfile),
         genome=str(yeast_fasta),
         barcode_details=str(yeast_barcode_details),
-        mapq_threshold=10
+        mapq_threshold=10,
+        output_dir=tmpdir
     )
 
     output = yeast_process_alignments(ns)

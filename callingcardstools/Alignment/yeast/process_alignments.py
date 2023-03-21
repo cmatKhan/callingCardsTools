@@ -58,6 +58,11 @@ def parse_args(
                         help="path to the input bam file",
                         required=True)
 
+    parser.add_argument("-o",
+                        "--output_dir",
+                        help="path to the output directory"
+                        " (default: current directory)")
+
     parser.add_argument("-g",
                         "--genome",
                         help=" ".join(["Path to a genome .fasta file.",
@@ -116,6 +121,8 @@ def process_alignments(args: argparse.Namespace) -> dict:
          output. Defaults to "_tagged.bam".
         nthreads (int): Number of threads which pysam.AlignmentFile may use to
          decompress lines
+        output_dir (str): Path to the directory where the output files will be
+            written
 
 
     Raises:
@@ -128,6 +135,7 @@ def process_alignments(args: argparse.Namespace) -> dict:
     # Check inputs
     try:
         input_path_list = [args.bampath,
+                           args.bampath + '.bai',
                            args.genome,
                            args.genome + '.fai',
                            args.barcode_details]
@@ -154,6 +162,11 @@ def process_alignments(args: argparse.Namespace) -> dict:
     except AttributeError:
         nthreads = 1
 
+    try:
+        output_dir = args.output_dir
+    except AttributeError:
+        output_dir = os.getcwd()
+
     logging.info("tagging reads...")
     # temp_dir is automatically cleaned when context ends
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -161,7 +174,9 @@ def process_alignments(args: argparse.Namespace) -> dict:
         # when this context ends
         bampath_tmp = os.path.join(temp_dir, "tmp_tagged.bam")
         # create the path to store the (permanent) output bam
-        bampath_out = os.path.splitext(os.path.basename(args.bampath))[0] + out_suffix  # noqa
+        bampath_out = os.path.join(
+            output_dir,
+            os.path.splitext(os.path.basename(args.bampath))[0] + out_suffix)  # noqa
 
         # open files
         # open the input bam

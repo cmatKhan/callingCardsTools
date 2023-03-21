@@ -21,13 +21,18 @@ class AlignmentTagger(BarcodeParser):
     _genome = ""
 
     def __init__(self, barcode_details_json: str, fasta_path: str) -> None:
-        """_summary_
+        """Create an AlignmentTagger object to facilitate adding tags to 
+        alignments and quantifying the number of hops
 
         Args:
-            fasta_path (str): Path to a genome fasta file. Note that a fai
+            barcode_details_json (str): path to a json file containing
+            barcode details
+            fasta_path (str): path to the genome fasta file. Note that a fai
              index file created by samtools faidx must
             exist at the same location.
-            barcode_details_json (str): Path to the barcode_details json file
+
+        Returns:
+            AlignmentTagger object
         """
         super().__init__(barcode_details_json)
         self.fasta = fasta_path
