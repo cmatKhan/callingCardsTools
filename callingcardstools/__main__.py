@@ -5,6 +5,7 @@ import logging
 from logging.config import dictConfig
 from importlib.metadata import version
 
+from .BarcodeParser import barcode_table_to_json
 from .Reads import legacy_split_fastq, split_fastq
 from .Alignment.yeast import legacy_makeccf
 from .Alignment.mammals import process_alignments as process_mammals_bam
@@ -24,6 +25,9 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
     # create the top-level parser
 
     script_descriptions = {
+
+        'barcode_to_json': 'parse a legacy mitra pipeline barcode table tsv '
+        'to a barcode json file',
 
         'split_fastq': 'parse a (possibly multiplexed) batch of reads into '
         'expected barcode file(s), and a set of undetermined reads',
@@ -72,6 +76,12 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
     # parse_bam subparser -----------------------------------------------------
     subparsers = parser.add_subparsers(
         help="Available Tools")
+    
+    subparsers = barcode_table_to_json.parse_args(
+        subparsers,
+        script_descriptions['barcode_to_json'],
+        common_args
+    )
 
     subparsers = legacy_split_fastq.parse_args(
         subparsers,
@@ -105,6 +115,7 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         script_descriptions['yeast_call_peaks'],
         common_args
     )
+
 
     # return the top level parser to be used in the main method below
     return parser

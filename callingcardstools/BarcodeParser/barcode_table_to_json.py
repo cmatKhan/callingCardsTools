@@ -1,24 +1,42 @@
 import json
 import os
-import sys
 import argparse
 
 import pandas as pd
 
 
-def parse_args(args=None):
-    """parse command line arguments for tagBam
+def parse_args(
+        subparser: argparse.ArgumentParser,
+        script_desc: str,
+        common_args: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    """This is intended to be used as a subparser for a parent parser passed 
+    from __main__.py. This function adds the arguments for this script to the
+    subparser and returns the subparser to be used in __main__.py
 
     Args:
-        args (_type_, optional): _description_. Defaults to None.
+        subparser (argparse.ArgumentParser): See __main__.py -- this is the 
+        subparser for the parent parser in __main__.py
+        script_desc (str): Description of this script, which is set in 
+        __main__.py. The description is set in __main__.py so that all of 
+        the script descriptions are together in one spot and it is easier to 
+        write a unified cmd line interface
+        common_args (argparse.ArgumentParser): These are the common arguments 
+        for all scripts in callingCardsTools, for instance logging level
 
     Returns:
-        _type_: _description_
+        argparse.ArgumentParser: The subparser with the this additional 
+        cmd line tool added to it -- intended to be gathered in __main__.py 
+        to create a unified cmd line interface for the package
     """
-    Description = ""
-    Epilog = ""
 
-    parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
+    parser = subparser.add_parser(
+        'barcode_table_to_json',
+        help=script_desc,
+        prog='barcode_table_to_json',
+        parents=[common_args]
+    )
+
+    parser.set_defaults(func=main)
 
     parser.add_argument('-b',
                         '--barcode_json',
@@ -33,11 +51,10 @@ def parse_args(args=None):
                         help='batch name, eg the run number like run_1234',
                         required=True)
 
-    return parser.parse_args(args)
+    return subparser
 
 
-def main(args=None):
-    args = parse_args(args)
+def main(args: argparse.Namespace) -> None:
 
     if not os.path.exists(args.barcode_table):
         raise FileNotFoundError(f'{args.barcode_table} DNE')
@@ -61,7 +78,3 @@ def main(args=None):
         with open(f"{args.batch}_barcode_details.json", 'w') as f2:
             json_object = json.dumps(barcode_dict, indent=4)
             f2.write(json_object)
-
-
-if __name__ == "__main__":
-    sys.exit(main())
