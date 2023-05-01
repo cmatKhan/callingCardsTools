@@ -350,24 +350,53 @@ class BarcodeParser:
             # if this is a compound component (eg the tf for yeast),
             # construct the sequence from the components. Else, extract the
             # sequence from the input component dict for the given key
-            query_seq = \
-                "".join([component_dict[x] for
-                         x in v.get('components', None)])\
-                if v.get('components', None) else component_dict[k]
+            if v.get('components', None):
+                target_dict_offset = 0
+                # first, calculate the distances for the components
+                # separately
+                for component in v.get('components', None):
+                    comp_split = component.split('_')
+                    query_seq = component_dict.get(component, None)
+                    start = target_dict_offset
+                    end = start + (self.barcode_dict[comp_split[0]]
+                                   [comp_split[1]]
+                                   ['index'][1] -
+                                   self.barcode_dict[comp_split[0]]
+                                   [comp_split[1]]['index'][0])
+                    target_dict_offset = end
+                    component_target_dict = {}
+                    for seq, id in target_dict.items():
+                        component_target_dict.update({seq[start:end]: id})
+                    component_check_dict[component] = \
+                        self.get_best_match(
+                        query_seq,
+                        component_target_dict,
+                        v.get('match_type', 'edit_distance'))
+                # next, calculate the distances for the compound component
+                # by concatenating the component sequences
+                query_seq = ''.join([component_dict.get(x, '')
+                                     for x in v.get('components', None)])
+                component_check_dict[k] = \
+                    self.get_best_match(
+                    query_seq,
+                    target_dict,
+                    v.get('match_type', 'edit_distance'))
+            else:
+                query_seq = component_dict[k]
+                component_check_dict[k] = \
+                    self.get_best_match(
+                    query_seq,
+                    target_dict,
+                    v.get('match_type', 'edit_distance'))
 
-            # get the match information for the given component
-            component_check_dict[k] = \
-                self.get_best_match(
-                query_seq,
-                target_dict,
-                v.get('match_type', 'edit_distance'))
             if v.get('bam_tag', None):
                 component_check_dict[k]['bam_tag'] = v.get('bam_tag')
 
         # figure out if the barcode passes based on edit distance allowances
         passing = True
         total_mismatches = 0
-        for k, v in component_check_dict.items():
+        for component in self.barcode_dict['components'].keys():
+            component_metrics = component_check_dict[component]
             # if the total_mismatches exceed the maximum number of mismatches
             # in a given barcode, set the passing value to false and exit the
             # loop
@@ -378,13 +407,13 @@ class BarcodeParser:
                 break
             # else, for a given component, extract the mismatch tolerance
             match_allowance = \
-                self.barcode_dict['components'][k]\
+                self.barcode_dict['components'][component]\
                     .get('match_allowance', 0)
             # if the edit dist exceeds the match_allowance, set the barcode to
             # failing and break the loop
-            if v['dist'] > match_allowance and \
+            if component_metrics['dist'] > match_allowance and \
                     self.barcode_dict['components']\
-                        .get(k, {})\
+                        .get(component, {})\
                         .get('require', True):
                 passing = False
                 break
@@ -392,9 +421,15 @@ class BarcodeParser:
             # note that if this is 0 it won't change anything, and move on to
             # the next component
             else:
-                if self.barcode_dict['components'].get(k, {}).get('require', True):  # noqa
-                    logging.debug(f'incrementing total mismatches b/c of {v}')
-                    total_mismatches = total_mismatches+v['dist']
+                if self.barcode_dict['components']\
+                    .get(component, {})\
+                        .get('require', True):
+                    
+                    logging.debug(f'incrementing total mismatches '
+                                  f'b/c of {component_metrics}')
+                    
+                    total_mismatches = (total_mismatches
+                                        + component_metrics['dist'])
 
         return {'passing': passing, 'details': component_check_dict}
 
@@ -402,22 +437,23 @@ class BarcodeParser:
     def get_best_match(
             query: str,
             component_dict: dict,
-            match_type: Literal['edit_distance', 'greedy'] = 'edit_distance') -> dict:  # noqa
-        """Given a match method, return a dictionary describing the 
+            match_type: Literal['edit_distance',
+                                'greedy'] = 'edit_distance') -> dict:
+        """Given a match method, return a dictionary describing the
         best match between query and component_dict
 
         Args:
             query (str): _description_
             component_dict (dict): _description_
-            match_type (str, optional): Either 'edit_distance' or 'greedy'. 
+            match_type (str, optional): Either 'edit_distance' or 'greedy'.
             Defaults to 'edit_distance'.
 
         Returns:
             dict: A dictionary of structure
-            {'name': either the sequence match, or the name if map is a 
+            {'name': either the sequence match, or the name if map is a
             named dictionary,
-            'dist': edit dist between query and best match -- 
-            always 0 or infinty if match is greedy depending on if exact 
+            'dist': edit dist between query and best match --
+            always 0 or infinty if match is greedy depending on if exact
             match is found or not. If not, return is 'name': '*', 'dist': inf}
         """
         # if no match found, these are the default values. Note that if

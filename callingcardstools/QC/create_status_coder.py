@@ -5,7 +5,7 @@ from typing import Callable
 
 from pysam import AlignedSegment  # pylint:disable=E0611
 
-from callingcardstools.QcStatusCoding.StatusFlags import StatusFlags
+from callingcardstools.QC.StatusFlags import StatusFlags
 
 __all__ = ['create_status_coder']
 

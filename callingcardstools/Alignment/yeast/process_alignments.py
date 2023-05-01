@@ -11,7 +11,7 @@ import pandas as pd
 # from memory_profiler import profile
 # local dependencies
 from callingcardstools.Alignment.AlignmentTagger import AlignmentTagger
-from callingcardstools.QcStatusCoding.create_status_coder import create_status_coder  # noqa
+from callingcardstools.QC.create_status_coder import create_status_coder  # noqa
 from callingcardstools.Alignment.SummaryParser import SummaryParser
 
 __all__ = ['parse_args', 'process_alignments']

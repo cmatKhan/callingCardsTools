@@ -6,6 +6,7 @@ import argparse
 from Bio import SeqIO
 
 from callingcardstools.Reads.ReadParser import ReadParser
+from callingcardstools.BarcodeParser.yeast import BarcodeQcCounter
 
 __all__ = ['parse_args', 'split_fastq']
 
@@ -16,24 +17,24 @@ def parse_args(
         subparser: argparse.ArgumentParser,
         script_desc: str,
         common_args: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    """This is intended to be used as a subparser for a parent parser passed 
-    from __main__.py. It adds the arguments required to iterate over yeast 
-    reads and demultiplex the fastq into separate files based on the TFs 
+    """This is intended to be used as a subparser for a parent parser passed
+    from __main__.py. It adds the arguments required to iterate over yeast
+    reads and demultiplex the fastq into separate files based on the TFs
     in the barcode details file.
 
     Args:
-        subparser (argparse.ArgumentParser): See __main__.py -- this is the 
+        subparser (argparse.ArgumentParser): See __main__.py -- this is the
         subparser for the parent parser in __main__.py
-        script_desc (str): Description of this script, which is set in 
-        __main__.py. The description is set in __main__.py so that all of 
-        the script descriptions are together in one spot and it is easier to 
+        script_desc (str): Description of this script, which is set in
+        __main__.py. The description is set in __main__.py so that all of
+        the script descriptions are together in one spot and it is easier to
         write a unified cmd line interface
-        common_args (argparse.ArgumentParser): These are the common arguments 
+        common_args (argparse.ArgumentParser): These are the common arguments
         for all scripts in callingCardsTools, for instance logging level
 
     Returns:
-        argparse.ArgumentParser: The subparser with the this additional 
-        cmd line tool added to it -- intended to be gathered in __main__.py 
+        argparse.ArgumentParser: The subparser with the this additional
+        cmd line tool added to it -- intended to be gathered in __main__.py
         to create a unified cmd line interface for the package
     """
 
@@ -78,6 +79,21 @@ def parse_args(
 
     return subparser
 
+# def create_tf_component_dict(barcode_details: dict) -> dict:
+#     for component in v.get('components', None):
+#     comp_split = component.split('_')
+#     query_seq = component_dict.get(component, None)
+#     start = target_dict_offset
+#     end = start + (self.barcode_dict[comp_split[0]]
+#                     [comp_split[1]]
+#                     ['index'][1] -
+#                     self.barcode_dict[comp_split[0]]
+#                     [comp_split[1]]['index'][0])
+#     target_dict_offset = end
+#     component_target_dict = {}
+#     for seq, id in target_dict.items():
+#         component_target_dict.update({seq[start:end]: id})
+
 
 def split_fastq(args: argparse.Namespace):
 
@@ -89,7 +105,11 @@ def split_fastq(args: argparse.Namespace):
                        args.output_prefix]
     for input_path in input_path_list:
         if not os.path.exists(input_path):
-            raise FileNotFoundError("Input file DNE: %s" % input_path)
+            raise FileNotFoundError(f"Input file DNE: {input_path}")
+
+    # create the BarcodeQcCounter object
+    logging.info('creating BarcodeQcCounter object...')
+    bc_counter = BarcodeQcCounter(args.barcode_details)
 
     # create the read parser object
     rp = ReadParser(args.barcode_details, args.read1, args.read2)
@@ -127,8 +147,8 @@ def split_fastq(args: argparse.Namespace):
             args.output_prefix,
             f"undetermined_{args.split_suffix}_R1.fq"), "w"),
         'r2': open(os.path.join(
-                args.output_prefix,
-                f"undetermined_{args.split_suffix}_R2.fq"), "w")
+            args.output_prefix,
+            f"undetermined_{args.split_suffix}_R2.fq"), "w")
     }
 
     # iterate over reads, split reads whose barcode components
@@ -137,55 +157,86 @@ def split_fastq(args: argparse.Namespace):
     # also record each read and barcode details into the id_to_bc.csv file.
     # note that this will be pretty big (measured in GBs, not as big as R1,
     # but close)
-    logging.info('opening id to barcode map...')
-    additional_components = ['tf', 'restriction_enzyme']
-    with open(os.path.join(
-                args.output_prefix,
-                "id_bc_map.tsv"), "w") as id_bc_map:  # pylint:disable=W1514
-        id_bc_map.write(
-            "\t".join(['id'] + list(rp.components) + additional_components))
-        id_bc_map.write("\n")
+    # logging.info('opening id to barcode map...')
+    # additional_components = ['tf', 'restriction_enzyme']
+    # with open(os.path.join(
+    #             args.output_prefix,
+    #             "id_bc_map.tsv"), "w") as id_bc_map:  # pylint:disable=W1514
+    #     # write header
+    #     id_bc_map.write(
+    #         "\t".join(['id'] + list(rp.components) + additional_components))
+    #     id_bc_map.write("\n")
 
-        logging.info('parsing fastq files...')
-        while True:
-            try:
-                rp.next()
-            except StopIteration:
-                break
-            read_dict = rp.parse()
-            # check that the barcode edit dist is 0 for each component
-            if read_dict['status']['passing'] is True:
-                # check that a TF was actually found -- if the TF barcode had
-                # a mismatch, then _3 for instance means that the closest match
-                # had an edit distance of 3
-                for read_end in ['r1', 'r2']:
-                    output_handle = determined_out[read_end]\
-                        .get(
-                            read_dict['status']['details'][args.split_key]['name'],
-                            determined_out[read_end])
-                    SeqIO.write(
-                        read_dict[read_end],
-                        output_handle,
-                        'fastq')
-            else:
-                for read_end in ['r1', 'r2']:
-                    SeqIO.write(
-                        read_dict[read_end],
-                        undetermined_out[read_end],
-                        'fastq')
+    logging.info('parsing fastq files...')
+    while True:
+        try:
+            rp.next()
+        except StopIteration:
+            break
+        read_dict = rp.parse()
+        # check that the barcode edit dist is 0 for each component
+        if read_dict['status']['passing'] is True:
+            # check that a TF was actually found -- if the TF barcode had
+            # a mismatch, then _3 for instance means that the closest match
+            # had an edit distance of 3
+            for read_end in ['r1', 'r2']:
+                output_handle = determined_out[read_end]\
+                    .get(
+                        read_dict['status']['details'][args.split_key]['name'],  # noqa
+                        determined_out[read_end])
+                SeqIO.write(
+                    read_dict[read_end],
+                    output_handle,
+                    'fastq')
+        else:
+            for read_end in ['r1', 'r2']:
+                SeqIO.write(
+                    read_dict[read_end],
+                    undetermined_out[read_end],
+                    'fastq')
 
             # write line to id to bc map
-            tf = "_".join(
-                [read_dict['status']['details'].get('tf', {}).get('name', "*"),
-                 str(read_dict['status']['details'].get('tf', {}).get('dist', ""))])
-            restriction_enzyme = read_dict['status']['details']\
-                .get('r2_restriction', {}).get('name', "*")
-            id_bc_line = \
-                [read_dict['r1'].id, ] + \
-                [read_dict['components'][comp] for comp in rp.components] + \
-                [tf, restriction_enzyme]
-            id_bc_map.write("\t".join(id_bc_line))
-            id_bc_map.write("\n")
+            # tf = "_".join(
+            #     [read_dict['status']['details'].get('tf', {}).get('name', "*"),
+            #      str(read_dict['status']['details'].get('tf', {}).get('dist', ""))]) # noqa
+            # restriction_enzyme = read_dict['status']['details']\
+            #     .get('r2_restriction', {}).get('name', "*")
+            # id_bc_line = \
+            #     [read_dict['r1'].id, ] + \
+            #     [read_dict['components'][comp] for comp in rp.components] + \
+            #     [tf, restriction_enzyme]
+            # id_bc_map.write("\t".join(id_bc_line))
+            # id_bc_map.write("\n")
+
+        # extract component information
+        r1_primer_seq = (read_dict['status']
+                         ['details']
+                         ['r1_primer']
+                         ['query'])
+        r1_primer_dist = (read_dict['status']
+                          ['details']
+                          ['r1_primer']
+                          ['dist'])
+        r1_transposon_seq = (read_dict['status']
+                             ['details']
+                             ['r1_transposon']
+                             ['query'])
+        r1_transposon_dist = (read_dict['status']
+                              ['details']
+                              ['r1_transposon']
+                              ['dist'])
+        r2_transposon_seq = (read_dict['status']
+                             ['details']
+                             ['r2_transposon']
+                             ['query'])
+        r2_transposon_dist = (read_dict['status']
+                              ['details']
+                              ['r2_transposon']
+                              ['dist'])
+        bc_counter.update(
+            (r1_primer_seq, r1_transposon_seq, r2_transposon_seq),
+            (r1_primer_dist, r1_transposon_dist, r2_transposon_dist),
+            read_dict['status']['details']['r2_restriction']['name'])
 
     # close the files
     for read_end in determined_out:
@@ -194,5 +245,10 @@ def split_fastq(args: argparse.Namespace):
         # close all tf files
         for write_handle in determined_out[read_end].values():
             write_handle.close()
+
+    # read_dict['components']['tf']
+    # bc_counter._summarize_by_tf()
+
+    # bc_counter.write()
 
     logging.info('Done parsing the fastqs!')

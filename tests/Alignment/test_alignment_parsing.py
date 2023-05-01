@@ -1,5 +1,5 @@
 from argparse import Namespace
-from callingcardstools.QcStatusCoding.create_status_coder import create_status_coder  # noqa
+from callingcardstools.QC.create_status_coder import create_status_coder  # noqa
 from callingcardstools.Alignment.yeast.process_alignments import process_alignments as yeast_process_alignments  # noqa
 from .conftests import *
 

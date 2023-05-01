@@ -7,8 +7,8 @@ import tempfile
 import pysam
 
 from callingcardstools.Alignment.AlignmentTagger import AlignmentTagger
-from callingcardstools.QcStatusCoding.StatusFlags import StatusFlags
-from callingcardstools.QcStatusCoding.create_status_coder import create_status_coder # noqa
+from callingcardstools.QC.StatusFlags import StatusFlags
+from callingcardstools.QC.create_status_coder import create_status_coder # noqa
 from .ReadRecords import ReadRecords
 
 __all__ = ['parse_bam']
