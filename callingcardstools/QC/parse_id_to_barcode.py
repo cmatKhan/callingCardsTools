@@ -1,4 +1,5 @@
 from callingcardstools.BarcodeParser import BarcodeParser
+import pandas as pd
 
 
 class QcParser(BarcodeParser):

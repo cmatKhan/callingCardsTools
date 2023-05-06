@@ -13,6 +13,7 @@ import pandas as pd
 from callingcardstools.Alignment.AlignmentTagger import AlignmentTagger
 from callingcardstools.QC.create_status_coder import create_status_coder  # noqa
 from callingcardstools.Alignment.SummaryParser import SummaryParser
+from callingcardstools.QC.StatusFlags import StatusFlags
 
 __all__ = ['parse_args', 'process_alignments']
 
@@ -80,9 +81,9 @@ def parse_args(
                         help="path to the output directory"
                         " (default: current directory)",
                         default='.')
-    
+
     parser.add_argument("-v",
-                        "--verbose",
+                        "--verbose_qc",
                         help="save complete alignment summary",
                         action="store_true")
 
@@ -152,7 +153,7 @@ def process_alignments(args: argparse.Namespace) -> dict:
         output_dir = args.output_dir
     except AttributeError:
         output_dir = os.getcwd()
-    
+
     output_basename = os.path.splitext(os.path.basename(args.bampath))[0]
 
     logging.info("tagging reads...")
@@ -261,14 +262,34 @@ def process_alignments(args: argparse.Namespace) -> dict:
     sp = SummaryParser(aln_summary_df)
     qbed_df = sp.to_qbed()
 
-    qbed_df.to_csv(os.path.join(output_dir, output_basename + '.qbed'), 
+    qbed_df.to_csv(os.path.join(output_dir, output_basename + '.qbed'),
                    sep='\t',
                    index=False)
-    
-    if args.verbose:
-        aln_summary_df.to_csv(os.path.join(output_dir, output_basename + '.summary'), 
-                              sep='\t',
-                              index=False)
+
+    aln_summary_df = aln_summary_df\
+        .assign(status_decomp=StatusFlags.decompose(aln_summary_df['status'],
+                                                    as_str=True))
+    # Convert the lists in the status_decomp column to strings
+    # by joining the elements with a comma
+    aln_summary_df['status_decomp'] = aln_summary_df['status_decomp']\
+        .apply(lambda x: ', '.join(x))
+
+    qc_summary = aln_summary_df\
+        .groupby(['status_decomp'])\
+        .agg({'id': 'count'})\
+        .reset_index()\
+        .rename(columns={'id': 'count'})
+
+    qc_summary.to_csv(
+        os.path.join(output_dir, output_basename + '_summary.tsv'),
+        sep='\t',
+        index=False)
+
+    if args.verbose_qc:
+        aln_summary_df.to_csv(
+            os.path.join(output_dir, output_basename + '_aln_info.tsv'),
+            sep='\t',
+            index=False)
 
     logging.info(f'{bampath_out} complete!')
-    #return {'summary': aln_summary_df, 'qbed': qbed_df}
+    # return {'summary': aln_summary_df, 'qbed': qbed_df}
