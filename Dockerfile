@@ -22,4 +22,4 @@ RUN pip install --upgrade pip
 
 #COPY dist/callingCardsTools-0.1.0.tar.gz .
 
-RUN pip install callingcardstools==0.1.2
+RUN pip install callingcardstools==0.1.3
