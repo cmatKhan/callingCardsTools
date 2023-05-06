@@ -10,8 +10,6 @@ from .Reads import legacy_split_fastq, split_fastq
 from .Alignment.yeast import legacy_makeccf
 from .Alignment.mammals import process_alignments as process_mammals_bam
 from .Alignment.yeast import process_alignments as process_yeast_bam
-from .PeakCalling import yeast as yeast_call_peaks
-
 
 def parse_args() -> Callable[[list], argparse.Namespace]:
     """Create a cmd line argument parser for callingcardstools
@@ -47,8 +45,6 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         'separate reads into passing.bam and failing.bam, a '
         'qBed format file of the passing reads, and a qc file which '
         'allows finer exploration of the barcode and alignment metrics',
-
-        'yeast_call_peaks': 'call peaks from a yeast qbed file'
     }
 
     # common options -- these can be applied to all scripts via the 'parent'---
@@ -109,13 +105,6 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         script_descriptions['process_mammals_bam'],
         common_args
     )
-
-    subparsers = yeast_call_peaks.parse_args(
-        subparsers,
-        script_descriptions['yeast_call_peaks'],
-        common_args
-    )
-
 
     # return the top level parser to be used in the main method below
     return parser

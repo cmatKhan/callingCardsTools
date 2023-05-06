@@ -23,6 +23,8 @@ def test_yeast_barcode_check1(yeast_barcode_details):
     expected = {
         'passing': True,
         'details': {
+            'r1_primer': {'query': 'TGATA', 'name': 'RIM101', 'dist': 0},
+            'r2_transposon': {'query': 'ACCTGTTT', 'name': 'RIM101', 'dist': 0},
             'r1_transposon': {'query': 'AATTCACTACGTCAACA',
                               'name': 'AATTCACTACGTCAACA',
                               'dist': 0, 'bam_tag': 'RT'},
@@ -53,6 +55,9 @@ def test_yeast_barcode_check2(yeast_barcode_details):
     expected = {
         'passing': True,
         'details': {
+            'r1_primer': {'query': 'TGATA', 'name': 'RIM101', 'dist': 0},
+            'r2_transposon': {'query': 'ACCTGTTT',
+                              'name': 'RIM101', 'dist': 0},
             'r1_transposon': {'query': 'AATTCACTACGTCAACA',
                               'name': 'AATTCACTACGTCAACA',
                               'dist': 0,
@@ -84,6 +89,8 @@ def test_yeast_barcode_check3(yeast_barcode_details):
     expected = {
         'passing': True,
         'details': {
+            'r1_primer': {'query': 'TGATA', 'name': 'RIM101', 'dist': 0},
+            'r2_transposon': {'query': 'ACCTGCTT', 'name': 'RIM101', 'dist': 1},
             'r1_transposon': {'query': 'AATTCACTACGTCAACA',
                               'name': 'AATTCACTACGTCAACA',
                               'dist': 0,
@@ -125,6 +132,8 @@ def test_yeast_barcode_check4(yeast_barcode_details):
     expected = {
         'passing': True,
         'details': {
+            'r1_primer': {'query': 'TGATA', 'name': 'RIM101', 'dist': 0},
+            'r2_transposon': {'query': 'ACCTGCTT', 'name': 'RIM101', 'dist': 1},
             'r1_transposon': {'query': 'AATTCACTACGTCAACA',
                               'name': 'AATTCACTACGTCAACA',
                               'dist': 0,

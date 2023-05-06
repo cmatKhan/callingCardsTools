@@ -51,16 +51,31 @@ def test_barcode_extractor_process(yeast_barcode_details, yeast_reads):
     assert actual['status']['details']['tf']['name'] == 'MTH1'
 
 
-def test_split_fastq(tmpdir):
+def test_split_fastq(tmpdir, yeast_barcodeqccounter_data):
+
+    pickle_qc = False
+    verbose_qc = True
+
+    r1, r2, barcode_details = yeast_barcodeqccounter_data
 
     ns = Namespace(
-        read1='tests/test_data/yeast/run_6177/r1_100_subsample.fq.gz',
-        read2='tests/test_data/yeast/run_6177/r2_100_subsample.fq.gz',
-        barcode_details='tests/test_data/yeast/run_6177/barcode_details.json',
+        read1=r1,  # 'tests/test_data/yeast/run_6177/r1_100_subsample.fq.gz',
+        read2=r2,  # 'tests/test_data/yeast/run_6177/r2_100_subsample.fq.gz',
+        # 'tests/test_data/yeast/run_6177/barcode_details.json',
+        barcode_details=barcode_details,
         split_key='tf',
         split_suffix='split',
-        output_prefix=tmpdir)
+        output_dirpath=tmpdir,
+        verbose_qc=verbose_qc,
+        pickle_qc=pickle_qc)
 
     split_fastq(ns)
 
-    assert len(os.listdir(tmpdir)) == 17
+    if pickle_qc and verbose_qc:
+        assert len(os.listdir(tmpdir)) == 19
+    elif pickle_qc:
+        assert len(os.listdir(tmpdir)) == 17
+    elif verbose_qc:
+        assert len(os.listdir(tmpdir)) == 19
+    else:
+        assert len(os.listdir(tmpdir)) == 18

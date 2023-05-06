@@ -1,4 +1,25 @@
+import pathlib
+import pytest
 from ..conftests import *
+
+
+@pytest.fixture
+def yeast_barcodeqccounter_data():
+    """paths to r1 r2 and barcode details which identify it as a correct read
+
+    Returns:
+        tuple: r1, r2, barcode_details
+    """
+    r1 = pathlib\
+        .Path("tests/Reads/data/yeast/r1.fq")\
+        .resolve()
+    r2 = pathlib\
+        .Path("tests/Reads/data/yeast/r2.fq")\
+        .resolve()
+    barcode_details = pathlib\
+        .Path("tests/Reads/data/yeast/run_6177_barcode_details.json")\
+        .resolve()
+    return r1, r2, barcode_details
 
 @pytest.fixture
 def yeast_reads():

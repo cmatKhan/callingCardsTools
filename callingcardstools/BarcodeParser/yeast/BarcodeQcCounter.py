@@ -11,11 +11,33 @@ from typing import DefaultDict, Iterable
 import logging
 import pickle
 import os
+from functools import partial
 
 import pandas as pd  # pylint:disable=E0401
 from edlib import align  # pylint:disable=E0401,E0611
 
 logger = logging.getLogger(__name__)
+
+# TODO: use this to re-write the barcodeparser object. reduce the barcode
+# parse to common attr and methods for any organism, and then extend it
+# for mammals/yeast. use this as the yeast basis. Do not align the barcode
+# components more than once in the iteration of the fastq file.
+
+class InnerDefaultDict(defaultdict):
+    def __init__(self, data_type=int):
+        super().__init__(data_type)
+
+class MiddleDefaultDict1(defaultdict):
+    def __init__(self, data_type=int):
+        super().__init__(partial(InnerDefaultDict, data_type))
+
+class MiddleDefaultDict2(defaultdict):
+    def __init__(self, data_type=int):
+        super().__init__(partial(MiddleDefaultDict1, data_type))
+
+class OuterDefaultDict(defaultdict):
+    def __init__(self, data_type=int):
+        super().__init__(partial(MiddleDefaultDict2, data_type))
 
 
 class BarcodeQcCounter:
@@ -24,20 +46,14 @@ class BarcodeQcCounter:
     Attributes:
         metrics (DefaultDict): A nested defaultdict containing the 
             barcode metrics.
-        r1_primer_dist_dict (DefaultDict): A defaultdict storing the R1 
-            primer edit distances.
-        r2_transposon_dist_dict (DefaultDict): A defaultdict storing the R2 
-            transposon edit distances.
         r1_transposon_seq_dict (DefaultDict): A defaultdict storing the R1 
             transposon sequences.
 
     """
     _metrics: DefaultDict
-    _r1_primer_dist_dict: DefaultDict
-    _r2_transposon_dist_dict: DefaultDict
     _r1_transposon_seq_dict: DefaultDict
 
-    def __init__(self, pickle_path=None) -> None:
+    def __init__(self, pickle_path: str = None) -> None:
         """Initializes a BarcodeQcCounter instance.
 
         Args:
@@ -54,13 +70,12 @@ class BarcodeQcCounter:
                 raise FileNotFoundError(msg)
             self.load(pickle_path)
         else:
-            self._metrics = defaultdict(
-                lambda: defaultdict(
-                    lambda: defaultdict(lambda: defaultdict(int)))
-            )
+            # self._metrics = defaultdict(
+            #     lambda: defaultdict(
+            #         lambda: defaultdict(lambda: defaultdict(int)))
+            # )
+            self._metrics = OuterDefaultDict(int)
             self._r1_transposon_seq_dict = defaultdict(set)
-            self._r1_primer_dist_dict = defaultdict(int)
-            self._r2_transposon_dist_dict = defaultdict(int)
 
     @property
     def metrics(self) -> defaultdict:
@@ -72,20 +87,12 @@ class BarcodeQcCounter:
         return self._metrics
 
     @property
-    def r1_edit_dist_dict(self) -> defaultdict:
-        """Returns the _r1_primer_dist_dict attribute.
+    def r1_transposon_dict(self) -> defaultdict:
+        """Returns the _r1_transposon_seq_dict attribute.
 
         Returns:
-            defaultdict: The _r1_primer_dist_dict attribute.
+            defaultdict: the _r1_transposon_seq_dict attribute.
         """
-        return self._r1_primer_dist_dict
-
-    @property
-    def r2_edit_dist_dict(self) -> defaultdict:
-        return self._r2_transposon_dist_dict
-
-    @property
-    def r1_transposon_dict(self) -> defaultdict:
         return self._r1_transposon_seq_dict
 
     # private methods ---------------------------------------------------------
@@ -115,19 +122,6 @@ class BarcodeQcCounter:
                 other.r1_transposon_dict.items():
             self._r1_transposon_seq_dict[r1_transposon_edit_dist]\
                 .update(r1_transposon_seq_set)
-
-        # Combine _r1_primer_dist_dict dictionaries
-        for r1_primer_seq, r1_primer_edit_dist in \
-                other.r1_edit_dist_dict.items():
-            self._r1_primer_dist_dict[r1_primer_seq] = r1_primer_edit_dist
-
-        # Combine _r2_transposon_dist_dict dictionaries
-        for (
-            r2_transposon_seq,
-            r2_transposon_edit_dist,
-        ) in other.r2_edit_dist_dict.items():
-            self._r2_transposon_dist_dict[r2_transposon_seq] = \
-                r2_transposon_edit_dist
 
     # public methods ----------------------------------------------------------
 
@@ -181,7 +175,7 @@ class BarcodeQcCounter:
 
     def update(self,
                component_tuple: tuple,
-               deviation_tuple: tuple,
+               r1_transposon_edit_dist: int,
                r2_restriction_enzyme_name: str) -> None:
         """Updates the metrics with given component and deviation tuples.
 
@@ -192,15 +186,9 @@ class BarcodeQcCounter:
                 R1 transposon, and R2 transposon edit distances.
             r2_restriction_enzyme_name (str): The R2 restriction enzyme name.
         """
-        logger.debug("updating metrics with: %s, %s",
-                     component_tuple, deviation_tuple)
         (r1_primer_seq,
          r1_transposon_seq,
          r2_transposon_seq) = component_tuple
-
-        (r1_primer_edit_dist,
-         r1_transposon_edit_dist,
-         r2_transposon_edit_dist) = deviation_tuple
 
         (self._metrics
          [r1_transposon_edit_dist]
@@ -210,10 +198,6 @@ class BarcodeQcCounter:
 
         self._r1_transposon_seq_dict[r1_transposon_edit_dist]\
             .add(r1_transposon_seq)
-
-        self._r1_primer_dist_dict[r1_primer_seq] = r1_primer_edit_dist
-        self._r2_transposon_dist_dict[r2_transposon_seq] = \
-            r2_transposon_edit_dist
 
     def _summarize_by_tf(self, component_dict: dict) -> None:
         """Summarizes the metrics by transcription factor (TF).
@@ -233,7 +217,8 @@ class BarcodeQcCounter:
         # only iterate over those reads which had an r1 transposon seq
         # edit distance of n or less
 
-        r1_for_given_r2_dict = {x: set() for x in component_dict['r1_primer']}
+        #r1_for_given_r2_dict = defaultdict(lambda: defaultdict(set))
+        r1_for_given_r2_dict = MiddleDefaultDict1(set)
         for i, r1_transposon_dict in self._metrics.items():
             # first level of iteration is over the r1 primer keys.
             # The dictionary is a nested dictionary with the keys being
@@ -243,24 +228,36 @@ class BarcodeQcCounter:
                 # if the r1 primer sequence is the expected sequence
                 # for a given tf, then iterate over the r2 transposon
                 # entries and record the results
-                if r1_primer_seq in component_dict['r1_primers']:
-                    r1_primer_index = \
-                        component_dict['r1_primers'].index(r1_primer_seq)
-                    for r2_transposon_seq, r2_transposon_seq_dict in \
-                            r1_primer_dict.items():
+                for r2_transposon_seq, r2_transposon_seq_dict in \
+                        r1_primer_dict.items():
+                    # if the r2_transposon_seq is recognized, then save the
+                    # r1_primer_seq. structure of the dict is:
+                    # {'valid_r2_trans_seq': set(r1_primer_seq1, ...)}
+                    if r2_transposon_seq in \
+                            component_dict['r2_transposon']:
+                        (r1_for_given_r2_dict
+                         [i]
+                         [r2_transposon_seq]
+                         .add(r1_primer_seq))
+                    # if the r1_primer_seq is an expected sequence, then
+                    # iterate over the r2_transposon_seq_dict and record the
+                    # results
+                    if r1_primer_seq in component_dict['r1_primer']:
+                        r1_primer_index = \
+                            component_dict['r1_primer'].index(r1_primer_seq)
+                        r2_transposon_target_seq = \
+                            component_dict['r2_transposon'][r1_primer_index]
                         edit_dist = \
                             align(
-                                (component_dict
-                                 ['r2_transposons']
-                                 [r1_primer_index]),
-                                r2_transposon_seq)
+                                r2_transposon_seq,
+                                r2_transposon_target_seq)
                         r1_primer_record = {
                             "tf": component_dict['tf'][r1_primer_index],
                             "r1_primer_seq":
-                            component_dict['r1_primers'][r1_primer_index],
+                            component_dict['r1_primer'][r1_primer_index],
                             "r1_transposon_edit_dist": i,
                             "r2_transposon_edit_dist":
-                            edit_dist.get["editDistance"]}
+                            edit_dist.get("editDistance")}
                         for restriction_enzyme, count in \
                                 r2_transposon_seq_dict.items():
                             record_copy = r1_primer_record.copy()
@@ -269,39 +266,48 @@ class BarcodeQcCounter:
                                 restriction_enzyme,
                                 'count': count})
                             r1_primer_summary.append(record_copy)
-                        # add the r1_primer_seq to the set of r1_primers
-                        # which have a valid r2_transposon_seq
-                        if r2_transposon_seq in \
-                                component_dict['r2_transposons']:
-                            r1_for_given_r2_dict['r1_primer_seq']\
-                                .add(r1_primer_seq)
 
         # in the second iteration, iterate over only those r1_primer_seqs with
         # a valid r2_transposon_seq
-        for i, r1_transposon_dict in self._metrics.items():
-            for tf, r1_primer_seq in r1_for_given_r2_dict.items():
-                tf_index = component_dict['tf'].index(tf)
-                r2_transposon_seq = component_dict["r2_transposons"][tf_index]
-
-                edit_dist = align(
-                    component_dict['r1_primer'][tf_index],
-                    r1_primer_seq)
-
-                r2_transposon_record = {
-                    "tf": tf,
-                    "r2_transposon_seq": r2_transposon_seq,
-                    "r1_transposon_edit_dist": i,
-                    "r1_primer_edit_dist":
-                    edit_dist.get["editDistance"]}
-                for restriction_enzyme, count in \
-                    r1_transposon_dict[r1_primer_seq][r2_transposon_seq]\
-                        .items():
-                    record_copy = r2_transposon_record.copy()
-                    record_copy.update({
-                        'restriction_ezyme':
-                        restriction_enzyme,
-                        'count': count})
-                    r2_transposon_summary.append(record_copy)
+        for r1_transposon_ed, r1_transposon_ed_dict in \
+                r1_for_given_r2_dict.items():
+            for r2_transposon_seq, r1_primer_seq_set in \
+                    r1_transposon_ed_dict.items():
+                # extract the TF and expected r1_primer sequence for this
+                # r2_transposon_seq and TF
+                index = component_dict['r2_transposon']\
+                    .index(r2_transposon_seq)
+                tf = component_dict['tf'][index]
+                r1_primer_expected = component_dict["r1_primer"][index]
+                # iterate over all of the `r1_primer_seq` for this
+                # r2_transposon_seq
+                for r1_primer_query in r1_primer_seq_set:
+                    # align the r1_primer to the expected r1_primer for this
+                    # r2_transposon_seq and TF
+                    edit_dist = align(
+                        r1_primer_query,
+                        r1_primer_expected)
+                    # create the base record
+                    r2_transposon_record = {
+                        "tf": tf,
+                        "r2_transposon_seq": r2_transposon_seq,
+                        "r1_transposon_edit_dist": r1_transposon_ed,
+                        "r1_primer_edit_dist":
+                        edit_dist.get("editDistance")}
+                    for restriction_enzyme, count in \
+                        (self._metrics
+                         [r1_transposon_ed]
+                         [r1_primer_query]
+                         [r2_transposon_seq]
+                         .items()):
+                        # make a copy of the record
+                        record_copy = r2_transposon_record.copy()
+                        # add additional restriction enzyme info
+                        record_copy.update({
+                            'restriction_ezyme':
+                            restriction_enzyme,
+                            'count': count})
+                        r2_transposon_summary.append(record_copy)
 
         return r1_primer_summary, r2_transposon_summary
 
@@ -343,7 +349,7 @@ class BarcodeQcCounter:
             # input checks
             if not isinstance(component_dict, dict):
                 raise TypeError("component_dict must be a dictionary")
-            if not {'tf', 'r1_primers', 'r2_transposons'} == \
+            if not {'tf', 'r1_primer', 'r2_transposon'} == \
                     set(list(component_dict.keys())):
                 raise ValueError("component_dict must be a dictionary "
                                  "where the keys are 'tf', 'r1_primers', "
@@ -354,7 +360,7 @@ class BarcodeQcCounter:
             for k, v in component_dict.items():
                 if not isinstance(v, list):
                     raise TypeError("component_dict values must be lists")
-            if len(set([len(x) for x in component_dict.values()])) != 1:
+            if len({len(x) for x in component_dict.values()}) != 1:
                 raise ValueError("component_dict values must be lists of "
                                  "the same length")
             # extract summaries from the metrics

@@ -58,11 +58,6 @@ def parse_args(
                         help="path to the input bam file",
                         required=True)
 
-    parser.add_argument("-o",
-                        "--output_dir",
-                        help="path to the output directory"
-                        " (default: current directory)")
-
     parser.add_argument("-g",
                         "--genome",
                         help=" ".join(["Path to a genome .fasta file.",
@@ -74,31 +69,22 @@ def parse_args(
                         help="Path to the barcode details json file",
                         required=True)
 
-    parser.add_argument('-d',
-                        '--database',
-                        help='path to the cc database',
-                        required=True)
-
-    parser.add_argument('-t',
-                        '--tf',
-                        help='Name of the tf for this alignment',
-                        required=True)
-
-    parser.add_argument('-r',
-                        '--regions_tblname',
-                        help='Name of the regions table in the db',
-                        required=True)
-
-    parser.add_argument('-b',
-                        '--background_tblname',
-                        help='Name of the background table in the db',
-                        required=True)
-
     parser.add_argument("-q",
                         "--mapq_threshold",
                         help="",
                         default=10,
                         type=int)
+
+    parser.add_argument("-o",
+                        "--output_dir",
+                        help="path to the output directory"
+                        " (default: current directory)",
+                        default='.')
+    
+    parser.add_argument("-v",
+                        "--verbose",
+                        help="save complete alignment summary",
+                        action="store_true")
 
     return subparser
 
@@ -166,6 +152,8 @@ def process_alignments(args: argparse.Namespace) -> dict:
         output_dir = args.output_dir
     except AttributeError:
         output_dir = os.getcwd()
+    
+    output_basename = os.path.splitext(os.path.basename(args.bampath))[0]
 
     logging.info("tagging reads...")
     # temp_dir is automatically cleaned when context ends
@@ -175,8 +163,7 @@ def process_alignments(args: argparse.Namespace) -> dict:
         bampath_tmp = os.path.join(temp_dir, "tmp_tagged.bam")
         # create the path to store the (permanent) output bam
         bampath_out = os.path.join(
-            output_dir,
-            os.path.splitext(os.path.basename(args.bampath))[0] + out_suffix)  # noqa
+            output_dir, output_basename + out_suffix)
 
         # open files
         # open the input bam
@@ -194,13 +181,14 @@ def process_alignments(args: argparse.Namespace) -> dict:
 
         status_coder = create_status_coder(
             mapq_threshold=mapq_threshold,
-            check_5_prime_clip=True)
+            check_5_prime_clip=True,
+            check_passing=False)
 
         read_group_set = set()
         read_summary = []
         # until_eof will include unmapped reads, also
         for read in input_bamfile.fetch(until_eof=True):
-            tagged_read = at.tag_read(read)
+            tagged_read = at.tag_read(read, decompose_barcode=False)
 
             status_code = status_coder(tagged_read)
 
@@ -273,5 +261,14 @@ def process_alignments(args: argparse.Namespace) -> dict:
     sp = SummaryParser(aln_summary_df)
     qbed_df = sp.to_qbed()
 
+    qbed_df.to_csv(os.path.join(output_dir, output_basename + '.qbed'), 
+                   sep='\t',
+                   index=False)
+    
+    if args.verbose:
+        aln_summary_df.to_csv(os.path.join(output_dir, output_basename + '.summary'), 
+                              sep='\t',
+                              index=False)
+
     logging.info(f'{bampath_out} complete!')
-    return {'summary': aln_summary_df, 'qbed': qbed_df}
+    #return {'summary': aln_summary_df, 'qbed': qbed_df}

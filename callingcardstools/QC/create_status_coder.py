@@ -15,7 +15,8 @@ logging.getLogger(__name__).addHandler(logging.NullHandler())
 def create_status_coder(
         insert_seqs: list = ['*'],
         mapq_threshold: int = 10,
-        check_5_prime_clip: bool = False) -> Callable[[AlignedSegment], int]:
+        check_5_prime_clip: bool = False,
+        check_passing: bool = True) -> Callable[[AlignedSegment], int]:
     """A factory function which returns a function capable of determining
      the status code of a read tagged by an AlignmentTagger object
 
@@ -24,13 +25,16 @@ def create_status_coder(
          ['*'], which will skip the insert seq check altogether.
         mapq_threshold (int): a mapq_threshold. Less than this value will be
         marked as failing the mapq threshold test. Default is 10.
+        check_passing (bool, optional): Whether to check the passing key
+            in the barcode_details dict. Defaults to True.
 
     Returns:
         Callable[[pysam.AlignedSegment], int]: A function which given a tagged
          pysam AlignedSegment will return the status code for a the read
     """
 
-    def coder(read_details: AlignedSegment, status_code: int = 0) -> int:
+    def coder(read_details: AlignedSegment,
+              status_code: int = 0) -> int:
         """_summary_
 
         Args:
@@ -55,13 +59,16 @@ def create_status_coder(
         if not isinstance(read_details.get('barcode_details'), dict):
             raise ValueError('read_details["barcode_details"] must be a '
                              'dict')
-        if not isinstance(
-                read_details.get('barcode_details').get('passing', None),
-                bool):
-            raise KeyError('passing must be a key in '
-                           'read_details["barcode_details"]')
+        if check_passing:
+            if not isinstance(
+                    read_details.get('barcode_details').get('passing', None),
+                    bool):
+                raise KeyError('passing must be a key in '
+                               'read_details["barcode_details"]')
 
-        if not read_details.get('barcode_details').get('passing'):
+        # if check passing is set to false, then the passing key may not
+        # exist. In this event, assume the read is passing
+        if not read_details.get('barcode_details').get('passing', True):
             status_code += StatusFlags.BARCODE.flag()
         # if the read is unmapped, add the flag, but don't check
         # other alignment metrics

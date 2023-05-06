@@ -65,34 +65,32 @@ def parse_args(
                         "barcode_details['components'], or just a string. "
                         "This will be used to create the passing "
                         "output fastq filenames",
-                        required=True)
+                        default="tf")
     parser.add_argument('-n',
                         '--split_suffix',
                         help='append this after the tf name and before _R1.fq '
                         'in the output fastq files',
                         default="split")
+    parser.add_argument('-v',
+                        '--verbose_qc',
+                        help='set this flag to output a file which contains '
+                        'the barcode components for each read ID in the '
+                        'fastq files associated with its barcode components',
+                        action='store_true')
+    parser.add_argument('-p',
+                        '--pickle_qc',
+                        help='set this flag to output a pickle file which '
+                        'containing the BarcodeQcCounter object. This is '
+                        'useful when splitting the fastq files prior to '
+                        'demultiplexing',
+                        action='store_true')
     parser.add_argument('-o',
-                        '--output_prefix',
+                        '--output_dirpath',
                         help='a path to a directory where the output files '
                         'will be output',
                         default=".")
 
     return subparser
-
-# def create_tf_component_dict(barcode_details: dict) -> dict:
-#     for component in v.get('components', None):
-#     comp_split = component.split('_')
-#     query_seq = component_dict.get(component, None)
-#     start = target_dict_offset
-#     end = start + (self.barcode_dict[comp_split[0]]
-#                     [comp_split[1]]
-#                     ['index'][1] -
-#                     self.barcode_dict[comp_split[0]]
-#                     [comp_split[1]]['index'][0])
-#     target_dict_offset = end
-#     component_target_dict = {}
-#     for seq, id in target_dict.items():
-#         component_target_dict.update({seq[start:end]: id})
 
 
 def split_fastq(args: argparse.Namespace):
@@ -102,14 +100,14 @@ def split_fastq(args: argparse.Namespace):
     input_path_list = [args.read1,
                        args.read2,
                        args.barcode_details,
-                       args.output_prefix]
+                       args.output_dirpath]
     for input_path in input_path_list:
         if not os.path.exists(input_path):
             raise FileNotFoundError(f"Input file DNE: {input_path}")
 
     # create the BarcodeQcCounter object
     logging.info('creating BarcodeQcCounter object...')
-    bc_counter = BarcodeQcCounter(args.barcode_details)
+    bc_counter = BarcodeQcCounter()
 
     # create the read parser object
     rp = ReadParser(args.barcode_details, args.read1, args.read2)
@@ -132,11 +130,11 @@ def split_fastq(args: argparse.Namespace):
     else:
         determined_out = {
             'r1': {tf: open(os.path.join(
-                args.output_prefix,
+                args.output_dirpath,
                 f"{tf}_{args.split_suffix}_R1.fq"), "w") for tf in
                    rp.barcode_dict['components'][args.split_key]['map'].values()},  # noqa
             'r2': {tf: open(os.path.join(
-                args.output_prefix,
+                args.output_dirpath,
                 f"{tf}_{args.split_suffix}_R2.fq"), "w") for tf in
                    rp.barcode_dict['components'][args.split_key]['map'].values()}  # noqa
         }
@@ -144,37 +142,51 @@ def split_fastq(args: argparse.Namespace):
     # match barcode expectations
     undetermined_out = {
         'r1': open(os.path.join(
-            args.output_prefix,
+            args.output_dirpath,
             f"undetermined_{args.split_suffix}_R1.fq"), "w"),
         'r2': open(os.path.join(
-            args.output_prefix,
+            args.output_dirpath,
             f"undetermined_{args.split_suffix}_R2.fq"), "w")
     }
 
+    # if verbose_qc is true, for read paired read, record a line which
+    # associates the fastq read ID with the barcode components
+    if args.verbose_qc:
+        logging.info('opening id to barcode map...')
+        additional_components = ['tf', 'restriction_enzyme']
+        id_bc_map = open(os.path.join(
+            args.output_dirpath, "id_bc_map.tsv"), "w")
+        # write header
+        id_bc_map.write(
+            "\t".join(['id'] + list(rp.components) + additional_components))
+        id_bc_map.write("\n")
+
+    logging.info('parsing fastq files...')
     # iterate over reads, split reads whose barcode components
     # match expectation into the appropriate file, and reads which don't
     # fulfill barcode expecations into undetermined.fq
-    # also record each read and barcode details into the id_to_bc.csv file.
-    # note that this will be pretty big (measured in GBs, not as big as R1,
-    # but close)
-    # logging.info('opening id to barcode map...')
-    # additional_components = ['tf', 'restriction_enzyme']
-    # with open(os.path.join(
-    #             args.output_prefix,
-    #             "id_bc_map.tsv"), "w") as id_bc_map:  # pylint:disable=W1514
-    #     # write header
-    #     id_bc_map.write(
-    #         "\t".join(['id'] + list(rp.components) + additional_components))
-    #     id_bc_map.write("\n")
-
-    logging.info('parsing fastq files...')
     while True:
         try:
             rp.next()
         except StopIteration:
             break
         read_dict = rp.parse()
-        # check that the barcode edit dist is 0 for each component
+        # if the verbose_qc is on, record the line in the id_bc_map file
+        if args.verbose_qc:
+            tf = "_".join(
+                [read_dict['status']['details'].get('tf', {}).get('name', "*"),
+                str(read_dict['status']['details'].get('tf', {}).get('dist', ""))])  # noqa
+            restriction_enzyme = \
+                read_dict['status']['details']\
+                .get('r2_restriction', {})\
+                .get('name', "*")
+            id_bc_line = \
+                [read_dict['r1'].id, ] + \
+                [read_dict['components'][comp] for comp in rp.components] + \
+                [tf, restriction_enzyme]
+            id_bc_map.write("\t".join(id_bc_line))
+            id_bc_map.write("\n")
+        # Determine to which fastq file the read should be written
         if read_dict['status']['passing'] is True:
             # check that a TF was actually found -- if the TF barcode had
             # a mismatch, then _3 for instance means that the closest match
@@ -195,28 +207,11 @@ def split_fastq(args: argparse.Namespace):
                     undetermined_out[read_end],
                     'fastq')
 
-            # write line to id to bc map
-            # tf = "_".join(
-            #     [read_dict['status']['details'].get('tf', {}).get('name', "*"),
-            #      str(read_dict['status']['details'].get('tf', {}).get('dist', ""))]) # noqa
-            # restriction_enzyme = read_dict['status']['details']\
-            #     .get('r2_restriction', {}).get('name', "*")
-            # id_bc_line = \
-            #     [read_dict['r1'].id, ] + \
-            #     [read_dict['components'][comp] for comp in rp.components] + \
-            #     [tf, restriction_enzyme]
-            # id_bc_map.write("\t".join(id_bc_line))
-            # id_bc_map.write("\n")
-
-        # extract component information
+        # extract component information to summarize as count metrics
         r1_primer_seq = (read_dict['status']
                          ['details']
                          ['r1_primer']
                          ['query'])
-        r1_primer_dist = (read_dict['status']
-                          ['details']
-                          ['r1_primer']
-                          ['dist'])
         r1_transposon_seq = (read_dict['status']
                              ['details']
                              ['r1_transposon']
@@ -229,13 +224,9 @@ def split_fastq(args: argparse.Namespace):
                              ['details']
                              ['r2_transposon']
                              ['query'])
-        r2_transposon_dist = (read_dict['status']
-                              ['details']
-                              ['r2_transposon']
-                              ['dist'])
         bc_counter.update(
             (r1_primer_seq, r1_transposon_seq, r2_transposon_seq),
-            (r1_primer_dist, r1_transposon_dist, r2_transposon_dist),
+            r1_transposon_dist,
             read_dict['status']['details']['r2_restriction']['name'])
 
     # close the files
@@ -246,9 +237,27 @@ def split_fastq(args: argparse.Namespace):
         for write_handle in determined_out[read_end].values():
             write_handle.close()
 
-    # read_dict['components']['tf']
-    # bc_counter._summarize_by_tf()
-
-    # bc_counter.write()
+    # construct the input to the BarcodeQcCounter summarize method
+    component_dict = {k: [] for k in ['tf', 'r1_primer', 'r2_transposon']}
+    r1_primer_start = rp.barcode_dict['r1']['primer']['index'][0]
+    r1_primer_end = rp.barcode_dict['r1']['primer']['index'][1]
+    r2_transposon_start = r1_primer_end + \
+        rp.barcode_dict['r2']['transposon']['index'][0]
+    r2_transposon_end = (r2_transposon_start +
+                         rp.barcode_dict['r2']['transposon']['index'][1] -
+                         rp.barcode_dict['r2']['transposon']['index'][0])
+    for k, v in rp.barcode_dict['components']['tf']['map'].items():
+        r1_primer_seq = k[r1_primer_start:r1_primer_end]
+        r2_transposon_seq = k[r2_transposon_start:r2_transposon_end]
+        component_dict['tf'].append(v)
+        component_dict['r1_primer'].append(r1_primer_seq)
+        component_dict['r2_transposon'].append(r2_transposon_seq)
+    # summarize the barcode metrics
+    if args.pickle_qc:
+        bc_counter.write(raw=args.pickle_qc,
+                         output_dirpath=args.output_dirpath)
+    else:
+        bc_counter.write(component_dict=component_dict,
+                         output_dirpath=args.output_dirpath)
 
     logging.info('Done parsing the fastqs!')
