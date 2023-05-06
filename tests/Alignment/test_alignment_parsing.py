@@ -184,7 +184,7 @@ def test_tag_bam(yeast_bamfile, yeast_fasta, yeast_barcode_details, tmpdir):
         barcode_details="/home/oguzkhan/code/callingcards/assets/yeast/run_6177_barcode_details.json",
         mapq_threshold=10,
         output_dir=tmpdir,
-        verbose=False
+        verbose_qc=False
     )
 
     output = yeast_process_alignments(ns)

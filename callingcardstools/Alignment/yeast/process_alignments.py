@@ -159,24 +159,25 @@ def process_alignments(args: argparse.Namespace) -> dict:
     logging.info("tagging reads...")
     # temp_dir is automatically cleaned when context ends
     with tempfile.TemporaryDirectory() as temp_dir:
-        # create temp file in temp dir -- note that temp dir is destroyed
-        # when this context ends
-        bampath_tmp = os.path.join(temp_dir, "tmp_tagged.bam")
-        # create the path to store the (permanent) output bam
-        bampath_out = os.path.join(
-            output_dir, output_basename + out_suffix)
-
         # open files
-        # open the input bam
+        logging.info("opening input bam file: %s", args.bampath)
         input_bamfile = pysam.AlignmentFile(  # pylint:disable=E1101
             args.bampath, "rb",
             require_index=True,
             threads=nthreads)
 
-        tmp_tagged_bam = pysam.AlignmentFile(  # pylint:disable=E1101
-            bampath_tmp,
-            "wb",
-            header=input_bamfile.header)
+        # create tmp output bam files
+        logging.debug('creating tmp passing and failing bam in '
+                      'temp dir: %s', temp_dir)
+        tmp_output_bampath_dict = \
+            {x: os.path.join(
+                temp_dir,
+                'tmp_' + output_basename + '_' + x + out_suffix)
+                for x in ['passing', 'failing']}
+
+        tmp_tagged_bam_dict = \
+            {k: pysam.AlignmentFile(v, "wb", header=input_bamfile.header)
+             for k, v in tmp_output_bampath_dict.items()}
 
         at = AlignmentTagger(args.barcode_details, args.genome)
 
@@ -212,12 +213,15 @@ def process_alignments(args: argparse.Namespace) -> dict:
 
             read_summary.append(summary_record)
 
-            tmp_tagged_bam.write(tagged_read.get('read'))
-            # read_obj_list.append(tagged_read)
+            if status_code == 0:
+                tmp_tagged_bam_dict['passing'].write(tagged_read.get('read'))
+            else:
+                tmp_tagged_bam_dict['failing'].write(tagged_read.get('read'))
 
-        # close the write handle so we can create a read handle
-        tmp_tagged_bam.close()
-        pysam.index(bampath_tmp)  # pylint:disable=E1101
+        for k, v in tmp_tagged_bam_dict.items():
+            v.close()
+            pysam.index(tmp_output_bampath_dict[k])
+
         # copy alignments from the tmp file to the actual output so that
         # we can include the RG headers. It is frustrating that this
         # seems like the only way to do this in pysam.
@@ -228,36 +232,40 @@ def process_alignments(args: argparse.Namespace) -> dict:
         # Create new read group header. Note: this is used below in
         # the tagged_bam
         new_header['RG'] = [{'ID': rg} for rg in read_group_set]
+
         # open the tmp_tagged_bam for reading
-        tmp_tagged_bam = pysam.AlignmentFile(bampath_tmp, "rb")   # pylint:disable=E1101 # noqa
-        # open the final bam output path and add the updated header
-        tagged_bam_output = pysam.AlignmentFile(  # pylint:disable=E1101
-            bampath_out, 'wb', header=new_header)
+        tmp_tagged_bam_dict = {k: pysam.AlignmentFile(v, "rb")
+                               for k, v in tmp_output_bampath_dict.items()}
+
+        output_bampath_dict = \
+            {x: os.path.join(
+                args.output_dir,
+                output_basename + '_' + x + out_suffix)
+                for x in ['passing', 'failing']}
+
+        tagged_bam_output_dict = \
+            {k: pysam.AlignmentFile(v, "wb", header=new_header)
+                for k, v in output_bampath_dict.items()}
+
         # iterate over the reads to re-write
         logging.info("re-writing bam with updated header...")
-        count = 0
-        for read in tmp_tagged_bam.fetch():
-            # for read in read_obj_list:
-            tagged_bam_output.write(read)
-            count += 1
-        logging.info(f"finished writing {count} lines to bam...")
-        # close the temp bampath. Note that the whole temp directory will be
-        # deleted when we leave the with TempDirectory as ... clause
-        tmp_tagged_bam.close()
+        for k, tmp_tagged_bam in tmp_tagged_bam_dict.items():
+            # until_eof will include unmapped reads, also
+            for read in tmp_tagged_bam.fetch(until_eof=True):
+                tagged_bam_output_dict[k].write(read)
+            # close the temp bampath. Note that the whole temp directory
+            # will be deleted when we leave the with
+            # TempDirectory as ... clause
+            tmp_tagged_bam.close()
 
-    # Close files
-    tagged_bam_output.close()
+    for k, v in tagged_bam_output_dict.items():
+        v.close()
+        pysam.index(output_bampath_dict[k])
+
+    # Close input
     input_bamfile.close()
 
-    # Re-index the output
-    # This is only here only to prevent the warning message:
-    # bam timestamp and read timestamp are different
-    # that you sometimes get when the bam is modified
-    # after the index is created
-    logging.info("indexing updated bam...")
-    pysam.index(bampath_out)  # pylint:disable=E1101
-
-    logging.info(f'summarizing {bampath_out} to summary_df and qbed...')
+    logging.info('summarizing to summary_df and qbed...')
     aln_summary_df = pd.DataFrame(read_summary)
     sp = SummaryParser(aln_summary_df)
     qbed_df = sp.to_qbed()
@@ -291,5 +299,5 @@ def process_alignments(args: argparse.Namespace) -> dict:
             sep='\t',
             index=False)
 
-    logging.info(f'{bampath_out} complete!')
+    logging.info('complete!')
     # return {'summary': aln_summary_df, 'qbed': qbed_df}
