@@ -340,10 +340,11 @@ class BarcodeQcCounter:
         # if raw is true, then pickle the object
         if raw:
             pickle_path = os.path.join(
-                output_dirpath, filename + suffix + ".pickle")
+                output_dirpath, filename + '_' + suffix + ".pickle")
             logger.info("pickling barcode_qc object to %s{pick_path}")
             with open(pickle_path, "wb") as pickle_file:
                 pickle.dump(self, pickle_file)
+                
         # if component_dict is passed
         if component_dict:
             # input checks
@@ -366,18 +367,20 @@ class BarcodeQcCounter:
             # extract summaries from the metrics
             r1_primer_summary, r2_transposon_summary = \
                 self._summarize_by_tf(component_dict)
+            
             # write r1_primer_summary to file
             r1_primer_basename = \
-                filename + "_r1_primer_summary" + suffix + ".csv"
+                filename + "_r1_primer_summary" + '_' + suffix + ".csv"
             r1_primer_summary_path = os.path.join(
                 output_dirpath, r1_primer_basename)
             r1_primer_summary_df = pd.DataFrame(r1_primer_summary)
             logger.info("writing r1_primer_summary "
                         "to %s{r1_primer_summary_path}")
             r1_primer_summary_df.to_csv(r1_primer_summary_path, index=False)
+            
             # write r2_transposon summary to file
             r2_transposon_summary_basename = \
-                filename + "_r2_transposon_summary" + suffix + ".csv"
+                filename + "_r2_transposon_summary" + '_' + suffix + ".csv"
             r2_transposon_summary_path = os.path.join(
                 output_dirpath, r2_transposon_summary_basename)
             r2_transposon_summary_df = pd.DataFrame(r2_transposon_summary)

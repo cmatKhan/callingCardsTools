@@ -64,13 +64,19 @@ def parse_args(
                         help="Either a name of a key in " +
                         "barcode_details['components'], or just a string. "
                         "This will be used to create the passing "
-                        "output fastq filenames",
+                        "output fastq filenames. Defaults to 'tf' which is "
+                        "appropriate for yeast data",
                         default="tf")
     parser.add_argument('-n',
                         '--split_suffix',
                         help='append this after the tf name and before _R1.fq '
-                        'in the output fastq files',
+                        'in the output fastq files. Defaults to "split"',
                         default="split")
+    parser.add_argument('-o',
+                        '--output_dirpath',
+                        help='a path to a directory where the output files '
+                        'will be output. Defaults to the current directory',
+                        default=".")
     parser.add_argument('-v',
                         '--verbose_qc',
                         help='set this flag to output a file which contains '
@@ -84,11 +90,6 @@ def parse_args(
                         'useful when splitting the fastq files prior to '
                         'demultiplexing',
                         action='store_true')
-    parser.add_argument('-o',
-                        '--output_dirpath',
-                        help='a path to a directory where the output files '
-                        'will be output',
-                        default=".")
 
     return subparser
 
@@ -164,7 +165,7 @@ def split_fastq(args: argparse.Namespace):
     logging.info('parsing fastq files...')
     # iterate over reads, split reads whose barcode components
     # match expectation into the appropriate file, and reads which don't
-    # fulfill barcode expecations into undetermined.fq
+    # fulfill barcode expectations into undetermined.fq
     while True:
         try:
             rp.next()
@@ -252,12 +253,15 @@ def split_fastq(args: argparse.Namespace):
         component_dict['tf'].append(v)
         component_dict['r1_primer'].append(r1_primer_seq)
         component_dict['r2_transposon'].append(r2_transposon_seq)
+        
     # summarize the barcode metrics
     if args.pickle_qc:
         bc_counter.write(raw=args.pickle_qc,
-                         output_dirpath=args.output_dirpath)
+                         output_dirpath=args.output_dirpath,
+                         suffix=args.split_suffix)
     else:
         bc_counter.write(component_dict=component_dict,
-                         output_dirpath=args.output_dirpath)
+                         output_dirpath=args.output_dirpath,
+                         suffix=args.split_suffix)
 
     logging.info('Done parsing the fastqs!')

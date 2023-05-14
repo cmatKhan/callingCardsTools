@@ -51,7 +51,7 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
     # argument -- see subparsers.add_parser for parse_bam below ---------------
     common_args = argparse.ArgumentParser(
         prog="callingcardstools", add_help=False)
-    common_args_group = common_args.add_argument_group('general')
+    common_args_group = common_args.add_argument_group('General')
     common_args_group.add_argument(
         "-l",
         "--log_level",
