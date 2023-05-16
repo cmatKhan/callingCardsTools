@@ -1,4 +1,4 @@
-tf,r2_transposon_seq,r1_transposon_edit_dist,r1_primer_edit_dist,restriction_ezyme,count
+tf,r2_transposon_seq,r1_transposon_edit_dist,r1_primer_edit_dist,restriction_enzyme,count
 DAL80,ACGCACGC,0,4,HinP1I,3
 DAL80,ACGCACGC,0,1,HinP1I,1
 DAL80,ACGCACGC,0,1,Hpall,1

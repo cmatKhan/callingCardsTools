@@ -1,4 +1,4 @@
-tf,r1_primer_seq,r1_transposon_edit_dist,r2_transposon_edit_dist,restriction_ezyme,count
+tf,r1_primer_seq,r1_transposon_edit_dist,r2_transposon_edit_dist,restriction_enzyme,count
 MET31,TGATA,11,4,*,1
 INO2x1,CCTGC,13,7,*,1
 DAL80,CAACG,0,0,HinP1I,14

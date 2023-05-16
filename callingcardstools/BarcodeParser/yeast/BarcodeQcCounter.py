@@ -243,7 +243,7 @@ class BarcodeQcCounter:
                     # iterate over the r2_transposon_seq_dict and record the
                     # results
                     if r1_primer_seq in component_dict['r1_primer']:
-                        r1_primer_index = \
+                        r1_pri_summarize_by_tfmer_index = \
                             component_dict['r1_primer'].index(r1_primer_seq)
                         r2_transposon_target_seq = \
                             component_dict['r2_transposon'][r1_primer_index]
@@ -262,7 +262,7 @@ class BarcodeQcCounter:
                                 r2_transposon_seq_dict.items():
                             record_copy = r1_primer_record.copy()
                             record_copy.update({
-                                'restriction_ezyme':
+                                'restriction_enzyme':
                                 restriction_enzyme,
                                 'count': count})
                             r1_primer_summary.append(record_copy)
@@ -304,7 +304,7 @@ class BarcodeQcCounter:
                         record_copy = r2_transposon_record.copy()
                         # add additional restriction enzyme info
                         record_copy.update({
-                            'restriction_ezyme':
+                            'restriction_enzyme':
                             restriction_enzyme,
                             'count': count})
                         r2_transposon_summary.append(record_copy)
