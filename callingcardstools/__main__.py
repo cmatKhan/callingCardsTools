@@ -6,10 +6,12 @@ from logging.config import dictConfig
 from importlib.metadata import version
 
 from .BarcodeParser import barcode_table_to_json
+from .BarcodeParser.yeast import combine_qc as yeast_combine_qc
 from .Reads import legacy_split_fastq, split_fastq
 from .Alignment.yeast import legacy_makeccf
 from .Alignment.mammals import process_alignments as process_mammals_bam
 from .Alignment.yeast import process_alignments as process_yeast_bam
+
 
 def parse_args() -> Callable[[list], argparse.Namespace]:
     """Create a cmd line argument parser for callingcardstools
@@ -36,6 +38,9 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         '.bam files. ccf files have the following columns: '
         '[chr,start,end,reads,strand,barcode] but only the first 4 '
         'columns are required. The genome coordinates are 1-indexed',
+
+        'yeast_combine_qc': 'Combine BarcodeQcCounter objects which may '
+        'result from splitting the fastq files prior to demultiplexing',
 
         'process_yeast_bam': 'Iterate over yeast alignments to produce a '
         'qBed format file of the passing reads, and a qc file which '
@@ -72,7 +77,7 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
     # parse_bam subparser -----------------------------------------------------
     subparsers = parser.add_subparsers(
         help="Available Tools")
-    
+
     subparsers = barcode_table_to_json.parse_args(
         subparsers,
         script_descriptions['barcode_to_json'],
@@ -92,6 +97,11 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
     subparsers = split_fastq.parse_args(
         subparsers,
         script_descriptions['split_fastq'],
+        common_args)
+
+    subparsers = yeast_combine_qc.parse_args(
+        subparsers,
+        script_descriptions['yeast_combine_qc'],
         common_args)
 
     subparsers = process_yeast_bam.parse_args(

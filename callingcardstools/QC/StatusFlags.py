@@ -64,7 +64,7 @@ class StatusFlags(IntFlag):
                     return ['NO_STATUS']
             # Use list comprehension to find the powers of two that
             # compose the input number
-            powers = [log2(1 << i) for i
+            powers = [int(log2(1 << i)) for i
                       in range(num.bit_length()) if num & (1 << i)]
 
             if as_str:

@@ -124,24 +124,24 @@ class BarcodeQcCounter:
                 .update(r1_transposon_seq_set)
 
     # public methods ----------------------------------------------------------
-
-    @classmethod
-    def load(cls, file_path: str) -> "BarcodeQcCounter":
+    def load(self, file_path: str):
         """Load a BarcodeQcCounter object from a file using Pickle.
 
         Args:
             file_path (str): The file path where the object is stored.
 
         Returns:
-            BarcodeQcCounter: The loaded BarcodeQcCounter object.
+            None
         """
         logger.info("loading BarcodeQcCounter object from %s", file_path)
         with open(file_path, "rb") as file:
             file_data = pickle.load(file)
-            if not isinstance(file_data, cls):
+            if not isinstance(file_data, BarcodeQcCounter):
                 raise TypeError(
                     f"{file_path} is not a BarcodeQcCounter object")
-            return file_data
+            # copy the data from the loaded object to the current instance
+            self._metrics = file_data._metrics
+            self._r1_transposon_seq_dict = file_data._r1_transposon_seq_dict
 
     @classmethod
     def combine(
@@ -369,8 +369,9 @@ class BarcodeQcCounter:
                 self._summarize_by_tf(component_dict)
             
             # write r1_primer_summary to file
+            append_suffix = '_' + suffix if suffix else ''
             r1_primer_basename = \
-                filename + "_r1_primer_summary" + '_' + suffix + ".csv"
+                filename + "_r1_primer_summary" + append_suffix + ".csv"
             r1_primer_summary_path = os.path.join(
                 output_dirpath, r1_primer_basename)
             r1_primer_summary_df = pd.DataFrame(r1_primer_summary)
@@ -380,7 +381,7 @@ class BarcodeQcCounter:
             
             # write r2_transposon summary to file
             r2_transposon_summary_basename = \
-                filename + "_r2_transposon_summary" + '_' + suffix + ".csv"
+                filename + "_r2_transposon_summary" + append_suffix + ".csv"
             r2_transposon_summary_path = os.path.join(
                 output_dirpath, r2_transposon_summary_basename)
             r2_transposon_summary_df = pd.DataFrame(r2_transposon_summary)

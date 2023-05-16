@@ -5,10 +5,6 @@ def test_status_flags():
 
 	status = 3
 
-	decomposed = sf.decompose(status)
+	assert sf.decompose(status, as_str=False) == [0, 1]
 
-	decomposed_str = [sf(x).name for x in decomposed]
-
-	assert decomposed == [0, 1]
-
-	assert decomposed_str == ['BARCODE', 'MAPQ']
+	assert sf.decompose(status) == ['BARCODE', 'MAPQ']

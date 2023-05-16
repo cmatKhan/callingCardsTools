@@ -6,8 +6,16 @@ from .conftests import *
 import pysam
 
 
-def test_constructor(yeast_readtagger):
-    assert yeast_readtagger.is_open() == True
+def test_constructor():
+
+    setup = {
+        "barcode_details_json": "tests/test_data/yeast/barcode_details.json",
+        "fasta_path": "tests/test_data/yeast/NC_001133.9_1_60000.fasta",
+    }
+
+    rt = AlignmentTagger(**setup)
+
+    return rt.is_open == True
 
 
 def test_aln_tagging_yeast(yeast_readtagger, yeast_bamfile, yeast_bp):
@@ -169,19 +177,14 @@ def test_aln_tagging_yeast(yeast_readtagger, yeast_bamfile, yeast_bp):
     #assert actual == expected
 
 
-def test_tag_bam(yeast_bamfile, yeast_fasta, yeast_barcode_details, tmpdir):
-    # ns = Namespace(
-    #     bampath=str(yeast_bamfile),
-    #     genome=str(yeast_fasta),
-    #     barcode_details=str(yeast_barcode_details),
-    #     mapq_threshold=10,
-    #     output_dir=tmpdir
-    # )
+def test_tag_bam(tmpdir, yeast_alignment_data):
+
+    chr2_fasta, bam, barcode_details = yeast_alignment_data
     
     ns = Namespace(
-        bampath="/home/oguzkhan/Desktop/tmp/testing_callingcards/results/run_6177_T1/alignment/bwamem2/run_6177_T1_DAL80.bam",
-        genome="/mnt/ref/data/S288C_R64/mitra_cc_genome/refactored_names_genome.fasta",
-        barcode_details="/home/oguzkhan/code/callingcards/assets/yeast/run_6177_barcode_details.json",
+        bampath=str(bam),
+        genome=str(chr2_fasta),
+        barcode_details=str(barcode_details),
         mapq_threshold=10,
         output_dir=tmpdir,
         verbose_qc=False

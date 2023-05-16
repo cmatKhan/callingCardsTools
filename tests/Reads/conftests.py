@@ -1,4 +1,6 @@
 import pathlib
+import os
+import re
 import pytest
 from ..conftests import *
 
@@ -21,6 +23,7 @@ def yeast_barcodeqccounter_data():
         .resolve()
     return r1, r2, barcode_details
 
+
 @pytest.fixture
 def yeast_reads():
     """paths relative to project root to yeast r1 and r2 fastq files
@@ -29,7 +32,20 @@ def yeast_reads():
         dict: key, value where keys are r1, r2 and values are paths to fastq files
     """
     return {
-        'r1':"tests/test_data/yeast/r1.fastq",
-        'r2':"tests/test_data/yeast/r1.fastq",
-        'r1_gz':"tests/test_data/yeast/R1.fq.gz", 
-        'r2_gz':"tests/test_data/yeast/R2.fq.gz"}
+        'r1': "tests/test_data/yeast/r1.fastq",
+        'r2': "tests/test_data/yeast/r1.fastq",
+        'r1_gz': "tests/test_data/yeast/R1.fq.gz",
+        'r2_gz': "tests/test_data/yeast/R2.fq.gz"}
+
+
+@pytest.fixture
+def yeast_split_qc_files():
+    """
+    collect the paths of the qc files in data/yeast/split_fastq
+    and return them as a dict
+    """
+    x = [pathlib.Path("tests/Reads/data/yeast/split_qc/" + x).resolve()
+         for x in os.listdir("tests/Reads/data/yeast/split_qc")]
+
+    return {'split': [path for path in x if re.search(r".pickle$", str(path))],
+            'check': [path for path in x if re.search(r".csv$", str(path))]}
