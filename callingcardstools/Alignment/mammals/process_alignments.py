@@ -141,7 +141,7 @@ def process_chunk(bam_in: pysam.AlignmentFile,
 
     # start iterating over the bam_chunk
     logger.debug("iterating over bam chunk...")
-    for read in bam_in.fetch():
+    for read in bam_in.fetch(until_eof=True):
         # only look at mapped primary alignments
         if not read.is_secondary and \
             not read.is_supplementary and \
