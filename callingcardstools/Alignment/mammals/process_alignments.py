@@ -1,10 +1,7 @@
 # pylint:disable=W1203
 import os
 import argparse
-from typing import Iterator, Generator
 import logging
-from itertools import islice
-import multiprocessing as mp
 import tempfile
 
 import pysam
@@ -83,10 +80,17 @@ def parse_args(
 
     parse_bam_output = parser.add_argument_group('output')
     parse_bam_output.add_argument(
+        "-f",
+        "--filename",
+        help="Filename minus optional suffix "
+        " and extension. Default is the input file basename "
+        "minus the extension",
+        default="",
+        required=False)
+    parse_bam_output.add_argument(
         "-s",
         "--suffix",
-        help="suffix to add to output files. "
-        "Defaults to the input filename minus the extension",
+        help="suffix to add to output files.",
         default="",
         required=False)
     parse_bam_output.add_argument(
@@ -96,7 +100,7 @@ def parse_args(
         "this is useful when processing split files in parallel and then "
         "combining later. Defaults to False, which saves as qbed/tsv",
         action="store_true")
-    
+
     return subparser
 
 
@@ -104,7 +108,7 @@ def process_chunk(bam_in: pysam.AlignmentFile,
                   barcode_details_path: str,
                   genome_path: str,
                   mapq_threshold: int,
-                  annotation_tags: list = ['ST']) -> dict:
+                  annotation_tags: set = {'ST'}) -> dict:
     """This function is called when the subparser for this script is used.
     It parses the bam file, sets tags, and creates a summary and qbed file
 
@@ -147,8 +151,8 @@ def process_chunk(bam_in: pysam.AlignmentFile,
             # eval the read based on quality expectations, get the status
             status = status_coder(tagged_read)
             # add the data to the qbed and qc records
-            output_dict['qbed'].update(tagged_read, 
-                                       status, 
+            output_dict['qbed'].update(tagged_read,
+                                       status,
                                        annotation_tags=annotation_tags)
             if status == 0:
                 # add the read to the passing_read list
@@ -186,7 +190,8 @@ def main(args: argparse.Namespace) -> None:
             logger.debug(error_msg)
             raise FileNotFoundError(error_msg)
 
-    output_basename = os.path.splitext(os.path.basename(args.input))[0]
+    output_basename = args.filename if args.filename \
+        else os.path.splitext(os.path.basename(args.input))[0]
 
     # open the bam file
     logger.info(f'beginning to parse {args.input}')
@@ -198,42 +203,52 @@ def main(args: argparse.Namespace) -> None:
                                 args.mapq_threshold)
 
     # write out
-    logger.info("writing unsorted bam files to a temporary directory...")
     with tempfile.TemporaryDirectory() as tmpdir:
-        # write the passing reads to a bam file
-        tmp_passing_bam_output = os.path.join(tmpdir, 'passing.bam')
-        with pysam.AlignmentFile(tmp_passing_bam_output,
-                                 'wb',
-                                 header=bam_in.header) as tmp_passing_bam:
-            for read in result_dict['passing']:
-                tmp_passing_bam.write(read)
+        if len(result_dict['passing']) > 0:
+            logger.info("writing unsorted passing bam...")
+            # write the passing reads to a bam file
+            tmp_passing_bam_output = os.path.join(tmpdir, 'passing.bam')
+            with pysam.AlignmentFile(tmp_passing_bam_output,
+                                     'wb',
+                                     header=bam_in.header) as tmp_passing_bam:
+                for read in result_dict['passing']:
+                    tmp_passing_bam.write(read)
+            # sort the passing and failing bam files with pysam
+            logger.info("sorting passing bam...")
 
-        # write the failing reads to a bam file
-        tmp_failing_bam_output = os.path.join(tmpdir, 'failing.bam')
-        with pysam.AlignmentFile(tmp_failing_bam_output,
-                                 'wb',
-                                 header=bam_in.header) as tmp_failing_bam:
-            for read in result_dict['failing']:
-                tmp_failing_bam.write(read)
+            try:
+                passing_output_filename = \
+                    output_basename + '_' + args.suffix + '_passing.bam' \
+                    if args.suffix else output_basename + '_passing.bam'
+                pysam.sort("-o", passing_output_filename,
+                           tmp_passing_bam_output)
+            except pysam.SamtoolsError as exc:
+                raise pysam.SamtoolsError('Error sorting passing bam file') from exc  # noqa
 
-        # sort the passing and failing bam files with pysam
-        logger.info("sorting passing and failing bam files...")
-        try:
-            passing_output_filename = \
-                output_basename + '_' + args.suffix + '_passing.bam' \
-                if args.suffix else output_basename + '_passing.bam'
-            pysam.sort("-o", passing_output_filename,
-                       tmp_passing_bam_output)
-        except pysam.SamtoolsError as exc:
-            raise pysam.SamtoolsError('Error sorting passing bam file') from exc  # noqa
-        try:
-            failing_output_filename = \
-                output_basename + '_' + args.suffix + '_failing.bam' \
-                if args.suffix else output_basename + '_failing.bam'
-            pysam.sort("-o", failing_output_filename,
-                       tmp_failing_bam_output)
-        except pysam.SamtoolsError as exc:
-            raise pysam.SamtoolsError('Error sorting failing bam file') from exc  # noqa
+        else:
+            logger.info(f"No passing reads found in {args.input}")
+
+        if len(result_dict['failing']) > 0:
+
+            logger.info("writing unsorted failing bam...")
+            tmp_failing_bam_output = os.path.join(tmpdir, 'failing.bam')
+            with pysam.AlignmentFile(tmp_failing_bam_output,
+                                     'wb',
+                                     header=bam_in.header) as tmp_failing_bam:
+                for read in result_dict['failing']:
+                    tmp_failing_bam.write(read)
+
+            try:
+                failing_output_filename = \
+                    output_basename + '_' + args.suffix + '_failing.bam' \
+                    if args.suffix else output_basename + '_failing.bam'
+                logger.info("sorting failing bam...")
+                pysam.sort("-o", failing_output_filename,
+                           tmp_failing_bam_output)
+            except pysam.SamtoolsError as exc:
+                raise pysam.SamtoolsError('Error sorting failing bam file') from exc  # noqa
+        else:
+            logger.info(f"No failing reads found in {args.input}")
 
     # write out
     result_dict['qbed'].write(output_basename, args.suffix, args.pickle)

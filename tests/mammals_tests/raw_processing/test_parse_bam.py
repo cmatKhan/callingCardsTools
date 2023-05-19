@@ -6,7 +6,7 @@ import logging
 import pandas as pd
 
 from callingcardstools.Alignment.mammals import process_alignments
-from callingcardstools.Alignment.mammals import combine
+from callingcardstools.Alignment.mammals import combine_qc
 from callingcardstools.Alignment.mammals.Qbed import Qbed
 from callingcardstools.BarcodeParser.mammals.BarcodeQcCounter import BarcodeQcCounter
 
@@ -86,7 +86,7 @@ def test_combine(parsed_bam_pickled, tmpdir, caplog):
                      suffix="",
                      pickle=False)
 
-    combine.main(args)
+    combine_qc.main(args)
     # todo -- test that the number of hops recorded in the qbed
     # is the same as the number of reads in the passing bam
     # note this is 3 b/c the summarize QC is not implemented at the moment
