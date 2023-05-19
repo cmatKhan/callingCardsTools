@@ -2,7 +2,6 @@
 import os
 import argparse
 import logging
-import multiprocessing as mp
 
 from callingcardstools.BarcodeParser.mammals.BarcodeQcCounter import BarcodeQcCounter  # noqa
 from .Qbed import Qbed
@@ -37,9 +36,9 @@ def parse_args(
         to create a unified cmd line interface for the package
     """
     parser = subparser.add_parser(
-        'combine_mammals_data',
+        'mammals_combine_qc',
         help=script_description,
-        prog='combine_mammals_data',
+        prog='mammals_combine_qc',
         parents=[common_args]
     )
 

@@ -9,8 +9,9 @@ from .BarcodeParser import barcode_table_to_json
 from .BarcodeParser.yeast import combine_qc as yeast_combine_qc
 from .Reads import legacy_split_fastq, split_fastq
 from .Alignment.yeast import legacy_makeccf
-from .Alignment.mammals import process_alignments as process_mammals_bam
 from .Alignment.yeast import process_alignments as process_yeast_bam
+from .Alignment.mammals import process_alignments as process_mammals_bam
+from .Alignment.mammals import combine_qc as mammals_combine_qc
 
 
 def parse_args() -> Callable[[list], argparse.Namespace]:
@@ -50,6 +51,9 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         'separate reads into passing.bam and failing.bam, a '
         'qBed format file of the passing reads, and a qc file which '
         'allows finer exploration of the barcode and alignment metrics',
+        
+        'mammals_combine_qc': 'Combine qbed and barcodeQC objects which may '
+        'result from splitting the fastq and processing chunks in parallel',
     }
 
     # common options -- these can be applied to all scripts via the 'parent'---
@@ -115,6 +119,11 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         script_descriptions['process_mammals_bam'],
         common_args
     )
+
+    subparsers = mammals_combine_qc.parse_args(
+        subparsers,
+        script_descriptions['mammals_combine_qc'],
+        common_args)
 
     # return the top level parser to be used in the main method below
     return parser

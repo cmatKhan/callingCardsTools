@@ -343,7 +343,10 @@ class Qbed():
             qc_output_file = filename + '_' + suffix + '_aln_summary.tsv' \
                 if suffix else filename + '_aln_summary.tsv'
             logger.info("writing qc summary to %s", qc_output_file)
-            status_df.to_csv(qc_output_file, sep='\t', index=False, header=False)
+            status_df.to_csv(qc_output_file, 
+                             sep='\t', 
+                             index=False, 
+                             header=False)
 
             srt_output_file = filename + '_' + suffix + '_srt_count.tsv' \
                 if suffix else filename + '_srt_count.tsv'
