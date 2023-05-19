@@ -4,9 +4,9 @@ import pytest
 from callingcardstools.Alignment.SummaryParser import SummaryParser
 
 
-def test_summary_parser_constructor(yeast_summary):
+def test_summary_parser_constructor(yeast_summary_data):
 
-    sp = SummaryParser(yeast_summary)
+    sp = SummaryParser(yeast_summary_data.as_posix())
 
     x = sp.summary
 

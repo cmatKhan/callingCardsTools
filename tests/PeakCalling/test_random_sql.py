@@ -95,8 +95,8 @@ def test_rtree():
   (28281, -80.844208, -80.841972, 35.0, 38.227203),
   (28282, -80.846382, -80.844193, 35.223972, 35.225655);"""
 
-    rtree_query = """SELECT id FROM demo_index
- WHERE maxY>=35.0 AND minY<=35.0;"""
+    rtree_query = ("SELECT id FROM demo_index "
+                   "WHERE maxY>=35.0 AND minY<=35.0;")
 
     cur.execute(rtree_create)
     cur.execute(rtree_fill)

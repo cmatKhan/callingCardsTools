@@ -70,6 +70,18 @@ def barcodes():
     return d
 
 
+@pytest.fixture(autouse=True)
+def parsed_bam_pickled(tests_dirpath):
+    parsed_output = {
+        'barcode_qc_pickle':
+        os.path.join(tests_dirpath,
+                     'test_data/parsed_bam/human_AY53-1_50_T1_barcode_qc.pkl'),
+        'qbed_pickle':
+        os.path.join(tests_dirpath,
+                     'test_data/parsed_bam/human_AY53-1_50_T1_qbed.pkl')}
+    return parsed_output
+
+
 # @pytest.fixture(autouse=True)
 # def bam_read1():
 
