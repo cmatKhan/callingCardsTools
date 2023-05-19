@@ -142,10 +142,12 @@ def process_chunk(bam_in: pysam.AlignmentFile,
     # start iterating over the bam_chunk
     logger.debug("iterating over bam chunk...")
     for read in bam_in.fetch(until_eof=True):
-        # only look at mapped primary alignments
-        if not read.is_secondary and \
-            not read.is_supplementary and \
-                not read.is_unmapped:
+        # write reads that are not primary, unique reads to the failing list
+        if read.is_secondary or read.is_supplementary or read.is_unmapped:
+            # parse the barcode, tag the read
+            tagged_read = at.tag_read(read)
+            output_dict['failing'].append(tagged_read['read'])
+        else:
             # parse the barcode, tag the read
             tagged_read = at.tag_read(read)
             # eval the read based on quality expectations, get the status

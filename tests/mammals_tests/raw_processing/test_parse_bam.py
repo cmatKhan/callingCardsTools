@@ -26,6 +26,7 @@ def test_parse_bam_plain(
     args = Namespace(input=bam_file,
                      barcode_details=barcode_details_file,
                      genome=genome_file,
+                     filename="parsed",
                      suffix="",
                      pickle=False,
                      mapq_threshold=10)
@@ -53,6 +54,7 @@ def test_parse_bam_pickle(
     args = Namespace(input=bam_file,
                      barcode_details=barcode_details_file,
                      genome=genome_file,
+                     filename="parsed",
                      suffix="",
                      pickle=True,
                      mapq_threshold=10)
