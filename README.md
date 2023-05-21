@@ -5,6 +5,18 @@ for processing raw Calling Cards data. This is used in the
 [nf-core/callingcards](https://github.com/nf-core/callingcards) pipeline, 
 which provides a workflow to process both yeast and mammals Calling Cards data.
 
+# Documentation
+
+[Served Documentation](https://cmatkhan.github.io/callingCardsTools/) provides 
+information on filetypes and the API. For help with the cmd line tools, 
+simply install callingcardstools (see below) and do:
+
+```
+callingcardstools --help
+```
+
+Each of the cmd line tools also provides a `--help` message.
+
 # Installation 
 
 ```
