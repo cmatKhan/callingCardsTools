@@ -5,7 +5,7 @@ import logging
 from logging.config import dictConfig
 from importlib.metadata import version
 
-from .BarcodeParser import barcode_table_to_json
+from .BarcodeParser.yeast import barcode_table_to_json
 from .BarcodeParser.yeast import combine_qc as yeast_combine_qc
 from .Reads import legacy_split_fastq, split_fastq
 from .Alignment.yeast import legacy_makeccf
@@ -51,7 +51,7 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         'separate reads into passing.bam and failing.bam, a '
         'qBed format file of the passing reads, and a qc file which '
         'allows finer exploration of the barcode and alignment metrics',
-        
+
         'mammals_combine_qc': 'Combine qbed and barcodeQC objects which may '
         'result from splitting the fastq and processing chunks in parallel',
     }
@@ -148,10 +148,6 @@ def main(args=None) -> None:
     # set the logging details
     log_config = {
         "version": 1,
-        "root": {
-            "handlers": ["console"],
-            "level": f"{log_level}"
-        },
         "handlers": {
             "console": {
                 "formatter": "std_out",
@@ -166,6 +162,12 @@ def main(args=None) -> None:
                 "\tthread details : %(thread)d, %(threadName)s\n" +
                 "\t%(levelname)s : %(message)s",
                 "datefmt": "%Y-%m-%d %H:%M:%S"
+            }
+        },
+        "loggers": {
+            "": {
+                "level": f"{log_level}",
+                "handlers": ["console"]
             }
         }
     }

@@ -81,20 +81,13 @@ class Qbed():
     _qbed: DefaultDict
     _status_dict: DefaultDict
 
-    def __init__(self, pickle_path: str = None):
+    def __init__(self, pickle_path: str = None) -> None:
         """Create a ReadRecords object. This object will write records to
         a qbed file and a qc file.
 
         Args:
-           qbed_tmpfile (_type_): path to a tmp file for the qbed. intention
-             is for this to be tmp and then print the grouped/aggregated to
-             user output
-            qc_tmpfile (_type_): path to a file for the qc records. intention
-             is for this to be tmp, and then offer methods to summarize and
-             print summary to user output
-
-        Returns:
-            ReadRecords object
+            pickle_path: Path to a pickle file to load. If None, then
+                initialize a new ReadRecords object.
         """
         if pickle_path:
             if not os.path.exists(pickle_path):
@@ -187,17 +180,13 @@ class Qbed():
             writer.writerow({'srt_type': 'multi_srt',
                             'count': multi_srt_count})
 
-
     # public methods ----------------------------------------------------------
-
-    def load(self, file_path: str):
+    
+    def load(self, file_path: str) -> None:
         """Load a BarcodeQcCounter object from a file using Pickle.
 
         Args:
             file_path (str): The file path where the object is stored.
-
-        Returns:
-            None
         """
         logger.info("loading Qbed object from %s", file_path)
         with open(file_path, "rb") as file:
@@ -247,17 +236,19 @@ class Qbed():
          destroyed.
 
         Args:
-            tagged_read (dict): _description_
-             status (int): A value which reflects how the read performs
-             based on pre-defined quality metrics. A status of 0 is considered
-             a pass. A status of greater than 0 is a read which fails
-             at least 1 quality metric
+            tagged_read (dict): A pysam.AlignedSegment object which has been 
+                tagged with the appropriate calling cards tags based on the 
+                BarcodeParser object used to create the object.
+            status (int): A value which reflects how the read performs
+                based on pre-defined quality metrics. A status of 0 is considered
+                a pass. A status of greater than 0 is a read which fails
+                at least 1 quality metric
             insert_offset (int): number to add to tag XI value to calculate
-             the end coordinate. For instance, if the start coord is the first
-             T in TTAA, then the offset would be 4.
+                the end coordinate. For instance, if the start coord is the first
+                T in TTAA, then the offset would be 4.
             annotation_tags (list): List of strings. Values in list are tags to
-             extract from tagged_read dictionary. Values of tag will be added
-             to the annotation column of the qbed as a string delimited by '/'.
+                extract from tagged_read dictionary. Values of tag will be added
+                to the annotation column of the qbed as a string delimited by '/'.
         """
         if len({'read', 'barcode_details'}-tagged_read.keys()) > 0:
             raise KeyError('tagged_read must have keys '
@@ -290,7 +281,7 @@ class Qbed():
         Args:
             filename (str): The name of the file to write to.
             raw (bool): If True, write to a raw file. Otherwise,
-             write to a tsv file.
+                write to a tsv file.
 
         Returns:
             [pd.DataFrame, pd.DataFrame]: The qbed and status DataFrames

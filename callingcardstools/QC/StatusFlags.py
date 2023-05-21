@@ -10,9 +10,22 @@ __all__ = ['StatusFlags']
 
 
 class StatusFlags(IntFlag):
-    """A barcode failure is 0x0, a mapq failure is 0x1 and a insert seq failure
-     is 0x2. A read that fails both barcode and mapq for instance would have
-     status 3.
+    """
+    A class used to represent different status flags for read alignment.
+    Each status flag corresponds to a different power of 2, allowing
+    combinations of flags to be represented as a sum of these powers.
+
+    Attributes:
+        BARCODE (int): Corresponds to a barcode failure.
+        MAPQ (int): Corresponds to a MAPQ failure.
+        INSERT_SEQ (int): Corresponds to an insert sequence failure.
+        FIVE_PRIME_CLIP (int): Corresponds to a failure due to 5' end
+            clipping in the read.
+        UNMAPPED (int): Corresponds to the read being unmapped.
+        NOT_PRIMARY (int): Corresponds to the read not being primary.
+        ALIGNER_QC_FAIL (int): Corresponds to the read failing aligner QC.
+        RESTRICTION_ENZYME (int): Corresponds to a failure due to
+            restriction enzyme.
     """
     BARCODE = 0x0
     MAPQ = 0x1
@@ -23,37 +36,60 @@ class StatusFlags(IntFlag):
     ALIGNER_QC_FAIL = 0x6
     RESTRICTION_ENZYME = 0x7
 
-    def flag(self):
+    def flag(self) -> int:
+        """
+        Returns the power of 2 corresponding to the flag's value.
+
+        Returns:
+            int: The power of 2 corresponding to the flag's value.
+        """
         return 2**self.value
 
     @staticmethod
     def decompose(nums: Union[int, List[int], ndarray, Series],
-                  as_str: bool = True) -> List:
+                  as_str: bool = True) -> List[int]:
         """
-        Decompose a number, list, ndarray, or pandas Series of numbers
-            representing the sum of the powers of two into a list of those
-            powers of two. Optionally, return the string representation of
-            the powers of two according to the StatusFlags object.
+        Decomposes a number, list, ndarray, or pandas Series of numbers 
+        representing the sum of the powers of two into a list of those 
+        powers of two. Optionally, return the string representation of the 
+        powers of two according to the StatusFlags object.
 
         Args:
-            nums (Union[int, List[int], ndarray, pd.Series]):
-                The input number, list, ndarray, or pandas Series to decompose.
-            as_str (bool, optional): Whether to return the string
-                representation of the powers of two according to the
+            nums (Union[int, List[int], ndarray, pd.Series]): The input 
+                number, list, ndarray, or pandas Series to decompose.
+            as_str (bool, optional): Whether to return the string 
+                representation of the powers of two according to the 
                 StatusFlags object. Defaults to True.
 
         Returns:
-            List: A list representing the sum of the powers of two if
-                `as_str` is False, e.g., 10 decomposes into [2, 8].
-                If `as_str` is true, then the result would be
+            List: A list representing the sum of the powers of two if 
+                `as_str` is False, e.g., 10 decomposes into [2, 8]. If 
+                `as_str` is true, then the result would be 
                 ['MAPQ', 'RESTRICTION_ENZYME'].
 
         Raises:
-            TypeError: If the input type is neither int, list, numpy array,
+            TypeError: If the input type is neither int, list, numpy array, 
                 nor pandas Series.
             ValueError: If the input is a negative integer.
         """
         def decompose_single(num: int, as_str: bool = True) -> list:
+            """
+            Helper function to decompose a single integer into powers of 2.
+
+            Args:
+                num (int): The integer to decompose.
+                as_str (bool): Whether to return the string representation of 
+                    the powers of two according to the StatusFlags object. 
+                    Defaults to True.
+
+            Returns:
+                list: List of powers of two composing the input number. If 
+                    `as_str` is True, the powers of two are represented by 
+                    their corresponding flag names.
+
+            Raises:
+                ValueError: If the input integer is negative.
+            """
             # check input
             if num < 0:
                 raise ValueError("Invalid input, expected positive int")
@@ -80,29 +116,3 @@ class StatusFlags(IntFlag):
         else:
             raise TypeError(
                 "Invalid input type, expected int, list, or numpy array")
-
-    # def decompose(num: int, as_str: bool = True) -> list:
-    #     """decompose a number which represents the sum of the powers of two
-    #         into a list of those powers of two. Optionally,
-
-    #     Args:
-    #         num (int): the flag to decompose, eg 10
-    #         as_str (bool, optional): whether to return the string
-    #             representation of the powers of two according to the
-    #             StatusFlag object. Defaults to True.
-
-    #     Returns:
-    #         list: list representing the sum of the powers of two if `as_str` is
-    #          False, eg 10 decomposes into [2,8]. If `as_str` is true, then the
-    #             result would be ['MAPQ', 'RESTRICTION_ENZYME']
-    #     """
-    #     # cite: https://codereview.stackexchange.com/a/201461
-    #     powers = []
-    #     while num != 0:
-    #         powers.append(log2(num & -num))
-    #         num = num & (num - 1)
-
-    #     if as_str:
-    #         powers = [StatusFlags(int(x)).name for x in powers]
-
-    #     return powers

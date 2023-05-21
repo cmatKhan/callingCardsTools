@@ -2,16 +2,22 @@
 # standard library
 import os
 import logging
+from typing import Union
 
 # outside library
 import pandas as pd
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logger = logging.getLogger(__name__)
 
 __all__ = ['SummaryParser']
 
 
 class SummaryParser():
+    """
+    Class to parse summary data with provided grouping and ordering parameters.
+    Able to convert this data into qBED format, a variant of the 
+    BED format.
+    """
 
     _query_string = "status == 0"
 
@@ -26,38 +32,21 @@ class SummaryParser():
 
     _summary = None
 
-    def __init__(self, summary: str or pd.DataFrame) -> None:
-        """_summary_
+    def __init__(self, summary: Union[str, pd.DataFrame]) -> None:
+        """
+        Initialize SummaryParser with given summary data.
 
         Args:
-            summary (str or pd.DataFrame): _description_
+            summary (Union[str, pd.DataFrame]): Either a path to a CSV 
+                file or an existing pandas DataFrame.
         """
         self.summary = summary
 
-        # switcher = {
-        #     'status': self._status_filter(*args, **kwargs),
-        #     'mapq': self._mapq_filter(*args, **kwargs),
-        #     'region': self._region_filter(*args, **kwargs),
-        #     'default': self.filterError(method)
-        # }
-
-        # switcher.get(method, "default")
-
-    # def filterError(self, method):
-    #     raise NotImplementedError(f"No filter method matches {method}")
-
-    # def _status_filter(self, query_string):
-    #     self.filter_string = query_string
-
-    # def _mapq_filter(self):
-    #     raise NotImplementedError
-
-    # def _region_filter(self):
-    #     raise NotImplementedError
-
     @property
     def query_string(self):
-        """_summary_"""
+        """
+        Query string for filtering summary data. Default is "status == 0".
+        """
         return self._query_string
 
     @query_string.setter
@@ -66,11 +55,13 @@ class SummaryParser():
 
     @property
     def summary(self):
-        """_summary_"""
+        """
+        The summary data in DataFrame format.
+        """
         return self._summary
 
     @summary.setter
-    def summary(self, summary: str or pd.DataFrame):
+    def summary(self, summary: Union[str, pd.DataFrame]):
         # check input
         if isinstance(summary, str):
             # check genome and index paths
@@ -78,7 +69,7 @@ class SummaryParser():
                 raise FileNotFoundError(f"Input file DNE: {summary}")
             summary = pd.read_csv(summary, dtype=self.summary_columns)
         elif isinstance(summary, pd.DataFrame):
-            logging.info(f'passed a dataframe to SummaryParser')
+            logger.info(f'passed a dataframe to SummaryParser')
         else:
             raise IOError(f'{summary} is not a data type recognized ' +
                           'as a summary by SummaryParser')
@@ -92,7 +83,10 @@ class SummaryParser():
 
     @property
     def summary_columns(self):
-        """_summary_"""
+        """
+        The expected structure (column names and data types) of 
+        the summary data.
+        """
         return self._summary_columns
 
     @summary_columns.setter
@@ -101,7 +95,9 @@ class SummaryParser():
 
     @property
     def grouping_fields(self):
-        """_summary_"""
+        """
+        The set of fields to be used for grouping data in summary.
+        """
         return self._grouping_fields
 
     @grouping_fields.setter
@@ -110,7 +106,9 @@ class SummaryParser():
 
     @property
     def qbed_col_order(self):
-        """_summary_"""
+        """
+        Order of columns to be used when generating a DataFrame in qBED format.
+        """
         return self._qbed_col_order
 
     @qbed_col_order.setter
@@ -118,13 +116,16 @@ class SummaryParser():
         self._qbed_col_order = new_col_order
 
     def _verify(self, summary: pd.DataFrame) -> None:
-        """_summary_
+        """
+        Verifies that the provided summary DataFrame matches the 
+        expected structure.
 
         Args:
-            summary (pd.DataFrame): _description_
+            summary (pd.DataFrame): Summary data as a DataFrame.
 
         Raises:
-            ValueError: _description_
+            ValueError: Raised when the structure of the summary data does 
+                not match the expected structure.
         """
         if not len(set(self.summary_columns.keys()) - set(summary.columns)) == 0:
             raise ValueError(
@@ -132,17 +133,15 @@ class SummaryParser():
                 f"{','.join(self.summary_columns)} in that order")
 
     def to_qbed(self) -> pd.DataFrame:
-        """_summary_
-
-        Args:
-            annotation (str): _description_
-
-        Raises:
-            AttributeError: _description_
+        """
+        Converts the summary data into a DataFrame in qBED format. It uses 
+        the query string to filter data, groups by the defined grouping fields, 
+        and orders columns as defined in qbed_col_order.
 
         Returns:
-            pd.DataFrame: _description_
+            pd.DataFrame: A DataFrame in qBED format.
         """
+
         local_grouping_fields = self.grouping_fields
 
         return self.summary\
@@ -153,13 +152,15 @@ class SummaryParser():
             .rename(columns={'sum': 'depth', 'insert_start': 'start', 'insert_stop': 'end'})[self.qbed_col_order]
 
     def write_qbed(self, output_path: str) -> None:
-        """_summary_
+        """
+        Writes the qBED-formatted DataFrame to a text file at the given path.
 
         Args:
-            output_path (str): _description_
+            output_path (str): The path to the file where the output 
+                should be written.
         """
         if not output_path[-4:] in ['.tsv', 'txt']:
-            logging.warning(
+            logger.warning(
                 f"output path {output_path} does not end with tsv or txt")
         self.to_qbed().to_csv(output_path,
                               sep="\t",

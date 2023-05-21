@@ -10,7 +10,7 @@ from callingcardstools.BarcodeParser.BarcodeParser import BarcodeParser
 
 __all__ = ['AlignmentTagger']
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logger = logging.getLogger(__name__)
 
 
 class AlignmentTagger(BarcodeParser):
@@ -21,18 +21,18 @@ class AlignmentTagger(BarcodeParser):
     _genome = ""
 
     def __init__(self, barcode_details_json: str, fasta_path: str) -> None:
-        """Create an AlignmentTagger object to facilitate adding tags to 
-        alignments and quantifying the number of hops
+        """Initializes the AlignmentTagger object with given barcode 
+        details and a fasta file.
 
         Args:
-            barcode_details_json (str): path to a json file containing
-            barcode details
-            fasta_path (str): path to the genome fasta file. Note that a fai
-             index file created by samtools faidx must
-            exist at the same location.
+            barcode_details_json (str): The path to a JSON file containing 
+                barcode details.
+            fasta_path (str): The path to the genome fasta file. A .fai index 
+                file created by samtools faidx must exist at the same location.
 
-        Returns:
-            AlignmentTagger object
+        Raises:
+            FileNotFoundError: Raised if the path to the fasta file or its
+                index file doesn't exist.
         """
         super().__init__(barcode_details_json)
         self.fasta = fasta_path
@@ -95,16 +95,16 @@ class AlignmentTagger(BarcodeParser):
 
         Args:
             id (str): id line from a given read in a bam produced from a fastq
-            processed by (a script that uses) the ReadParser
+                processed by (a script that uses) the ReadParser
 
         Raises:
             IndexError: Raised if parsing of the id doesn't work as expected
 
         Returns:
             dict: For example, the id line
-            MN00200:647:000H533KW:1:11102:20080:1075_RT-AATTCACTACGTCAACA;RS-TaqAI;TF-ERT1
-            would be returned as
-             {'RT': 'AATTCACTACGTCAACA', 'RS': 'TaqAI', 'TF': 'ERT1'}
+                MN00200:647:000H533KW:1:11102:20080:1075_RT-AATTCACTACGTCAACA;RS-TaqAI;TF-ERT1
+                would be returned as 
+                {'RT': 'AATTCACTACGTCAACA', 'RS': 'TaqAI', 'TF': 'ERT1'}
         """
         try:
             tag_str = id.split('_')[1]
@@ -124,28 +124,31 @@ class AlignmentTagger(BarcodeParser):
                 from exc
         return tag_dict
 
-    def tag_read(self, read, decompose_barcode: bool = True):
+    def tag_read(self, read, decompose_barcode: bool = True) -> dict:
         """given a AlignedSegment object, add RG, XS and XZ tags
 
         Args:
             read (AlignedSegment): An aligned segment object -- eg returned
-              in a for loop by interating over bam.fetch() object from pysam
+                in a for loop by interating over bam.fetch() object from pysam
             decompose_barcode (bool): if the barcode is appended as a
-             read identifer on the bam id line, rather than an already
-              decomposed tag string, then extract the barcode and evaluate 
-              it against expectations in the barcode_details json.
-              Default to True.
+                read identifer on the bam id line, rather than an already
+                decomposed tag string, then extract the barcode and evaluate 
+                it against expectations in the barcode_details json.
+                Default to True.
 
         Raises:
+            IndexError: Raised if no read ID is present.
             TypeError: Raised with the cigarstring is not parse-able in a
-             given read
+                given read
             ValueError: Raised when the insertion sequence indicies
-             are out of bounds
+                are out of bounds
 
         Returns:
-            AlignedSegment: The same read, but with RG, XS and XZ tags added
+            dict: A dictionary with key:value pairs
+                {'read': tagged_read, 'barcode_details': dictionary of barcode
+                detals}
         """
-        logging.debug(read.query_name)
+        logger.debug(read.query_name)
         # instantiate some dict objects
         tag_dict = dict()
         barcode_dict = dict()
@@ -156,7 +159,7 @@ class AlignmentTagger(BarcodeParser):
         if decompose_barcode:
             try:
                 tag_str = read.query_name.split('_')[1]
-                logging.debug(tag_str)
+                logger.debug(tag_str)
             except IndexError as exc:
                 raise IndexError('No read ID present -- '
                                  'expecting a string appended to the read '

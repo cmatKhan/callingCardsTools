@@ -6,7 +6,7 @@ from Bio import SeqIO
 
 from callingcardstools.BarcodeParser.BarcodeParser import BarcodeParser
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logger = logging.getLogger(__name__)
 
 __all__ = ['ReadParser']
 
@@ -19,6 +19,14 @@ class ReadParser(BarcodeParser):
      the read(s), return the assembled components (this could include both what
      could be construed as a barcode as well as any other components), and the
      reads trimmed for the components labelled for trimming.
+    
+    Attributes:
+        r1_path (str): File path to Read 1.
+        r2_path (str): File path to Read 2.
+        r1_handle (_io.TextIOWrapper): File handle for Read 1.
+        r2_handle (_io.TextIOWrapper): File handle for Read 2.
+        cur_r1 (SeqRecord): Current read record for Read 1.
+        cur_r2 (SeqRecord): Current read record for Read 2.
 
     Example:
     ```
@@ -36,10 +44,14 @@ class ReadParser(BarcodeParser):
     _cur_r2 = ""
 
     def __init__(self, barcode_details_json: str = "", r1: str = "", r2: str = "") -> None:  # noqa
-        """_summary_
+        """Initializes the ReadParser with barcode details and optional 
+        read files.
 
         Args:
-            barcode_details_json (str, optional): _description_. Defaults to "".
+            barcode_details_json (str): The JSON file path containing 
+                barcode details.
+            r1 (str): The path to the Read 1 file.
+            r2 (str): The path to the Read 2 file.
         """
         if barcode_details_json:
             super().__init__(barcode_details_json)
@@ -118,14 +130,17 @@ class ReadParser(BarcodeParser):
         self._cur_r2 = r2_seqrecord
 
     def fastq_path_parser(self, fq_path: str) -> bool:
-        """_summary_
+        """Checks if the FastQ file path is valid.
 
         Args:
-            fq_path (str): _description_
+            fq_path (str): The path to the FastQ file.
 
         Raises:
-            FileNotFoundError: _description_
-            IOError: raised if the accetable fastq extensions, .fq or .fastq
+            FileNotFoundError: If the FastQ file does not exist.
+            IOError: If the FastQ file extension is not .fastq, .fq, or .gz.
+
+        Returns:
+            bool: True if the file path is valid, otherwise False.
         """
         error_msg = 'fastq extension must be either .fastq or .fq. ' +\
             'it may be gzipped, eg .fq.gz'
@@ -141,10 +156,13 @@ class ReadParser(BarcodeParser):
                 raise IOError(error_msg)
 
     def open(self) -> None:
-        """_summary_
+        """Opens the read file(s).
+
+        If the file is gzipped, it is opened with gzip, otherwise it's opened normally.
+        In case of paired-end reads, both files are opened.
 
         Raises:
-            AttributeError: _description_
+            AttributeError: If the Read 1 file path is not set.
         """
         if not self.r1_path:
             raise AttributeError('R1 Not Set')
@@ -172,8 +190,7 @@ class ReadParser(BarcodeParser):
                     format='fastq')
 
     def close(self) -> None:
-        """close file objects, if they are set
-        """
+        """close file objects, if they are set"""
         if self.r1_handle:
             self.r1_handle = ""
         if self.r2_handle:
@@ -186,9 +203,9 @@ class ReadParser(BarcodeParser):
         Raises:
             AttributeError: If R1 is not open
             StopIteration: If the end of file is reached in either
-             R1 or R2 (if it is set)
+                R1 or R2 (if it is set)
             ValueError: If after advancing the read ids for
-             R1 and r2 (if paired end) do not match
+                R1 and r2 (if paired end) do not match
         """
         r1_stop = False
         r2_stop = False
@@ -207,14 +224,14 @@ class ReadParser(BarcodeParser):
                 r2_stop = True
             if r1_stop != r2_stop:
                 error_msg = 'The length of R1 and R2 is not the same'
-                logging.WARNING(error_msg)  # pylint:disable=E1102
+                logger.warning(error_msg)  # pylint:disable=E1102
                 raise IOError(error_msg)
             elif r1_stop or r2_stop:
                 raise StopIteration
             if self.cur_r1.id != self.cur_r2.id:
                 error_msg = f"r1 ID: {self.cur_r1.id} does not match r2 "\
                     f"fID: {self.cur_r2.id}"
-                logging.CRITICAL(error_msg)  # pylint:disable=E1102
+                logger.critical(error_msg)  # pylint:disable=E1102
                 raise ValueError(error_msg)
 
     def parse(self, set_name_to_empty: bool = True) -> dict:  # noqa
@@ -222,11 +239,11 @@ class ReadParser(BarcodeParser):
 
         Args:
             set_name_to_empty (bool, optional): Set the name attribute to 
-            empty. SeqIO sets to ID if a name DNE. Defaults to True.
+                empty. SeqIO sets to ID if a name DNE. Defaults to True.
 
         Returns:
             dict: A dictionary with the r1 and r2 SeqRecord objects, the 
-            barcode and the unadulterated read ID
+                barcode and the unadulterated read ID
         """
         # extract this in case it is augmented with the barcode later on
         read_id = self.cur_r1.id

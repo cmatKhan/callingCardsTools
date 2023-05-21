@@ -1,1 +1,1 @@
-from .PackageResources import Resources
+from .Resources import Resources

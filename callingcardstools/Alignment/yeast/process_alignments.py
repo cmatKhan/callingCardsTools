@@ -17,7 +17,7 @@ from callingcardstools.QC.StatusFlags import StatusFlags
 
 __all__ = ['parse_args', 'process_alignments']
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logger = logging.getLogger(__name__)
 
 
 def parse_args(
@@ -156,18 +156,18 @@ def process_alignments(args: argparse.Namespace) -> dict:
 
     output_basename = os.path.splitext(os.path.basename(args.bampath))[0]
 
-    logging.info("tagging reads...")
+    logger.info("tagging reads...")
     # temp_dir is automatically cleaned when context ends
     with tempfile.TemporaryDirectory() as temp_dir:
         # open files
-        logging.info("opening input bam file: %s", args.bampath)
+        logger.info("opening input bam file: %s", args.bampath)
         input_bamfile = pysam.AlignmentFile(  # pylint:disable=E1101
             args.bampath, "rb",
             require_index=True,
             threads=nthreads)
 
         # create tmp output bam files
-        logging.debug('creating tmp passing and failing bam in '
+        logger.debug('creating tmp passing and failing bam in '
                       'temp dir: %s', temp_dir)
         tmp_output_bampath_dict = \
             {x: os.path.join(
@@ -248,7 +248,7 @@ def process_alignments(args: argparse.Namespace) -> dict:
                 for k, v in output_bampath_dict.items()}
 
         # iterate over the reads to re-write
-        logging.info("re-writing bam with updated header...")
+        logger.info("re-writing bam with updated header...")
         for k, tmp_tagged_bam in tmp_tagged_bam_dict.items():
             # until_eof will include unmapped reads, also
             for read in tmp_tagged_bam.fetch(until_eof=True):
@@ -265,7 +265,7 @@ def process_alignments(args: argparse.Namespace) -> dict:
     # Close input
     input_bamfile.close()
 
-    logging.info('summarizing to summary_df and qbed...')
+    logger.info('summarizing to summary_df and qbed...')
     aln_summary_df = pd.DataFrame(read_summary)
     sp = SummaryParser(aln_summary_df)
     qbed_df = sp.to_qbed()
@@ -299,5 +299,5 @@ def process_alignments(args: argparse.Namespace) -> dict:
             sep='\t',
             index=False)
 
-    logging.info('complete!')
+    logger.info('complete!')
     # return {'summary': aln_summary_df, 'qbed': qbed_df}

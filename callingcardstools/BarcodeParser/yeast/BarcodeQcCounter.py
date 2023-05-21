@@ -124,14 +124,11 @@ class BarcodeQcCounter:
                 .update(r1_transposon_seq_set)
 
     # public methods ----------------------------------------------------------
-    def load(self, file_path: str):
+    def load(self, file_path: str) -> None:
         """Load a BarcodeQcCounter object from a file using Pickle.
 
         Args:
             file_path (str): The file path where the object is stored.
-
-        Returns:
-            None
         """
         logger.info("loading BarcodeQcCounter object from %s", file_path)
         with open(file_path, "rb") as file:
@@ -154,7 +151,7 @@ class BarcodeQcCounter:
 
         Returns:
             BarcodeQcCounter: A new BarcodeQcCounter object with the
-              combined metrics.
+                combined metrics.
         """
         result = BarcodeQcCounter()
 
@@ -182,8 +179,8 @@ class BarcodeQcCounter:
         Args:
             component_tuple (tuple): A tuple containing R1 primer,
                 R1 transposon, and R2 transposon sequences.
-            deviation_tuple (tuple): A tuple containing R1 primer,
-                R1 transposon, and R2 transposon edit distances.
+            r1_transposon_edit_dist (int): The edit distance between the
+                R1 transposon sequence and the expected R1 transposon
             r2_restriction_enzyme_name (str): The R2 restriction enzyme name.
         """
         (r1_primer_seq,
@@ -217,7 +214,7 @@ class BarcodeQcCounter:
         # only iterate over those reads which had an r1 transposon seq
         # edit distance of n or less
 
-        #r1_for_given_r2_dict = defaultdict(lambda: defaultdict(set))
+        # r1_for_given_r2_dict = defaultdict(lambda: defaultdict(set))
         r1_for_given_r2_dict = MiddleDefaultDict1(set)
         for i, r1_transposon_dict in self._metrics.items():
             # first level of iteration is over the r1 primer keys.
@@ -344,7 +341,7 @@ class BarcodeQcCounter:
             logger.info("pickling barcode_qc object to %s{pick_path}")
             with open(pickle_path, "wb") as pickle_file:
                 pickle.dump(self, pickle_file)
-                
+
         # if component_dict is passed
         if component_dict:
             # input checks
@@ -367,7 +364,7 @@ class BarcodeQcCounter:
             # extract summaries from the metrics
             r1_primer_summary, r2_transposon_summary = \
                 self._summarize_by_tf(component_dict)
-            
+
             # write r1_primer_summary to file
             append_suffix = '_' + suffix if suffix else ''
             r1_primer_basename = \
@@ -378,7 +375,7 @@ class BarcodeQcCounter:
             logger.info("writing r1_primer_summary "
                         "to %s{r1_primer_summary_path}")
             r1_primer_summary_df.to_csv(r1_primer_summary_path, index=False)
-            
+
             # write r2_transposon summary to file
             r2_transposon_summary_basename = \
                 filename + "_r2_transposon_summary" + append_suffix + ".csv"

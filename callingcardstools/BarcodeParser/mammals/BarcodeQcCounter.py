@@ -155,14 +155,11 @@ class BarcodeQcCounter:
 
     # public methods ----------------------------------------------------------
 
-    def load(self, file_path: str):
+    def load(self, file_path: str) -> None:
         """Load a BarcodeQcCounter object from a file using Pickle.
 
         Args:
             file_path (str): The file path where the object is stored.
-
-        Returns:
-            None
         """
         logger.info("loading BarcodeQcCounter object from %s", file_path)
         with open(file_path, "rb") as file:
@@ -185,7 +182,7 @@ class BarcodeQcCounter:
 
         Returns:
             BarcodeQcCounter: A new BarcodeQcCounter object with the
-              combined metrics.
+                combined metrics.
         """
         result = BarcodeQcCounter()
 
@@ -238,18 +235,12 @@ class BarcodeQcCounter:
         barcode QC metrics.
 
         Args:
-            raw (bool, optional): If True, pickles the object.
-                Defaults to False.
-            component_dict (dict, optional): A dictionary containing keys
-                for 'tf', 'pbs', and 'lrt2s', and their
-                respective lists of values. If provided, writes summaries
-                for each component. Defaults to None.
-            output_dirpath (str, optional): The output directory path where
-                the files will be saved. Defaults to the current directory.
             filename (str, optional): The base filename for the output files.
                 Defaults to "barcode_qc".
             suffix (str, optional): A suffix to be appended to the base
                 filename. Defaults to an empty string.
+            raw (bool, optional): If True, pickles the object.
+                Defaults to False.
         """
         # if raw is true, then pickle the object
         if raw:
@@ -280,11 +271,11 @@ class BarcodeQcCounter:
                         for lrt2_seq, srt_dict in lrt2_dict.items():
                             for srt_seq, count in srt_dict.items():
                                 bc_status = ("pass" if
-                                            (self._bc_status[pb_seq]
-                                            [lrt1_seq]
-                                            [lrt2_seq]
-                                            [srt_seq])
-                                            else "false")
+                                             (self._bc_status[pb_seq]
+                                              [lrt1_seq]
+                                              [lrt2_seq]
+                                              [srt_seq])
+                                             else "false")
                                 csv_writer.writerow([
                                     pb_seq,
                                     lrt1_seq,

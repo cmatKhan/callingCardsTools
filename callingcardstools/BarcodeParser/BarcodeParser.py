@@ -14,7 +14,7 @@ from edlib import align  # pylint:disable=E0611
 
 __all__ = ['BarcodeParser']
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logger = logging.getLogger(__name__)
 
 
 class BarcodeParser:
@@ -69,12 +69,12 @@ class BarcodeParser:
         if not len(required_keys - set(barcode_dict)) == 0:
             raise KeyError(f'the following keys are required: {required_keys}')
         # update the barcode_dict attribute
-        logging.info(
+        logger.info(
             "Updating the barcode dict to reflect "
             "the new barcode details json...")
         self.barcode_dict = barcode_dict
         # if that works, update the barcode_details_json path
-        logging.info("Success! Setting the barcode details json path")
+        logger.info("Success! Setting the barcode details json path")
         self._barcode_details_json = new_barcode_details_json
         # and update some properties
         self.max_r1 = self.__get_max_r1()
@@ -143,7 +143,7 @@ class BarcodeParser:
 
         Raises:
             AttributeError: Raised if the current barcode details json does 
-            not have an insert seq key
+                not have an insert seq key
         """
         if self.key_dict['insert_seq'] in self.barcode_dict:
             return self.barcode_dict[self.key_dict['insert_seq']]
@@ -268,11 +268,11 @@ class BarcodeParser:
 
         Raises:
             TypeError: if the extracted or calculated max_mismatch value is not 
-            an integer
+                an integer
 
         Returns:
             int: an integer describing the total number of allowable mismatches 
-            between a barcode and a set of barcode components.
+                between a barcode and a set of barcode components.
         """
         max_mismatch = self.barcode_dict.get('max_mismatch', None)
 
@@ -281,7 +281,7 @@ class BarcodeParser:
             for k in self.barcode_dict['components'].keys()])
         if max_mismatch:
             if max_mismatch > component_mismatch_sum:
-                logging.info('max_mismatch in barcode_details: '
+                logger.info('max_mismatch in barcode_details: '
                              f'{max_mismatch} which is greater than the sum '
                              f'of component mismatch allowances: '
                              f'{component_mismatch_sum}')
@@ -328,14 +328,14 @@ class BarcodeParser:
 
         Args:
             component_dict (dict): a dictionary where the keys are component 
-            names and the values are the actual sequences, eg
-            {'r1_primer': 'TGATA', 'r1_transposon': 'AATTCACTACGTCAACA', 
-            'r2_transposon': 'ACCTGCTT', 'r2_restriction': 'TCGAGCGCCCGG'}
+                names and the values are the actual sequences, eg
+                {'r1_primer': 'TGATA', 'r1_transposon': 'AATTCACTACGTCAACA', 
+                'r2_transposon': 'ACCTGCTT', 'r2_restriction': 'TCGAGCGCCCGG'}
 
         Returns:
             dict: A dict of structure {"pass": Boolean, True if the barcode 
-            passes, "tf": Str, where the value is eithe "*" if unknown or a TF 
-            string from the barcode_details} 
+                passes, "tf": Str, where the value is either "*" 
+                if unknown or a TF string from the barcode_details} 
         """
         component_check_dict = {}
         for k, v in self.barcode_dict[self.key_dict['components']].items():
@@ -402,7 +402,7 @@ class BarcodeParser:
             # loop
             if total_mismatches > self.max_mismatches:
                 passing = False
-                logging.debug('total_mismatches = {total_mismatches}; '
+                logger.debug('total_mismatches = {total_mismatches}; '
                               + 'max_mismatches = {self.max_mismatches}')
                 break
             # else, for a given component, extract the mismatch tolerance
@@ -425,7 +425,7 @@ class BarcodeParser:
                     .get(component, {})\
                         .get('require', True):
                     
-                    logging.debug(f'incrementing total mismatches '
+                    logger.debug(f'incrementing total mismatches '
                                   f'b/c of {component_metrics}')
                     
                     total_mismatches = (total_mismatches
@@ -443,18 +443,20 @@ class BarcodeParser:
         best match between query and component_dict
 
         Args:
-            query (str): _description_
-            component_dict (dict): _description_
+            query (str): the string to compare to the component dict values
+            component_dict (dict): a dictionary where the keys are the
+                sequences to compare to the query and the values are the
+                names of the sequences
             match_type (str, optional): Either 'edit_distance' or 'greedy'.
-            Defaults to 'edit_distance'.
+                Defaults to 'edit_distance'.
 
         Returns:
             dict: A dictionary of structure
-            {'name': either the sequence match, or the name if map is a
-            named dictionary,
-            'dist': edit dist between query and best match --
-            always 0 or infinty if match is greedy depending on if exact
-            match is found or not. If not, return is 'name': '*', 'dist': inf}
+                {'name': either the sequence match, or the name if map is a
+                named dictionary,
+                'dist': edit dist between query and best match --
+                always 0 or infinty if match is greedy depending on if exact
+                match is found or not. If not, return is 'name': '*', 'dist': inf}
         """
         # if no match found, these are the default values. Note that if
         # the match type is not recognized, this function errors

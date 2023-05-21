@@ -10,7 +10,7 @@ from callingcardstools.BarcodeParser.yeast import BarcodeQcCounter
 
 __all__ = ['parse_args', 'split_fastq']
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logger = logging.getLogger(__name__)
 
 
 def parse_args(
@@ -97,7 +97,7 @@ def parse_args(
 def split_fastq(args: argparse.Namespace):
 
     # Check inputs
-    logging.info('checking input...')
+    logger.info('checking input...')
     input_path_list = [args.read1,
                        args.read2,
                        args.barcode_details,
@@ -107,12 +107,12 @@ def split_fastq(args: argparse.Namespace):
             raise FileNotFoundError(f"Input file DNE: {input_path}")
 
     # create the BarcodeQcCounter object
-    logging.info('creating BarcodeQcCounter object...')
+    logger.info('creating BarcodeQcCounter object...')
     bc_counter = BarcodeQcCounter()
 
     # create the read parser object
     rp = ReadParser(args.barcode_details, args.read1, args.read2)
-    logging.info('opening fq files')
+    logger.info('opening fq files')
     rp.open()
     # if the split_key isn't in the barcode_details, then every passing
     # read goes into a file with that name
@@ -120,7 +120,7 @@ def split_fastq(args: argparse.Namespace):
         msg = f"{args.split_key} not found in barcode_dict['components']. " \
             f"all output is directed to " \
             f"{args.split_key}_{args.split_suffix}_R1,2.fq"
-        logging.info(msg)
+        logger.info(msg)
 
         determined_out = {
             'r1': open(f"{args.split_key}_{args.split_suffix}_R1.fq", "w"),  # pylint:disable=W1514 # noqa
@@ -153,7 +153,7 @@ def split_fastq(args: argparse.Namespace):
     # if verbose_qc is true, for read paired read, record a line which
     # associates the fastq read ID with the barcode components
     if args.verbose_qc:
-        logging.info('opening id to barcode map...')
+        logger.info('opening id to barcode map...')
         additional_components = ['tf', 'restriction_enzyme']
         id_bc_map = open(os.path.join(
             args.output_dirpath, "id_bc_map.tsv"), "w")
@@ -162,7 +162,7 @@ def split_fastq(args: argparse.Namespace):
             "\t".join(['id'] + list(rp.components) + additional_components))
         id_bc_map.write("\n")
 
-    logging.info('parsing fastq files...')
+    logger.info('parsing fastq files...')
     # iterate over reads, split reads whose barcode components
     # match expectation into the appropriate file, and reads which don't
     # fulfill barcode expectations into undetermined.fq
@@ -264,4 +264,4 @@ def split_fastq(args: argparse.Namespace):
                          output_dirpath=args.output_dirpath,
                          suffix=args.split_suffix)
 
-    logging.info('Done parsing the fastqs!')
+    logger.info('Done parsing the fastqs!')

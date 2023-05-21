@@ -70,7 +70,7 @@ from Bio import SeqIO,Seq
 
 __all__ = ['parse_args', 'legacy_split_fastq']
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logger = logging.getLogger(__name__)
 
 
 def read_barcode_file(barcode_filename):

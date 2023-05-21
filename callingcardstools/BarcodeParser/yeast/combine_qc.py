@@ -7,7 +7,7 @@ from ..BarcodeParser import BarcodeParser
 
 __all__ = ['parse_args', 'combine_qc']
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logger = logging.getLogger(__name__)
 
 
 def parse_args(

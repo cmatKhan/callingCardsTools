@@ -23,19 +23,32 @@ plugins:
 
 nav:
 - Home:
-  - Overview: home/index.md
-  - Contributing: home/contributing.md
+  - Overview: index.md
   - Changelog: home/changelog.md
   - License: home/license.md
 - "File Format Specs":
-  - qBed: "configure/qbed.md"
-- Configuration:
-  - chr_map: 'configure/chr_map.md'
-- Code:
-  - BarcodeParser: 'code/BarcodeParser'
-  - ReadParser: 'code/ReadParser.md'
-  - AlignmentTagger: 'code/AlignmentTagger.md'
-  - DatabaseApi: 'code/DatabaseApi.md'
+  - barcode_details: "file_format_specs/barcode_details.md"
+  - qBed: "file_format_specs/qbed.md"
+- API:
+  - Alignment:
+    - AlignmentTagger: 'API/Alignment/AlignmentTagger.md'
+    - SummaryParser: 'API/Alignment/SummaryParser.md'
+    - mammals:
+      - Qbed: 'API/Alignment/mammals/Qbed.md'
+  - BarcodeParser:
+    - mammals:
+      - BarcodeCounterQc: 'API/BarcodeParser/mammals/BarcodeCounterQc.md'
+    - yeast:
+      - BarcodeCounterQc: 'API/BarcodeParser/yeast/BarcodeCounterQc.md'
+  - QC:
+    - create_status_coder: 'API/QC/create_status_coder.md'
+    - StatusFlags: 'API/QC/StatusFlags.md'
+  - Reads:
+    - ReadParser: 'API/Reads/ReadParser.md'
+  - Resources:
+    - Resources: 'API/Resources/Resources.md'
+- "Testing, Debugging and Contributing":
+  - Reproducible Debugging: 'testing_debugging_contributing/Reproducible_Debugging.md'
 
 markdown_extensions:
     - smarty
