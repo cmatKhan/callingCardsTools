@@ -7,6 +7,7 @@ from collections import defaultdict
 from typing import Iterable, DefaultDict
 from functools import partial
 import csv
+import re
 # outside dependencies
 import pandas as pd
 
@@ -73,17 +74,27 @@ class OuterDefaultDict(defaultdict):
 
 
 class Qbed():
-    """An object to write records from a tagged_read_dict to qbed file and 
-    qc files.
     """
-    
+    An object to write records from a tagged_read_dict to qbed file and
+        qc files. See https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8150125/
+        for more details.
+
+    Attributes:
+        qbed_fields (list): List of strings. Values in list are column names
+            for qbed file.
+        qbed (OuterDefaultDict): A nested defaultdict object. The keys are the
+            qbed_fields. The values are the counts of each record.
+        status_dict (DefaultDict): A defaultdict object. The keys are the
+            status flags. The values are the counts of each status flag.    
+    """
     _qbed_fields: list
     _qbed: DefaultDict
     _status_dict: DefaultDict
 
     def __init__(self, pickle_path: str = None) -> None:
-        """Create a ReadRecords object. This object will write records to
-        a qbed file and a qc file.
+        """
+        Create a ReadRecords object. This object will write records to
+            a qbed file and a qc file.
 
         Args:
             pickle_path: Path to a pickle file to load. If None, then
@@ -96,7 +107,8 @@ class Qbed():
             self.load(pickle_path)
         else:
             # set qbed fields
-            self.qbed_fields = ['chr', 'start', 'end', 'strand', 'depth']
+            self.qbed_fields = ['chr', 'start', 'end', 'depth',
+                                'strand', 'annotation']
             self.qbed = OuterDefaultDict(int)
             self.status_dict = DefaultDict(int)
 
@@ -108,8 +120,8 @@ class Qbed():
     @qbed_fields.setter
     def qbed_fields(self, value: list):
         """Set the qbed fields"""
-        if not len(value) == 5:
-            raise ValueError('qbed_fields must have 5 values')
+        if not len(value) == 6:
+            raise ValueError('qbed_fields must have 6 values')
         self._qbed_fields = value
 
     @property
@@ -150,12 +162,12 @@ class Qbed():
             for start, value2 in value1.items():
                 for end, value3 in value2.items():
                     for strand, value4 in value3.items():
-                        for annotation_str, count in value4.items():
+                        for srt_seq, count in value4.items():
                             (self.qbed[chr]
                              [start]
                              [end]
                              [strand]
-                             [annotation_str]) += count
+                             [srt_seq]) += count
 
         # Combine status_dict property
         for status, count in other.status_dict.items():
@@ -169,8 +181,8 @@ class Qbed():
             fieldnames = ['srt_type', 'count']
 
             # Create a DictWriter instance with a tab delimiter.
-            writer = csv.DictWriter(tsvfile, 
-                                    fieldnames=fieldnames, 
+            writer = csv.DictWriter(tsvfile,
+                                    fieldnames=fieldnames,
                                     delimiter='\t')
 
             # Write
@@ -181,7 +193,7 @@ class Qbed():
                             'count': multi_srt_count})
 
     # public methods ----------------------------------------------------------
-    
+
     def load(self, file_path: str) -> None:
         """Load a BarcodeQcCounter object from a file using Pickle.
 
@@ -229,45 +241,45 @@ class Qbed():
     def update(self,
                tagged_read: dict,
                status: int,
-               insert_offset=1,
-               annotation_tags: list = None) -> None:
+               insert_offset: int = 1,
+               srt_tag: str = 'ST') -> None:
         """write records to both the raw qbed tmpfile and raw qc tmpfile.
          Note that these tempfiles will be destroyed when the object is
          destroyed.
 
         Args:
-            tagged_read (dict): A pysam.AlignedSegment object which has been 
-                tagged with the appropriate calling cards tags based on the 
+            tagged_read (dict): A pysam.AlignedSegment object which has been
+                tagged with the appropriate calling cards tags based on the
                 BarcodeParser object used to create the object.
             status (int): A value which reflects how the read performs
-                based on pre-defined quality metrics. A status of 0 is considered
-                a pass. A status of greater than 0 is a read which fails
-                at least 1 quality metric
+                based on pre-defined quality metrics. A status of 0 is
+                considered a pass. A status of greater than 0 is a read which
+                fails at least 1 quality metric
             insert_offset (int): number to add to tag XI value to calculate
-                the end coordinate. For instance, if the start coord is the first
-                T in TTAA, then the offset would be 4.
-            annotation_tags (list): List of strings. Values in list are tags to
-                extract from tagged_read dictionary. Values of tag will be added
-                to the annotation column of the qbed as a string delimited by '/'.
+                the end coordinate. For instance, if the start coord is the
+                first T in TTAA, then the offset would be 4.
+            srt_tag (str): The tag which corresponds to the SRT sequence
+                of a given read. This will be included in the annotation
+                column of the mammals qbed file.
         """
         if len({'read', 'barcode_details'}-tagged_read.keys()) > 0:
             raise KeyError('tagged_read must have keys '
                            '{"reads","barcode_details"}')
 
         if status == 0:
-            # create the annotation field. If the annotation_tags list is not
-            # empty, this will try to extract the value in the tag from the
-            # tagged_read. KeyError is raised if that tag DNE. Empty string
-            # is created if annotation_tags is empty list
-            annotation = ("/".join(tagged_read['read'].get_tag(x).split('/')[0]
-                                   for x in annotation_tags)
-                          if annotation_tags else '')
+            # for mammals, the SRT tag is expected. This will raise a KeyError
+            # if the SRT tag is not present
+            try:
+                srt_with_edit_dist = tagged_read['read'].get_tag(srt_tag)
+                srt = re.sub(r'\/\d+', '', srt_with_edit_dist)
+            except KeyError as exc:
+                raise f"tagged_read must have SRT key {srt_tag}" from exc
             chr = tagged_read['read'].reference_name
             start = tagged_read['read'].get_tag('XI')
             end = tagged_read['read'].get_tag('XI') + insert_offset
             strand = '+' if tagged_read['read'].is_forward else '-'
 
-            self.qbed[chr][start][end][strand][annotation] += 1
+            self.qbed[chr][start][end][strand][srt] += 1
 
         self.status_dict[status] += 1
 
@@ -294,18 +306,17 @@ class Qbed():
             for start, value2 in value1.items():
                 for end, value3 in value2.items():
                     for strand, value4 in value3.items():
-                        hop_count = 0
-                        hop_annotation_set = set()
-                        for annotation_str, count in value4.items():
-                            hop_count += count
-                            hop_annotation_set.add(annotation_str)
-                        # add a hop record to the qbed DataFrame
-                        qbed_df = qbed_df.append(
-                            pd.Series([chr, start, end, strand, hop_count],
-                                      index=self.qbed_fields),
-                            ignore_index=True)
+                        locus_srt_set = set()
+                        for srt_seq, count in value4.items():
+                            locus_srt_set.add(srt_seq)
+                            # add a hop record to the qbed DataFrame
+                            qbed_df = qbed_df.append(
+                                pd.Series([chr, start, end, count,
+                                           strand, srt_seq],
+                                          index=self.qbed_fields),
+                                ignore_index=True)
                         # count single/multi srt as appropriate
-                        if len(hop_annotation_set) > 1:
+                        if len(locus_srt_set) > 1:
                             multi_srt_counter += 1
                         else:
                             single_srt_counter += 1
@@ -334,14 +345,14 @@ class Qbed():
             qc_output_file = filename + '_' + suffix + '_aln_summary.tsv' \
                 if suffix else filename + '_aln_summary.tsv'
             logger.info("writing qc summary to %s", qc_output_file)
-            status_df.to_csv(qc_output_file, 
-                             sep='\t', 
-                             index=False, 
+            status_df.to_csv(qc_output_file,
+                             sep='\t',
+                             index=False,
                              header=False)
 
             srt_output_file = filename + '_' + suffix + '_srt_count.tsv' \
                 if suffix else filename + '_srt_count.tsv'
             logger.info("writing srt summary to %s", srt_output_file)
-            self._srt_writer(srt_output_file, 
-                             single_srt_counter, 
+            self._srt_writer(srt_output_file,
+                             single_srt_counter,
                              multi_srt_counter)

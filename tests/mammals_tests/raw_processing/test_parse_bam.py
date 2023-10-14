@@ -118,8 +118,8 @@ def test_combine(parsed_bam_pickled, tmpdir, caplog):
         [int(x) for x in combined_dict['combined_barcode_qc.tsv'].iloc[1:, 4]]
 
     assert [int(x)*3 for x
-            in single_dict['single.qbed'].iloc[1:, 4]] == \
-        [int(x) for x in combined_dict['combined.qbed'].iloc[1:, 4]]
+            in single_dict['single.qbed'].iloc[1:, 3]] == \
+        [int(x) for x in combined_dict['combined.qbed'].iloc[1:, 3]]
 
     assert all(single_dict['single_srt_count.tsv'].iloc[:, 1] ==
                combined_dict['combined_srt_count.tsv'].iloc[:, 1])

@@ -67,7 +67,7 @@ class BarcodeQcCounter:
     Attributes:
         metrics (DefaultDict): A nested defaultdict containing the
             barcode metrics.
-        lrt1_seq_dict (DefaultDict): A defaultdict storing the R1
+        ltr1_seq_dict (DefaultDict): A defaultdict storing the R1
             transposon sequences.
 
     """
@@ -201,30 +201,30 @@ class BarcodeQcCounter:
 
     def update(self,
                pb_seq: str,
-               lrt1_seq: str,
-               lrt2_seq: str,
+               ltr1_seq: str,
+               ltr2_seq: str,
                srt_seq: str,
                bc_status: bool) -> None:
         """Updates the metrics with given component and deviation tuples.
 
         Args:
             pb_seq (str): The primer binding sequence.
-            lrt1_seq (str): The left transposon sequence.
-            lrt2_seq (str): The right transposon sequence.
+            ltr1_seq (str): The left transposon sequence.
+            ltr2_seq (str): The right transposon sequence.
             srt_seq (str): The sample barcode sequence.
             bc_status (bool): The barcode status.
         """
 
         (self._metrics
          [pb_seq]
-         [lrt1_seq]
-         [lrt2_seq]
+         [ltr1_seq]
+         [ltr2_seq]
          [srt_seq]) += 1
 
         (self._bc_status
          [pb_seq]
-         [lrt1_seq]
-         [lrt2_seq]
+         [ltr1_seq]
+         [ltr2_seq]
          [srt_seq]) = bc_status
 
     def write(self,
@@ -259,27 +259,27 @@ class BarcodeQcCounter:
                 csv_writer = csv.writer(tsv_file, delimiter='\t')
                 csv_writer.writerow([
                     "pb_seq",
-                    "lrt1_seq",
-                    "lrt2_seq",
+                    "ltr1_seq",
+                    "ltr2_seq",
                     "srt_seq",
                     "count",
                     "barcode_status"
                 ])
 
-                for pb_seq, lrt1_dict in self._metrics.items():
-                    for lrt1_seq, lrt2_dict in lrt1_dict.items():
-                        for lrt2_seq, srt_dict in lrt2_dict.items():
+                for pb_seq, ltr1_dict in self._metrics.items():
+                    for ltr1_seq, ltr2_dict in ltr1_dict.items():
+                        for ltr2_seq, srt_dict in ltr2_dict.items():
                             for srt_seq, count in srt_dict.items():
                                 bc_status = ("pass" if
                                              (self._bc_status[pb_seq]
-                                              [lrt1_seq]
-                                              [lrt2_seq]
+                                              [ltr1_seq]
+                                              [ltr2_seq]
                                               [srt_seq])
                                              else "false")
                                 csv_writer.writerow([
                                     pb_seq,
-                                    lrt1_seq,
-                                    lrt2_seq,
+                                    ltr1_seq,
+                                    ltr2_seq,
                                     srt_seq,
                                     count,
                                     bc_status

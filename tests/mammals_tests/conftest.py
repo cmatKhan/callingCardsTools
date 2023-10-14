@@ -64,7 +64,7 @@ def barcodes():
     d = {
         "dist0": "TAGCGTCAATTTTACGCAGACTATCTTTCTAGGGTTAA",
         "pb_dist1": "TGGCGTCAATTTTACGCAGACTATCTTTCTAGGGTTAA",
-        'lrt_dist1': "TAGCGTCAANTTTACGCAGACTATCTTTCTAGGGTTAA",
+        'ltr_dist1': "TAGCGTCAANTTTACGCAGACTATCTTTCTAGGGTTAA",
         "error": "TAGCGTCAATTTTACGCAGACTATCTTTCTCTGGTAAT"
     }
     return d
@@ -78,7 +78,7 @@ def parsed_bam_pickled(tests_dirpath):
                      'test_data/parsed_bam/human_AY53-1_50_T1_barcode_qc.pkl'),
         'qbed_pickle':
         os.path.join(tests_dirpath,
-                     'test_data/parsed_bam/human_AY53-1_50_T1_qbed.pkl')}
+                     'test_data/parsed_bam/human_AY53-1_50_T1_qbed.pkl')} # noqa
     return parsed_output
 
 

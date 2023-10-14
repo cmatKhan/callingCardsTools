@@ -173,7 +173,7 @@ def test_barcode_breakdown(mouse_barcode_details, mouse_barcodes):
     # which needs to be removed. It ended up showing that current behavior
     # is correct
     error_bc = bp.decompose_barcode(mouse_barcodes.get('error'))
-    assert error_bc.get('details').get('r1_lrt2').get('dist') == 2
+    assert error_bc.get('details').get('r1_ltr2').get('dist') == 2
 
 
 def test_annotation_tag_list(mouse_barcode_details):

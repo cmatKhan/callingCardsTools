@@ -116,12 +116,12 @@ can likely simply copy and paste this onto your system and use it directly:
         "pb": {"trim": true,
                "index": [0,3]},
 
-        "lrt1": {"trim": true,
+        "ltr1": {"trim": true,
                     "index": [3,28]},
         "srt": {"trim": true,
                 "index":[28,32]},
 
-        "lrt2": {"trim": true,
+        "ltr2": {"trim": true,
                     "index": [32,38]}
     },
     "r2":{},
@@ -131,7 +131,7 @@ can likely simply copy and paste this onto your system and use it directly:
                      "match_allowance": 0,
                      "bam_tag": "PB"},
 
-        "r1_lrt1":  {"map": ["CGTCAATTTTACGCAGACTATCTTT"],
+        "r1_ltr1":  {"map": ["CGTCAATTTTACGCAGACTATCTTT"],
                      "match_type": "edit_distance",
                      "match_allowance": 0,
                      "require": true,
@@ -145,7 +145,7 @@ can likely simply copy and paste this onto your system and use it directly:
                      "require": true,
                      "bam_tag": "ST",
                      "annotation": true},
-        "r1_lrt2":  {"map": ["GGTTAA"],
+        "r1_ltr2":  {"map": ["GGTTAA"],
                      "match_type": "edit_distance",
                      "match_allowance": 0,
                      "require": true,
