@@ -18,7 +18,7 @@ def test_barcode_breakdown(barcode_details_file,barcodes):
 	# which needs to be removed. It ended up showing that current behavior 
 	# is correct
 	error_bc = bp.decompose_barcode(barcodes.get('error'))
-	assert error_bc.get('details').get('r1_lrt2').get('dist') == 2
+	assert error_bc.get('details').get('r1_ltr2').get('dist') == 2
 
 def test_annotation_tag_list(barcode_details_file):
 	bp = BarcodeParser(barcode_details_file)

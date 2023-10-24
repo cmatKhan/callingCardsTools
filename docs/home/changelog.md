@@ -1,20 +1,17 @@
 # Change Log
----
 
-## Upgrading
+## Version 1.1.0
 
-To upgrade callingCardsTools to the latest stable release, use pip:
+### Bug fixes
 
-```bash
-pip install -U callingcardstools
-```
+- Adding SRT annotation to mammals qBED output
 
-The development version may be installed from the repository:
+### Features/not bugs
 
-(instructions here)
+- Remove header from mammals qBed
+- Fix typo in mammals barcode details -- the component identified with `lrt`
+should be (and now is) `ltr`
 
 ## Version 1.0.0
-
-## Version 0.0.0
 
 - Initial release

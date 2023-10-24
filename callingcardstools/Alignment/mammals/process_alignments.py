@@ -7,8 +7,9 @@ import tempfile
 import pysam
 
 from callingcardstools.Alignment.AlignmentTagger import AlignmentTagger
-from callingcardstools.QC.create_status_coder import create_status_coder  # noqa
-from callingcardstools.BarcodeParser.mammals.BarcodeQcCounter import BarcodeQcCounter  # noqa
+from callingcardstools.QC.create_status_coder import create_status_coder
+from callingcardstools.BarcodeParser.mammals.BarcodeQcCounter \
+    import BarcodeQcCounter
 from .Qbed import Qbed
 
 __all__ = ['main']
@@ -108,7 +109,7 @@ def process_chunk(bam_in: pysam.AlignmentFile,
                   barcode_details_path: str,
                   genome_path: str,
                   mapq_threshold: int,
-                  annotation_tags: set = {'ST'}) -> dict:
+                  **kwargs) -> dict:
     """This function is called when the subparser for this script is used.
     It parses the bam file, sets tags, and creates a summary and qbed file
 
@@ -119,7 +120,7 @@ def process_chunk(bam_in: pysam.AlignmentFile,
         genome_path (str): The path to the genome fasta file
         mapq_threshold (int): Reads less than or equal to mapq_threshold
         will be marked as failed
-        annotation_tags (list, optional): The tags to use for annotation.
+        kwargs (dict): Additional arguments passed to qbed.update
 
     Returns:
         dict: A dictionary with the following keys:
@@ -142,37 +143,31 @@ def process_chunk(bam_in: pysam.AlignmentFile,
     # start iterating over the bam_chunk
     logger.debug("iterating over bam chunk...")
     for read in bam_in.fetch(until_eof=True):
-        # write reads that are not primary, unique reads to the failing list
-        if read.is_secondary or read.is_supplementary or read.is_unmapped:
-            # parse the barcode, tag the read
-            tagged_read = at.tag_read(read)
-            output_dict['failing'].append(tagged_read['read'])
+        # parse the barcode, tag the read
+        tagged_read = at.tag_read(read)
+        # eval the read based on quality expectations, get the status
+        status = status_coder(tagged_read)
+        # add the data to the qbed and qc records
+        output_dict['qbed'].update(tagged_read,
+                                   status,
+                                   **kwargs)
+        if status == 0:
+            # add the read to the passing_read list
+            output_dict['passing'].append(tagged_read['read'])
         else:
-            # parse the barcode, tag the read
-            tagged_read = at.tag_read(read)
-            # eval the read based on quality expectations, get the status
-            status = status_coder(tagged_read)
-            # add the data to the qbed and qc records
-            output_dict['qbed'].update(tagged_read,
-                                       status,
-                                       annotation_tags=annotation_tags)
-            if status == 0:
-                # add the read to the passing_read list
-                output_dict['passing'].append(tagged_read['read'])
-            else:
-                # add the read to the failing_read list
-                output_dict['failing'].append(tagged_read['read'])
-            # record barcode QC
-            bc_counter_dict = {k: (v['query'], v['dist'] == 0) for
-                               k, v in (tagged_read['barcode_details']
-                                        ['details'].items())}
-            bc_status = all([v[1] for v in bc_counter_dict.values()])
-            output_dict['barcode_qc'].update(
-                bc_counter_dict['r1_pb'][0],
-                bc_counter_dict['r1_lrt1'][0],
-                bc_counter_dict['r1_lrt2'][0],
-                bc_counter_dict['r1_srt'][0],
-                bc_status)
+            # add the read to the failing_read list
+            output_dict['failing'].append(tagged_read['read'])
+        # record barcode QC
+        bc_counter_dict = {k: (v['query'], v['dist'] == 0) for
+                           k, v in (tagged_read['barcode_details']
+                                    ['details'].items())}
+        bc_status = all([v[1] for v in bc_counter_dict.values()])
+        output_dict['barcode_qc'].update(
+            bc_counter_dict['r1_pb'][0],
+            bc_counter_dict['r1_ltr1'][0],
+            bc_counter_dict['r1_ltr2'][0],
+            bc_counter_dict['r1_srt'][0],
+            bc_status)
 
     return output_dict
 
@@ -225,7 +220,8 @@ def main(args: argparse.Namespace) -> None:
                 pysam.sort("-o", passing_output_filename,
                            tmp_passing_bam_output)
             except pysam.SamtoolsError as exc:
-                raise pysam.SamtoolsError('Error sorting passing bam file') from exc  # noqa
+                raise pysam.SamtoolsError('Error sorting passing bam file') \
+                    from exc
 
         else:
             logger.info(f"No passing reads found in {args.input}")
@@ -248,7 +244,8 @@ def main(args: argparse.Namespace) -> None:
                 pysam.sort("-o", failing_output_filename,
                            tmp_failing_bam_output)
             except pysam.SamtoolsError as exc:
-                raise pysam.SamtoolsError('Error sorting failing bam file') from exc  # noqa
+                raise pysam.SamtoolsError('Error sorting failing bam file') \
+                    from exc
         else:
             logger.info(f"No failing reads found in {args.input}")
 
