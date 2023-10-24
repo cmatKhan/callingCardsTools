@@ -17,7 +17,7 @@ plugins:
 - mkdocstrings:
     handlers:
           python:
-            paths: [src]  # search packages in the src folder
+            paths: [callingCardsTools]  # search packages in the src folder
             docstring_style: 'google'
             merge_init_into_class: True
 
