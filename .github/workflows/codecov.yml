@@ -6,9 +6,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: Test CallingCardsTools
-    defaults:
-      run:
-        working-directory: ./CallingCardsTools
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v2
