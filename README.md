@@ -21,17 +21,31 @@ Each of the cmd line tools also provides a `--help` message.
 
 ## Installation
 
+callingCardsTools is available through bioconda:
+
+```bash
+conda install -c bioconda callingcardstools
+```
+
+pypi:
+
 ```bash
 pip install callingcardstools
 ```
 
-To start using the command line tools, see the help message with:
+or github (this will be the most current version):
+
+```bash
+pip install git+https://github.com/cmatkhan/callingCardsTools.git
+```
+
+After installing, you can get help with the cmd line tools by doing:
 
 ```bash
 callingcardstools --help
 ```
 
-Callingcardstools is containerized:
+## Callingcardstools is containerized:
 
 - A singularity container is hosted on
   [Galaxyhub](https://depot.galaxyproject.org/singularity/). If you go to this
@@ -57,12 +71,6 @@ Callingcardstools is containerized:
 
 4. shell into the virtual environment with `poetry shell`
 
-5. build the package with `poetry build`
-
-6. install the callingcardstools package into your virtual environment
-  `pip install dist/callingcardstools-...`
-  - Note: you could figure out how to use the pip install `-e` flag to 
-  have an interactive development environment. I don't think that is compatible 
-  with only the `pyproject.toml` file, but if you look it up, you'll find good 
-  stackoverflow instructions on how to put a dummy `setup.py` file in to make 
-  this possible
+5. you can `pip install -e .` to install the package in editable mode. This is
+   useful if you want to test the cmd line interface as you make changes to the
+   source code.
