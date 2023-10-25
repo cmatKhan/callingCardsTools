@@ -4,199 +4,95 @@
 Contributions are welcome, and they are greatly appreciated!
 Every little bit helps, and credit will always be given.
 
+## Fork the repo
+
+Fork the repo into your personal profile. This will allow you to make changes
+and push them to your forked repo. When you're ready, issue a pull request to
+the main repo.
+
+## Issues
+
+Ideally, create an issue first. This will allow us to discuss the feature or
+bug fix you want to implement.
+
+## Pull Requests
+
+Issue pull requests against the `dev` branch. Please make sure that your code
+is covered by a test (see below).
+
 ## Environment setup
 
-Nothing easier!
+1. install [poetry](https://python-poetry.org/)
 
-Fork and clone the repository, then:
+- I prefer to set the default location of the virtual environment to the
+  project directory. You can set that as a global configuration for your
+  poetry installation like so: `poetry config virtualenvs.in-project true`
 
-```bash
-cd python
-make setup
-```
+2. git clone the repo
 
-> NOTE:
-> If it fails for some reason,
-> you'll need to install
-> [PDM](https://github.com/pdm-project/pdm)
-> manually.
-> 
-> You can install it with:
-> 
-> ```bash
-> python3 -m pip install --user pipx
-> pipx install pdm
-> ```
-> 
-> Now you can try running `make setup` again,
-> or simply `pdm install`.
+3. cd into the repo and issue the command `poetry install`
 
-You now have the dependencies installed.
+4. shell into the virtual environment with `poetry shell`
 
-You can run the application with `pdm run mkdocstrings-python [ARGS...]`.
+5. you can `pip install -e .` to install the package in editable mode. This is
+   useful if you want to test the cmd line interface as you make changes to the
+   source code.
 
-Run `make help` to see all the available actions!
+## Tests are reproducible debugging tools!
 
-## Tasks
+There is a test suite provided with this package which is intended to give 
+any future Calling Cards developers who might use this an easier way into the 
+code. All code should be accessible from the current tests, and the current 
+tests can be used to give some assurance that a new change doesn't absolutely 
+break any functionality.  
 
-This project uses [duty](https://github.com/pawamoy/duty) to run tasks.
-A Makefile is also provided. The Makefile will try to run certain tasks
-on multiple Python versions. If for some reason you don't want to run the task
-on multiple Python versions, you can do one of the following:
+__However__, the purpose of the tests is not to prove correctness. Rather, 
+it is a record of the debugging that I have done. It makes the debugging 
+reproducible!  
 
-1. `export PYTHON_VERSIONS= `: this will run the task
-   with only the current Python version
-2. run the task directly with `pdm run duty TASK`
+The real benefit to me in the future, or you, if you have inherited this, 
+is that you can use VScode to set breakpoints in the code. This means you 
+don't have to read my documentation or guess at what I was trying to do.  
 
-The Makefile detects if a virtual environment is activated,
-so `make` will work the same with the virtualenv activated or not.
+Here is an example:
 
-## Development
+![debugging_example](../assets/debug_allows_interaction.png)
 
-As usual:
+What you're seeing here is a a dummy test on the right. Notice that this 
+test does nothing! it just says that 2 == 2. However, it is importing 
+a _fixture_. A fixture is a test data object -- in this case, it is a 
+SummaryParser object that is loaded from test data that is provided in the 
+package repository.  
 
-1. create a new branch: `git checkout -b feature-or-bugfix-name`
-1. edit the code and/or the documentation
+Notice that I have set a breakpoint on the `SummaryParser()` constructor. This 
+isn't necessarily the most direct way or setting up this test, but it provides 
+an example of both a fixture, and proves that tests don't need to actually 
+test anything at all to be useful.  
 
-**Before committing:**
+Why is this useful? Because now you can "step into" the SummaryParser 
+constructor. When I wrote the constructor, I needed to make sure that it 
+actually constructs. We do that by trying it out. Because I have provided this 
+"test", you can re-run that debugging process as many times as you wan to. You 
+don't need to read the documentation on what the SummaryParser() is supposed 
+to do -- just set a breakpoint and run the test -- the execution will stop at 
+the breakpoint and you'll be in an interactive coding environment.  
 
-1. run `make format` to auto-format the code
-1. run `make check` to check everything (fix any warning)
-1. run `make test` to run the tests (fix any issue)
-1. if you updated the documentation or the project dependencies:
-    1. run `make docs-serve`
-    1. go to http://localhost:8000 and check that everything looks good
-1. follow our [commit message convention](#commit-message-convention)
+By doing this, as a developer, you can interatively improve the tests over 
+time. As you debug, upon first writing or at any point in the future when you 
+are debugging, just keep a record (that is the iteratively improved test). 
+For example, maybe you write a more robust test of the constructor:
 
-If you are unsure about how to fix or ignore a warning,
-just let the continuous integration fail,
-and we will help you during review.
+![a more robust test](../assets/constructor_test_after_interaction.png)
 
-Don't bother updating the changelog, we will take care of this.
+As you write the rest of the class, you'll want to make sure that you're 
+including tests. At the _very very_ least, provide the names of the tests:
 
-## Commit message convention
+![names of tests](../assets/preparing_to_write_the_rest.png)
 
-Commits messages must follow the
-[Angular style](https://gist.github.com/stephenparish/9941e89d80e2bc58a153#format-of-the-commit-message):
-
-```
-<type>[(scope)]: Subject
-
-[Body]
-```
-
-Scope and body are optional. Type can be:
-
-- `build`: About packaging, building wheels, etc.
-- `chore`: About packaging or repo/files management.
-- `ci`: About Continuous Integration.
-- `docs`: About documentation.
-- `feat`: New feature.
-- `fix`: Bug fix.
-- `perf`: About performance.
-- `refactor`: Changes which are not features nor bug fixes.
-- `style`: A change in code style/format.
-- `tests`: About tests.
-
-**Subject (and body) must be valid Markdown.**
-If you write a body, please add issues references at the end:
-
-```
-Body.
-
-References: #10, #11.
-Fixes #15.
-```
-
-## Pull requests guidelines
-
-Link to any related issue in the Pull Request message.
-
-During review, we recommend using fixups:
-
-```bash
-# SHA is the SHA of the commit you want to fix
-git commit --fixup=SHA
-```
-
-Once all the changes are approved, you can squash your commits:
-
-```bash
-git rebase -i --autosquash master
-```
-
-And force-push:
-
-```bash
-git push -f
-```
-
-If this seems all too complicated, you can push or force-push each new commit,
-and we will squash them ourselves if needed, before merging.
-
-## Using tests to make debugging __easy__ and __reproducible__
-
-What I am going to describe has some name -- test first development or some such. 
-I don't know what it is called, and I don't care to have a debate about whether 
-or not it is "good" or "an effective part of the development cycle". These are 
-discussions that happen, apparently, among the "developer community", and to the 
-extent that the discussion is interesting, the setting in which they are occuring 
-are not academic labs. In other words, if you're tempted to call what I am about 
-to describe as "test first development", please set that out of your mind.  
-
-### Tests as debugging tools
-
-I am not suggesting that you write tests that prove that your code is correct, 
-nor am I suggesting that you need a certain "test coverage". I am suggesting that 
-you use the tools available in your IDE and the language to make writing easier. 
-You will be debugging your code, one way or another. If you do so in a test 
-environment, then your debugging will be both __easier__ and __reproducible__. 
-Why does __reproducible__ matter? It makes it easier to change/update/improve 
-your code in the future, and it helps someone else understand what your code 
-does without you telling them.  
-
-### Using tests as writing aids
-
-#### First, think
-
-Start by thinking about what you want to write. I do this on paper. 
-
-#### Write a skeleton
-
-This is an example of a class, but this could also be a set of functions.
-
-#### Get some test data
-
-This doesn't have to be perfect. It is something that can be iteratively improved. 
-Do be careful about adding/committing large files to git, though -- subset them 
-down before adding.
-
-#### If you can, in the test, write what you expect to get out of your function
-
-But this can be really hard -- what if you don't know what you are doing yet? 
-I am frequently in this position. Best practice would probably be to go back 
-to the paper and figure it out, but frequently it is easiest to have an interactive 
-environment to play with the data.
-
-#### Write a "dummy test", write some code into your function and set a break point
-
-Now you can get into the class/function namespace and start exploring, interactively, 
-while you write. You can go back and forth between writing the class/function 
-and the test, refining both as you go.  
-
-#### But writing a test increases the number of lines that I have to write
-
-That's true, although likely not by much. But, what you have gained is an 
-interactive and reproducible debugging and development environment. 
-Not only that, anyone else who might want to use your code can do the same. 
-It is much easier to have ready made functions (the tests) which bring in some 
-data and run your code in a way that allows another person to set a breakpoint 
-and take a look around at what your doing. Tests are not specification, and 
-they don't take the place of comments and documentation. They don't "prove" 
-that your code is right necessarily, and you don't need to spend a ton of time 
-coming up with all of the edge cases, etc. The are __tools__ -- they are better 
-than print statements for debugging, and they are reproducible in both your 
-hands, and the hands of others.
-
-## Cite
-This is based on the [mkdocstrings](https://github.com/mkdocstrings/python/blob/master/CONTRIBUTING.md) contribution policy
+If you're good, then you'll write this tests firsts, and then write the 
+function. But most of us are mere mortals, and will write the functional code 
+and the tests concurrently. You do this already, most likely -- write and test 
+in an interactive environment, and then copy/paste the working function into 
+your production environment -- the only difference between that, and using the 
+testing framework, is that by using the testing framework, you're providing a 
+resource to yourself-in-the-future, and possibly other developers.

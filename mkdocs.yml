@@ -25,6 +25,7 @@ nav:
 - Home:
   - Overview: index.md
   - Changelog: home/changelog.md
+  - Contributing: home/contributing.md
   - License: home/license.md
 - "File Format Specs":
   - barcode_details: "file_format_specs/barcode_details.md"
@@ -47,8 +48,6 @@ nav:
     - ReadParser: 'API/Reads/ReadParser.md'
   - Resources:
     - Resources: 'API/Resources/Resources.md'
-- "Testing, Debugging and Contributing":
-  - Reproducible Debugging: 'testing_debugging_contributing/Reproducible_Debugging.md'
 
 markdown_extensions:
     - smarty
