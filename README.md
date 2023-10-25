@@ -54,7 +54,7 @@ callingcardstools --help
   the correct version.
 
 - A docker container is hosted on
-  [Dockerhub](https://quay.io/repository/biocontainers/callingcardstools).
+  [quay (and biocontainers)](https://quay.io/repository/biocontainers/callingcardstools).
   Again, make sure you get the correct version.
 
 ## Development Installation
