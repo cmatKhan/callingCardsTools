@@ -300,8 +300,10 @@ class Qbed():
         """
         # create qbed DataFrame
         qbed_df = pd.DataFrame(columns=self.qbed_fields)
+        concat_list = []  # List to hold the Series before concatenating
         single_srt_counter = 0
         multi_srt_counter = 0
+
         for chr, value1 in self.qbed.items():
             for start, value2 in value1.items():
                 for end, value3 in value2.items():
@@ -309,25 +311,38 @@ class Qbed():
                         locus_srt_set = set()
                         for srt_seq, count in value4.items():
                             locus_srt_set.add(srt_seq)
+                            # Prepare a new series to add to qbed DataFrame
+                            new_row = pd.Series([chr, start, end, count,
+                                                strand, srt_seq],
+                                                index=self.qbed_fields)
+                            concat_list.append(new_row)
                             # add a hop record to the qbed DataFrame
-                            qbed_df = qbed_df.append(
-                                pd.Series([chr, start, end, count,
-                                           strand, srt_seq],
-                                          index=self.qbed_fields),
-                                ignore_index=True)
+
                         # count single/multi srt as appropriate
                         if len(locus_srt_set) > 1:
                             multi_srt_counter += 1
                         else:
                             single_srt_counter += 1
 
+        qbed_df = pd.concat([qbed_df,
+                             pd.DataFrame(concat_list,
+                                          columns=self.qbed_fields)],
+                            ignore_index=True)
+
         # create status DataFrame
         status_df = pd.DataFrame(columns=['status', 'count'])
+        concat_list = []  # List to hold the Series before concatenating
+
         for status, count in self.status_dict.items():
             status_str = ",".join(StatusFlags.decompose(status))
-            status_df = status_df.append(
-                pd.Series([status_str, count], index=['status', 'count']),
-                ignore_index=True)
+            # Prepare a new series to add to status DataFrame
+            new_row = pd.Series([status_str, count], index=['status', 'count'])
+            concat_list.append(new_row)
+
+        status_df = pd.concat([status_df,
+                               pd.DataFrame(concat_list,
+                                            columns=['status', 'count'])],
+                              ignore_index=True)
 
         # write to file
         if raw:
@@ -340,7 +355,10 @@ class Qbed():
             qbed_output_file = filename + '_' + suffix + '.qbed' \
                 if suffix else filename + '.qbed'
             logger.info("writing qbed to %s", qbed_output_file)
-            qbed_df.to_csv(qbed_output_file, sep='\t', index=False)
+            qbed_df.to_csv(qbed_output_file,
+                           sep='\t',
+                           index=False,
+                           header=False)
 
             qc_output_file = filename + '_' + suffix + '_aln_summary.tsv' \
                 if suffix else filename + '_aln_summary.tsv'

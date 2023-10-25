@@ -1,5 +1,12 @@
 # Change Log
 
+## Version 1.2.0
+
+### Bug fixes
+
+- Removing the deprecated (and removed in pandas 2.0) DataFrame.append
+  function calls from Qbed.py
+
 ## Version 1.1.0
 
 ### Bug fixes
