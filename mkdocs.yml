@@ -5,7 +5,7 @@ site_url: "https://cmatkhan.github.io/callingCardsTools/"
 repo_url: "https://github.com/cmatKhan/callingCardsTools"
 repo_name: "callingCardsTools"
 edit_uri: "edit/master/docs/"
-watch: ['src']
+watch: ['callingcardstools', 'docs']
 
 theme:
   name: material
