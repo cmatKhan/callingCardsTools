@@ -1,16 +1,19 @@
 # callingCardsTools
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10042067.svg)](https://doi.org/10.5281/zenodo.10042067)
+[![Test workflow](https://github.com/cmatKhan/callingCardsTools/actions/workflows/codecov.yml/badge.svg)](https://github.com/cmatKhan/callingCardsTools/actions/workflows/codecov.yml)
+
 ## Introduction
 
-`CallingCardsTools` Provides both an API and a number of cmd line tools 
-for processing raw Calling Cards data. This is used in the 
-[nf-core/callingcards](https://github.com/nf-core/callingcards) pipeline, 
+`CallingCardsTools` Provides both an API and a number of cmd line tools
+for processing raw Calling Cards data. This is used in the
+[nf-core/callingcards](https://github.com/nf-core/callingcards) pipeline,
 which provides a workflow to process both yeast and mammals Calling Cards data.
 
 ## Documentation
 
-[Served Documentation](https://cmatkhan.github.io/callingCardsTools/) provides 
-information on filetypes and the API. For help with the cmd line tools, 
+[Served Documentation](https://cmatkhan.github.io/callingCardsTools/) provides
+information on filetypes and the API. For help with the cmd line tools,
 simply install callingcardstools (see below) and do:
 
 ```bash
