@@ -239,6 +239,7 @@ class BarcodeQcCounter:
                     # if the r1_primer_seq is an expected sequence, then
                     # iterate over the r2_transposon_seq_dict and record the
                     # results
+                    r2_equivalence_classes_dict = dict()
                     if r1_primer_seq in component_dict['r1_primer']:
                         r1_primer_index = \
                             component_dict['r1_primer'].index(r1_primer_seq)
@@ -248,6 +249,9 @@ class BarcodeQcCounter:
                             align(
                                 r2_transposon_seq,
                                 r2_transposon_target_seq)
+                        r2_equivalence_classes_dict\
+                            .setdefault(edit_dist, set())\
+                            .add(r2_transposon_seq)
                         r1_primer_record = {
                             "tf": component_dict['tf'][r1_primer_index],
                             "r1_primer_seq":
@@ -266,6 +270,7 @@ class BarcodeQcCounter:
 
         # in the second iteration, iterate over only those r1_primer_seqs with
         # a valid r2_transposon_seq
+        r1_equivalence_classes_dict = dict()
         for r1_transposon_ed, r1_transposon_ed_dict in \
                 r1_for_given_r2_dict.items():
             for r2_transposon_seq, r1_primer_seq_set in \
@@ -284,6 +289,8 @@ class BarcodeQcCounter:
                     edit_dist = align(
                         r1_primer_query,
                         r1_primer_expected)
+                    r1_equivalence_classes_dict.setdefault(
+                        edit_dist, set()).add(r1_primer_query)
                     # create the base record
                     r2_transposon_record = {
                         "tf": tf,
@@ -306,7 +313,8 @@ class BarcodeQcCounter:
                             'count': count})
                         r2_transposon_summary.append(record_copy)
 
-        return r1_primer_summary, r2_transposon_summary
+        return (r1_primer_summary, r2_transposon_summary,
+                r1_equivalence_classes_dict, r2_equivalence_classes_dict)
 
     def write(self,
               raw: bool = False,
@@ -362,7 +370,8 @@ class BarcodeQcCounter:
                 raise ValueError("component_dict values must be lists of "
                                  "the same length")
             # extract summaries from the metrics
-            r1_primer_summary, r2_transposon_summary = \
+            (r1_primer_summary, r2_transposon_summary,
+                r1_equivalence_class_dict, r2_equivalence_class_dict) = \
                 self._summarize_by_tf(component_dict)
 
             # write r1_primer_summary to file
@@ -376,6 +385,18 @@ class BarcodeQcCounter:
                         "to %s{r1_primer_summary_path}")
             r1_primer_summary_df.to_csv(r1_primer_summary_path, index=False)
 
+            # write r1_equivalence_class_dict to file
+            r1_equivalence_class_basename = \
+                filename + "_r1_equivalence_class" + append_suffix + ".csv"
+            r1_equivalence_class_path = os.path.join(
+                output_dirpath, r1_equivalence_class_basename)
+            r1_equivalence_class_df = pd.DataFrame(
+                r1_equivalence_class_dict)
+            logger.info("writing r1_equivalence_class "
+                        "to %s{r1_equivalence_class_path}")
+            r1_equivalence_class_df.to_csv(
+                r1_equivalence_class_path, index=False)
+
             # write r2_transposon summary to file
             r2_transposon_summary_basename = \
                 filename + "_r2_transposon_summary" + append_suffix + ".csv"
@@ -386,3 +407,15 @@ class BarcodeQcCounter:
                         "to %s{r2_transposon_summary_path}")
             r2_transposon_summary_df.to_csv(
                 r2_transposon_summary_path, index=False)
+            
+            # write r2_equivalence_class_dict to file
+            r2_equivalence_class_basename = \
+                filename + "_r2_equivalence_class" + append_suffix + ".csv"
+            r2_equivalence_class_path = os.path.join(
+                output_dirpath, r2_equivalence_class_basename)
+            r2_equivalence_class_df = pd.DataFrame(
+                r2_equivalence_class_dict)
+            logger.info("writing r2_equivalence_class "
+                        "to %s{r2_equivalence_class_path}")
+            r2_equivalence_class_df.to_csv(
+                r2_equivalence_class_path, index=False)
