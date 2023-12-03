@@ -30,6 +30,7 @@ nav:
 - "File Format Specs":
   - barcode_details: "file_format_specs/barcode_details.md"
   - qBed: "file_format_specs/qbed.md"
+  - yeast_rank_response: "file_format_specs/yeast_rank_response.md"
 - API:
   - Alignment:
     - AlignmentTagger: 'API/Alignment/AlignmentTagger.md'

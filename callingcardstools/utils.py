@@ -1,6 +1,22 @@
 import warnings
+import os
 
-__all__ = ['map_novo', 'remove_suffix', 'deprecated']
+__all__ = ['check_file_path', 'map_novo', 'remove_suffix', 'deprecated']
+
+
+def check_file_path(path: str) -> str:
+    """check if a file exists
+
+    Args:
+        path (str): path to file
+
+    Raises:
+        FileExistsError: if file does not exist
+    """
+    if os.path.isfile(path):
+        return path
+    else:
+        raise FileExistsError(f"{path} does not exist")
 
 
 def map_novo():

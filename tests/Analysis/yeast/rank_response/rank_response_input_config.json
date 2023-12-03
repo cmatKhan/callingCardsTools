@@ -1,0 +1,17 @@
+{
+  "binding_data_path": "path/to/binding/data", 
+  "binding_identifier_col": "identifier_column_name",
+  "binding_effect_col": "effect_column_name_or_none",
+  "binding_pvalue_col": "pvalue_column_name_or_none",
+  "rank_by_effect": false,
+  "expression_data_path": "path/to/expression/data",
+  "expression_identifier_col": "identifier_column_name",
+  "expression_effect_col": "effect_column_name_or_none",
+  "expression_effect_thres": 0.0,
+  "expression_pvalue_col": "pvalue_column_name_or_none",
+  "expression_pvalue_thres": 0.05,
+  "rank_bin_size": 5,
+  "normalize": false,
+  "output_file": "rank_response.tsv",
+  "compress": false
+}
