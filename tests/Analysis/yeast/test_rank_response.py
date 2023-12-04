@@ -1,4 +1,5 @@
 import os
+import json
 import pandas as pd
 import numpy as np
 from scipy.stats import binomtest
@@ -12,6 +13,7 @@ from callingcardstools.Analysis.yeast.rank_response import (
     compute_rank_response,
     parse_binomtest_results,
     rank_response_ratio_summarize,
+    validate_config,
     main as rank_response_main
 )
 
@@ -214,3 +216,47 @@ def test_rank_response_ratio_summarize():
         "Returned random_expectation_df is not a DataFrame"
     assert isinstance(rank_response_df, pd.DataFrame), \
         "Returned rank_response_df is not a DataFrame"
+
+
+def test_validate_config(tmpdir):
+    config_path = tmpdir.join('config.json')
+
+    test_data_directory = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        'test_data/yeast/Analysis')
+
+    assert test_data_directory == '/home/oguzkhan/code/callingCardsTools/tests/test_data/yeast/Analysis'  # noqa
+
+    config = {
+        'binding_data_path': os.path.join(test_data_directory,
+                                          'hap5_promoter_sig.csv'),
+        'binding_identifier_col': 'name',
+        'binding_effect_col': 'callingcards_enrichment',
+        'binding_pvalue_col': 'poisson_pval',
+        'rank_by_effect': False,
+        'expression_data_path': os.path.join(test_data_directory,
+                                             'hap5_15min_mcisaac.csv.gz'),
+        'expression_identifier_col': 'gene_id',
+        'expression_effect_col': 'log2_shrunken_timecourses',
+        'expression_effect_thres': 0.00,
+        'expression_pvalue_col': None,
+        'expression_pvalue_thres': None,
+        'rank_bin_size': 5,
+        'normalize': False,
+        'output_file': str(tmpdir.join('rank_response.csv')),
+        'compress': False
+    }
+
+    # Write to the config file
+    config_path.write(json.dumps(config), "w")
+
+    # Assert that the config file exists
+    assert os.path.exists(str(config_path))
+
+    with open(config_path, 'r', encoding='utf-8') as config_file:
+        parsed_config = json.load(config_file)
+
+    # Call the function
+    actual = validate_config(parsed_config)
+    
+    assert isinstance(actual, dict)
