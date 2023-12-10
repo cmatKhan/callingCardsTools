@@ -2,6 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10042067.svg)](https://doi.org/10.5281/zenodo.10042067)
 [![Test workflow](https://github.com/cmatKhan/callingCardsTools/actions/workflows/codecov.yml/badge.svg)](https://github.com/cmatKhan/callingCardsTools/actions/workflows/codecov.yml)
+[![codecov](https://codecov.io/gh/cmatKhan/callingCardsTools/graph/badge.svg?token=YIJ9OO1ZWZ)](https://codecov.io/gh/cmatKhan/callingCardsTools)
 
 ## Introduction
 
