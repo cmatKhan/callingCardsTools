@@ -2,9 +2,11 @@ import logging
 import argparse
 import json
 from .validate_config import validate_config
-from .create_rank_response_table import create_rank_response_tables
+from .create_rank_response_table import create_rank_response_table
 
 logger = logging.getLogger(__name__)
+
+__all__ = ['parse_args', 'main']
 
 
 def parse_args(
@@ -56,11 +58,11 @@ def main(args: argparse.Namespace):
         logger.error("Error in configuration file: %s", exc)
         raise
 
-    rank_response_df = create_rank_response_tables(config_dict)
+    rank_response_df = create_rank_response_table(config_dict)
 
     compression = 'gzip' if config_dict.get('compress', False) else None
-    if compression and not args.output_file.endswith('.gz'):
-        args.output_file += '.gz'
-    rank_response_df.to_csv(args.output_file,
+    if compression and not config_dict['output_file'].endswith('.gz'):
+        config_dict['output_file'] += '.gz'
+    rank_response_df.to_csv(config_dict['output_file'],
                             compression=compression,
                             index=False)

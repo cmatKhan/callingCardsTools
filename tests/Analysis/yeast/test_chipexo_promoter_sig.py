@@ -59,7 +59,7 @@ def test_chipexo_data(tmpdir):
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
         'test_data/yeast/Analysis')
 
-    assert test_data_directory == '/home/oguzkhan/code/callingCardsTools/tests/test_data/yeast/Analysis'  # noqa
+    assert os.path.isdir(test_data_directory) is True
 
     chipexo_data_path = os.path.join(test_data_directory,
                                      'chipexo_10352.csv.gz')

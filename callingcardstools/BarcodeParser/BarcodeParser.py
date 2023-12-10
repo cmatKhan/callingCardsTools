@@ -5,9 +5,9 @@ to a barcode_details json file. Note that all sequences are cast to upper"""
 import json
 import logging
 import os
+import random
 from math import inf as infinity
 from typing import Literal
-import random
 
 # outside package
 from edlib import align  # pylint:disable=E0611
@@ -438,7 +438,8 @@ class BarcodeParser:
             query: str,
             component_dict: dict,
             match_type: Literal['edit_distance',
-                                'greedy'] = 'edit_distance') -> dict:
+                                'greedy'] = 'edit_distance',
+            seed: int = 42) -> dict:
         """Given a match method, return a dictionary describing the
         best match between query and component_dict
 
@@ -449,6 +450,8 @@ class BarcodeParser:
                 names of the sequences
             match_type (str, optional): Either 'edit_distance' or 'greedy'.
                 Defaults to 'edit_distance'.
+            seed (int, optional): seed for random number generator. Defaults to
+                42.
 
         Returns:
             dict: A dictionary of structure
@@ -458,6 +461,10 @@ class BarcodeParser:
                 always 0 or infinty if match is greedy depending on if exact
                 match is found or not. If not, return is 'name': '*', 'dist': inf}
         """
+        if not isinstance(seed, int):
+            logger.warning('seed must be an integer. Setting to 42')
+            seed = 42
+        random.seed(seed)
         # if no match found, these are the default values. Note that if
         # the match type is not recognized, this function errors
         component_name = "*"

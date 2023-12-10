@@ -13,12 +13,14 @@ not marked as [REQUIRED], then there is a default which is set in the tool.
 
 ```json
 {
-  "binding_data_path": "path/to/binding/data", 
+  "binding_data_path": "path/to/binding/data",
+  "binding_source": "eg, 'chipexo_1234' or cc_1234'",
   "binding_identifier_col": "identifier_column_name",
   "binding_effect_col": "effect_column_name_or_none",
   "binding_pvalue_col": "pvalue_column_name_or_none",
   "rank_by_effect": false,
   "expression_data_path": "path/to/expression/data",
+  "binding_source": "eg, 'mcisaac_1234' or kemmeren_1234'",
   "expression_identifier_col": "identifier_column_name",
   "expression_effect_col": "effect_column_name_or_none",
   "expression_effect_thres": 0.0,
@@ -36,11 +38,13 @@ not marked as [REQUIRED], then there is a default which is set in the tool.
 | Key                          | Description |
 |------------------------------|-------------|
 | `binding_data_path`          | [REQUIRED] Path to the binding data file. The `binding_effect_col`, `binding_pval_col`, and 'gene_id' are required.|
+| `binding_source`          | [REQUIRED] A description of where the binding data comes from. This might just be the data source, eg 'chipexo', or it might be a identifier, eg callingcards_17 or cc_17|
 | `binding_identifier_col`     | [REQUIRED] Name of the feature identifier column in the binding data.|
 | `binding_effect_col`         | [REQUIRED] Name of the effect column in the binding data. Set to `none` if an effect column does not exist.|
 | `binding_pvalue_col`         | [REQUIRED] Name of the pvalue column in the binding data. Set to `none` if a pvalue column does not exist.|
 | `rank_by_effect`             | `true` or `false`. Defaults to `false` if not provided. Set to `true` to rank by the binding effect column.|
 | `expression_data_path`       | [REQUIRED] Path to the expression data file.|
+| `expression_source`       | [REQUIRED] A description of where the expressin data comes from. This might just be the data source, eg 'mcisaac', or it might be a identifier, eg mcisaac_17|
 | `expression_identifier_col`  | [REQUIRED] Name of the feature identifier column in the expression data.|
 | `expression_effect_col`      | [REQUIRED] Name of the effect column in the gene expression data. Set to `none` if an effect column does not exist.|
 | `expression_effect_thres`    | [REQUIRED] Threshold for effect expression. Set to `none` if an effect column does not exist|

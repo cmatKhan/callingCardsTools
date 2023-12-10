@@ -1,19 +1,19 @@
-import sys
 import argparse
-from typing import Callable
 import logging
-from logging.config import dictConfig
+import sys
 from importlib.metadata import version
+from logging.config import dictConfig
+from typing import Callable
 
-from .BarcodeParser.yeast import barcode_table_to_json
-from .BarcodeParser.yeast import combine_qc as yeast_combine_qc
-from .Reads import legacy_split_fastq, split_fastq
+from .Alignment.mammals import combine_qc as mammals_combine_qc
+from .Alignment.mammals import process_alignments as process_mammals_bam
 from .Alignment.yeast import legacy_makeccf
 from .Alignment.yeast import process_alignments as process_yeast_bam
-from .Alignment.mammals import process_alignments as process_mammals_bam
-from .Alignment.mammals import combine_qc as mammals_combine_qc
-from .PeakCalling.yeast import call_peaks as yeast_call_peaks
 from .Analysis.yeast import rank_response as yeast_rank_response
+from .BarcodeParser.yeast import barcode_table_to_json
+from .BarcodeParser.yeast import combine_qc as yeast_combine_qc
+from .PeakCalling.yeast import call_peaks as yeast_call_peaks
+from .Reads import legacy_split_fastq, split_fastq
 
 
 def parse_args() -> Callable[[list], argparse.Namespace]:
@@ -57,7 +57,11 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         'mammals_combine_qc': 'Combine qbed and barcodeQC objects which may '
         'result from splitting the fastq and processing chunks in parallel',
 
-        'yeast_peak_calling': 'Call peaks on yeast data',
+        'yeast_call_peaks': 'Call peaks on yeast data',
+
+        'yeast_find_min_responsive': 'Given a set of yeast expression data '
+        'and thresholds on the effects and/or pvalues, find the minimum '
+        'number of responsive genes in the data set given',
 
         'yeast_rank_response': 'Rank response analysis on yeast data'
     }
@@ -133,10 +137,10 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
 
     subparsers = yeast_call_peaks.parse_args(
         subparsers,
-        script_descriptions['yeast_peak_calling'],
+        script_descriptions['yeast_call_peaks'],
         common_args)
 
-    subparsers = yeast_rank_response.parse_args(
+    subparsers = yeast_rank_response.rank_response_parse_args(
         subparsers,
         script_descriptions['yeast_rank_response'],
         common_args)

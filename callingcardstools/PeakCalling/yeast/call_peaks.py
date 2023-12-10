@@ -254,9 +254,9 @@ def parse_args(
     """
 
     parser = subparser.add_parser(
-        'call_peaks_yeast',
+        'yeast_call_peaks',
         help=script_desc,
-        prog='call_peaks_yeast',
+        prog='yeast_call_peaks',
         parents=[common_args]
     )
 

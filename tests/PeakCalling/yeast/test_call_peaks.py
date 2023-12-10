@@ -1,10 +1,12 @@
 import argparse
 import os
+
 import pandas as pd
-from callingcardstools.PeakCalling.yeast.call_peaks import (count_hops,
-                                                            call_peaks)
-from callingcardstools.PeakCalling.yeast.call_peaks import main \
-    as call_peaks_main
+
+from callingcardstools.PeakCalling.yeast.call_peaks import (call_peaks,
+                                                            count_hops)
+from callingcardstools.PeakCalling.yeast.call_peaks import \
+    main as call_peaks_main
 
 
 def count_hops_unstranded():
@@ -266,11 +268,11 @@ def test_with_data():
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
         'test_data/yeast/Analysis')
 
-    assert test_data_directory == '/home/oguzkhan/code/callingCardsTools/tests/test_data/yeast/Analysis'  # noqa
+    assert os.path.isdir(test_data_directory) is True
 
     args = argparse.Namespace(
         experiment_data_path=os.path.join(
-            test_data_directory, 'hap5_expr17.qbed'),
+            test_data_directory, 'hap5_expr17.qbed.gz'),
         experiment_orig_chr_convention='id',
         promoter_data_path=os.path.join(
             test_data_directory, 'yiming_promoters.bed.gz'),

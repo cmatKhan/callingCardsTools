@@ -37,6 +37,7 @@ def read_in_data(
         KeyError: if identifier_col, effect_col, or pval_col is not in the
             data, or if the `identifier_col` is something other than `feature`
             and the column `feature` also exists in the data
+        AttributeError: if there are NA values in the effect or pvalue columns
     """
     if not os.path.exists(data_path):
         raise FileExistsError(f"{data_path} does not exist")
@@ -55,7 +56,7 @@ def read_in_data(
         compression='gzip' if compressed else None)
 
     if identifier_col not in df.columns:
-        raise KeyError(f"Column {identifier_col} is not in {data_path}")
+        raise KeyError(f"Column `{identifier_col}` is not in {data_path}")
     if 'feature' in df.columns and identifier_col != 'feature':
         raise KeyError(f"Column `feature` exists in the data, but is not the "
                        f"`identifier_col` {identifier_col}. Please rename the "
@@ -63,18 +64,26 @@ def read_in_data(
 
     try:
         effect_colname = data_type + '_effect'
-        df[effect_colname] = inf \
-            if effect_col == 'none' \
-            else df[effect_col]
+        # Assuming df is your DataFrame and effect_col is a variable
+        # indicating column name
+        df[effect_colname] = df[effect_col] if effect_col else float('inf')
+
+        # Check for NA values in the effect_colname
+        if pd.isna(df[effect_colname]).any():
+            raise AttributeError(f"NA values found in column {effect_colname}."
+                                 " This must not be.")
     except KeyError as exc:
         raise KeyError(f"Column {effect_col} is not `none` and "
                        "does not exist in {data_path}") from exc
 
     try:
         pval_colname = data_type + '_pvalue'
-        df[pval_colname] = 0 \
-            if pval_col == 'none' \
-            else df[pval_col]
+        df[pval_colname] = df[pval_col] if pval_col else 0.0
+
+        # Check for NA values in the pval_colname
+        if pd.isna(df[pval_colname]).any():
+            raise AttributeError(f"NA values found in column {pval_colname}. "
+                                 "This must not be.")
     except KeyError as exc:
         raise KeyError(f"Column {pval_col} is not `none` and "
                        "does not exist in {data_path}") from exc

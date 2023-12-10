@@ -5,6 +5,8 @@ from .find_min_responsive import find_min_responsive
 
 logger = logging.getLogger(__name__)
 
+__all__ = ['parse_args', 'main']
+
 
 def parse_args(
         subparser: argparse.ArgumentParser,

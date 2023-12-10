@@ -41,6 +41,11 @@ def validate_config(config: dict) -> dict:
         raise KeyError("Missing key 'binding_data_path' in config") from exc
 
     try:
+        config['binding_source'] = str(config['binding_source'])
+    except KeyError as exc:
+        raise KeyError("Missing key 'binding_source' in config") from exc
+
+    try:
         if not isinstance(config['binding_identifier_col'], str):
             raise TypeError("binding_identifier_col must be a string")
     except KeyError as exc:
@@ -76,6 +81,11 @@ def validate_config(config: dict) -> dict:
     except KeyError as exc:
         raise KeyError("Missing key 'expression_data_path' in config") \
             from exc
+    
+    try:
+        config['expression_source'] = str(config['expression_source'])
+    except KeyError as exc:
+        raise KeyError("Missing key 'expression_source' in config") from exc
 
     try:
         if not isinstance(config['expression_identifier_col'], str):

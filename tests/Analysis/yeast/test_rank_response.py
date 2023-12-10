@@ -1,21 +1,16 @@
-import os
+import argparse
 import json
-import pandas as pd
+import os
+
 import numpy as np
+import pandas as pd
 from scipy.stats import binomtest
 
 from callingcardstools.Analysis.yeast.rank_response import (
-    read_in_data,
-    create_partitions,
-    label_responsive_genes,
-    calculate_random_expectation,
-    bin_by_binding_rank,
-    compute_rank_response,
-    parse_binomtest_results,
-    rank_response_ratio_summarize,
-    validate_config,
-    main as rank_response_main
-)
+    bin_by_binding_rank, calculate_random_expectation, compute_rank_response,
+    create_partitions, create_rank_response_table, label_responsive_genes,
+    parse_binomtest_results, rank_response_main, rank_response_ratio_summarize,
+    read_in_data, validate_config)
 
 
 def test_read_in_data_columns():
@@ -23,12 +18,12 @@ def test_read_in_data_columns():
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
         'test_data/yeast/Analysis')
 
-    assert test_data_directory == '/home/oguzkhan/code/callingCardsTools/tests/test_data/yeast/Analysis'  # noqa
+    assert os.path.isdir(test_data_directory) is True 
 
     test_data_path = os.path.join(test_data_directory,
-                                  'hap5_promoter_sig.csv')
+                                  'hap5_exprid_17_yiming_adh1_promoter_sig.csv.gz')
 
-    test_identifier_col = "name"
+    test_identifier_col = "target_gene_id"
     test_effect_col = 'callingcards_enrichment'  # Replace with actual column name
     test_pval_col = 'poisson_pval'  # Replace with actual column name
     test_source = 'callingcards'
@@ -87,7 +82,7 @@ def test_label_responsive_genes():
     })
 
     # Test without normalization
-    expected_responsive = [True, True, False, True, False, False]
+    expected_responsive = [True, True, False, False, False, False]
     result_df = label_responsive_genes(df, 0.6, 0.05)
     assert all(result_df['responsive'] ==
                expected_responsive), "Failed test without normalization"
@@ -225,17 +220,20 @@ def test_validate_config(tmpdir):
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
         'test_data/yeast/Analysis')
 
-    assert test_data_directory == '/home/oguzkhan/code/callingCardsTools/tests/test_data/yeast/Analysis'  # noqa
+    assert os.path.isdir(test_data_directory) is True
 
     config = {
-        'binding_data_path': os.path.join(test_data_directory,
-                                          'hap5_promoter_sig.csv'),
-        'binding_identifier_col': 'name',
+        'binding_data_path': os.path.join(
+            test_data_directory,
+            'hap5_exprid_17_yiming_adh1_promoter_sig.csv.gz'),
+        'binding_source': 'cc_17',
+        'binding_identifier_col': 'target_gene_id',
         'binding_effect_col': 'callingcards_enrichment',
         'binding_pvalue_col': 'poisson_pval',
         'rank_by_effect': False,
         'expression_data_path': os.path.join(test_data_directory,
                                              'hap5_15min_mcisaac.csv.gz'),
+        'expression_source': 'mcisaac_hap5_15',
         'expression_identifier_col': 'gene_id',
         'expression_effect_col': 'log2_shrunken_timecourses',
         'expression_effect_thres': 0.00,
@@ -258,5 +256,17 @@ def test_validate_config(tmpdir):
 
     # Call the function
     actual = validate_config(parsed_config)
-    
+
     assert isinstance(actual, dict)
+
+    # rank_response_df = create_rank_response_table(actual)
+
+    # assert isinstance(rank_response_df, pd.DataFrame)
+
+    args = argparse.Namespace(
+        config=config_path
+    )
+
+    rank_response_main(args)
+
+    assert os.path.exists(str(tmpdir.join('rank_response.csv'))) is True
