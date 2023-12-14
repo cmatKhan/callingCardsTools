@@ -1,4 +1,5 @@
 import os
+
 import pandas as pd
 
 
@@ -199,8 +200,8 @@ def read_in_experiment_data(experiment_data_path: str,
     ...   'curr_chr_name_convention',
     ...   'new_chr_name_convention',
     ...    chrmap_df)
-    >>> list(experiment_df.columns) == ['chr', 'start', 'end', 'strand',
-    ...                                 'depth']
+    >>> list(experiment_df.columns) == ['chr', 'start', 'end', 'depth',
+    ...                                 'strand']
     True
     >>> experiment_total_hops
     1
@@ -218,7 +219,7 @@ def read_in_experiment_data(experiment_data_path: str,
                          sep='\t',
                          compression='gzip' if gzipped else None,
                          nrows=0)
-    if header.columns.tolist() != ['chr', 'start', 'end', 'strand', 'depth']:
+    if header.columns.tolist() != ['chr', 'start', 'end', 'depth', 'strand']:
         header = None
     else:
         header = 0
@@ -228,12 +229,12 @@ def read_in_experiment_data(experiment_data_path: str,
                                     sep='\t',
                                     header=header,
                                     names=['chr', 'start', 'end',
-                                           'strand', 'depth'],
+                                           'depth', 'strand'],
                                     dtype={'chr': str,
                                            'start': int,
                                            'end': int,
-                                           'strand': str,
-                                           'depth': int},
+                                           'depth': int,
+                                           'strand': str},
                                     compression='gzip' if gzipped else None)
     except ValueError as e:
         raise ValueError('experiment_data_path must be a qbed file '
@@ -393,8 +394,8 @@ def read_in_background_data(background_data_path: str,
     ...   'curr_chr_name_convention',
     ...   'new_chr_name_convention',
     ...    chrmap_df)
-    >>> list(background_df.columns) == ['chr', 'start', 'end', 'strand',
-    ...                                  'depth']
+    >>> list(background_df.columns) == ['chr', 'start', 'end', 'depth',
+    ...                                  'strand']
     True
     >>> background_total_hops
     1
@@ -409,7 +410,7 @@ def read_in_background_data(background_data_path: str,
     gzipped = str(background_data_path).endswith('.gz')
     # check if data has column headers
     header = pd.read_csv(background_data_path, sep='\t', nrows=0)
-    if header.columns.tolist() != ['chr', 'start', 'end', 'strand', 'depth']:
+    if header.columns.tolist() != ['chr', 'start', 'end', 'depth', 'strand']:
         header = None
     else:
         header = 0
@@ -420,17 +421,17 @@ def read_in_background_data(background_data_path: str,
                                     sep='\t',
                                     header=header,
                                     names=['chr', 'start', 'end',
-                                           'strand', 'depth'],
+                                           'depth', 'strand'],
                                     dtype={'chr': str,
                                            'start': int,
                                            'end': int,
-                                           'strand': str,
-                                           'depth': 'int64'},
+                                           'depth': 'int64',
+                                           'strand': str},
                                     compression='gzip' if gzipped else None)
     except ValueError as e:
         raise ValueError('background_data_path must be a qbed file '
-                         'with columns `chr`, `start`, `end`, `strand`, '
-                         'and `depth`') from e
+                         'with columns `chr`, `start`, `end`, `depth`, '
+                         'and `strand`') from e
 
     # relabel chr column
     background_df = relabel_chr_column(background_df,

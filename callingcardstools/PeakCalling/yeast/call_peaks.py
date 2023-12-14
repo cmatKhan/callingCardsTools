@@ -18,22 +18,23 @@ Functions
 .. author:: Chase Mateusiak
 .. date:: 2023-11-23
 """
-import logging
-import time
-import os
 import argparse
+import logging
+import os
+import time
+
 import pandas as pd
-from callingcardstools.PeakCalling.yeast import \
-    (read_in_chrmap,
-     read_in_experiment_data,
-     read_in_promoter_data,
-     read_in_background_data)
+
+from callingcardstools.PeakCalling.yeast import (read_in_background_data,
+                                                 read_in_chrmap,
+                                                 read_in_experiment_data,
+                                                 read_in_promoter_data)
 from callingcardstools.PeakCalling.yeast.enrichment_vectorized import \
     enrichment_vectorized
-from callingcardstools.PeakCalling.yeast.poisson_pval_vectorized import \
-    poisson_pval_vectorized
 from callingcardstools.PeakCalling.yeast.hypergeom_pval_vectorized import \
     hypergeom_pval_vectorized
+from callingcardstools.PeakCalling.yeast.poisson_pval_vectorized import \
+    poisson_pval_vectorized
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,7 @@ def count_hops(promoter_df: pd.DataFrame,
     ...     'chr': ['chr1', 'chr1', 'chr1', 'chr1', 'chr1'],
     ...     'start': [150, 250, 350, 450, 550],
     ...     'end': [200, 300, 400, 500, 600],
+    ...     'depth': [1, 1, 1, 1, 1],
     ...     'strand': ['+', '-', '+', '-', '+']
     ... })
     >>> count_hops(promoter_df, qbed_df, 'hops', True)
@@ -82,10 +84,18 @@ def count_hops(promoter_df: pd.DataFrame,
     3   chr1    400  500      -     1
     4   chr1    500  600      +     1
     """
-
-    query_str = '(start <= qbed_start <= end) and strand == qbed_strand' \
-        if consider_strand \
-        else 'start <= qbed_start <= end'
+    if consider_strand:
+        query_str = '(start <= qbed_start <= end) and strand == qbed_strand'
+    else:
+        # if consider_strand is false, then combine rows with the same
+        # coordinates but different strand values and sum the depth. Set the
+        # strand to "*" for all rows
+        qbed_df = qbed_df\
+            .groupby(['chr', 'start', 'end'])\
+            .agg({'depth': 'sum'})\
+            .reset_index()\
+            .assign(strand='*')
+        query_str = 'start <= qbed_start <= end'
 
     return promoter_df\
         .merge(qbed_df.rename(columns={'start': 'qbed_start',
@@ -184,7 +194,7 @@ def call_peaks(
         .fillna(0)\
         .assign(background_total_hops=background_total_hops,
                 experiment_total_hops=experiment_total_hops)
-    
+
     promoter_hops_df['background_hops'] = \
         promoter_hops_df['background_hops'].astype('int64')
 
@@ -360,7 +370,7 @@ def main(args: argparse.Namespace) -> None:
         if not os.path.isfile(file):
             raise FileNotFoundError('The following path '
                                     f'does not exist: {file}')
-                                    
+
     result_df = call_peaks(
         args.experiment_data_path,
         args.experiment_orig_chr_convention,

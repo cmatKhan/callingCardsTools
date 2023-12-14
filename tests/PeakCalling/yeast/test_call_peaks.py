@@ -147,7 +147,7 @@ def count_hops_strand_testing():
         'name': ['promoter1', 'promoter2', 'promoter3',
                  'promoter4', 'promoter5'],
         'strand': ['+', '-', '+', '+', '+'],
-        'experiment_hops': [2, 2, 1, 1, 1]
+        'experiment_hops': [1, 1, 1, 1, 1]
     })
 
     return promoter_df, qbed_df, expected_df_stranded, expected_df_unstranded
@@ -209,16 +209,16 @@ def test_call_peaks(tmp_path):
         'chr': ['chr1', 'chr1', 'chr1', 'chr1', 'chr1'],
         'start': [150, 150, 350, 450, 550],
         'end': [200, 200, 400, 500, 600],
-        'strand': ['+', '-', '+', '-', '+'],
-        'depth': [10, 100, 20, 200, 3]
+        'depth': [10, 100, 20, 200, 3],
+        'strand': ['+', '-', '+', '-', '+']
     })
 
     background_data = pd.DataFrame({
         'chr': ['chr1', 'chr1', 'chr1', 'chr1', 'chr1'],
         'start': [150, 150, 350, 450, 550],
         'end': [200, 200, 400, 500, 600],
-        'strand': ['+', '-', '+', '-', '+'],
-        'depth': [10, 100, 20, 200, 3]
+        'depth': [10, 100, 20, 200, 3],
+        'strand': ['+', '-', '+', '-', '+']
     })
 
     # Expected output

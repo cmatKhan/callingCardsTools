@@ -1,10 +1,12 @@
-import logging
 import argparse
+import logging
 import os
+
 import pandas as pd
+
 from callingcardstools.PeakCalling.yeast import (read_in_chrmap,
-                                                 relabel_chr_column,
-                                                 read_in_promoter_data)
+                                                 read_in_promoter_data,
+                                                 relabel_chr_column)
 
 logger = logging.getLogger(__name__)
 
@@ -187,7 +189,7 @@ def parse_args(
         help='Set this flag to gzip the output file.'
     )
 
-    return parser
+    return subparser
 
 
 def main(args: argparse.Namespace) -> None:

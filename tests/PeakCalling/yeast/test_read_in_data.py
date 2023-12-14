@@ -1,8 +1,9 @@
 import pandas as pd
-from callingcardstools.PeakCalling.yeast import (relabel_chr_column,
+
+from callingcardstools.PeakCalling.yeast import (read_in_background_data,
                                                  read_in_experiment_data,
                                                  read_in_promoter_data,
-                                                 read_in_background_data)
+                                                 relabel_chr_column)
 
 # Test for relabel_chr_column
 
@@ -34,8 +35,8 @@ def test_read_in_experiment_data(tmp_path):
     qbed_data = pd.DataFrame({'chr': ['chr1'],
                               'start': [1],
                               'end': [2],
-                              'strand': ['+'],
-                              'depth': [1]})
+                              'depth': [1],
+                              'strand': ['+']})
     qbed_file = tmp_path / "test.qbed"
     qbed_data.to_csv(qbed_file, sep='\t', index=False, header=True)
 
@@ -52,7 +53,7 @@ def test_read_in_experiment_data(tmp_path):
 
     # Assertions
     assert list(experiment_df.columns) == ['chr', 'start',
-                                           'end', 'strand', 'depth']
+                                           'end', 'depth', 'strand']
     assert experiment_total_hops == 1
 
 # Test for read_in_promoter_data
@@ -92,8 +93,8 @@ def test_read_in_background_data(tmp_path):
         'chr': ['chr1'],
         'start': [1],
         'end': [2],
-        'strand': ['+'],
-        'depth': [1]})
+        'depth': [1],
+        'strand': ['+']})
     background_file = tmp_path / "background.qbed"
     background_data.to_csv(background_file, sep='\t', index=False, header=True)
 
@@ -110,5 +111,5 @@ def test_read_in_background_data(tmp_path):
 
     # Assertions
     assert list(background_df.columns) == ['chr', 'start', 'end',
-                                           'strand', 'depth']
+                                           'depth', 'strand']
     assert background_total_hops == 1

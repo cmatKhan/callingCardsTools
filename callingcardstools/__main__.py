@@ -9,7 +9,8 @@ from .Alignment.mammals import combine_qc as mammals_combine_qc
 from .Alignment.mammals import process_alignments as process_mammals_bam
 from .Alignment.yeast import legacy_makeccf
 from .Alignment.yeast import process_alignments as process_yeast_bam
-from .Analysis.yeast import rank_response as yeast_rank_response
+from .Analysis.yeast import chipexo_promoter_sig as yeast_chipexo_promoter_sig
+from .Analysis.yeast.rank_response import rank_response_parse_args
 from .BarcodeParser.yeast import barcode_table_to_json
 from .BarcodeParser.yeast import combine_qc as yeast_combine_qc
 from .PeakCalling.yeast import call_peaks as yeast_call_peaks
@@ -58,6 +59,9 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         'result from splitting the fastq and processing chunks in parallel',
 
         'yeast_call_peaks': 'Call peaks on yeast data',
+
+        'yeast_chipexo_sig_promoter': 'call significant promoters from '
+        'chipexo data from yeastepigenome.org',
 
         'yeast_find_min_responsive': 'Given a set of yeast expression data '
         'and thresholds on the effects and/or pvalues, find the minimum '
@@ -139,8 +143,13 @@ def parse_args() -> Callable[[list], argparse.Namespace]:
         subparsers,
         script_descriptions['yeast_call_peaks'],
         common_args)
+    
+    subparsers = yeast_chipexo_promoter_sig.parse_args(
+        subparsers,
+        script_descriptions['yeast_chipexo_sig_promoter'],
+        common_args)
 
-    subparsers = yeast_rank_response.rank_response_parse_args(
+    subparsers = rank_response_parse_args(
         subparsers,
         script_descriptions['yeast_rank_response'],
         common_args)

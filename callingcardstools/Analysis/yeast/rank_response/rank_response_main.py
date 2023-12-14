@@ -1,8 +1,9 @@
-import logging
 import argparse
 import json
-from .validate_config import validate_config
+import logging
+
 from .create_rank_response_table import create_rank_response_table
+from .validate_config import validate_config
 
 logger = logging.getLogger(__name__)
 

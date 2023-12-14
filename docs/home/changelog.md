@@ -1,5 +1,13 @@
 # Change Log
 
+## Version 1.4.0
+
+### Additions
+
+For yeast, changing the `yeast_call_peaks` `consider_strand` functionality
+to collapse read counts at the same coordinate on the forward/reverse strand
+in addition to ignoring the strand with regards to the promoter.
+
 ## Version 1.3.0
 
 ### Additions
