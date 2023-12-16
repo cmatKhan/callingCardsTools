@@ -1,5 +1,14 @@
 # Change Log
 
+## Version 1.4.1
+
+### Changes
+
+- chipexo_promoter_sig now checks the columns and expects the original
+  yeastepigenome.org allevents `coord` column to be split into `start` 
+  and `end` where `end` is simply coord + 1. This is to be consistent
+  with the other bed-type files.
+
 ## Version 1.4.0
 
 ### Additions

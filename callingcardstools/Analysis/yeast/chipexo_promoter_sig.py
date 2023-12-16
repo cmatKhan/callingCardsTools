@@ -30,10 +30,33 @@ def read_in_chipexo_data(
     Returns:
             pandas.DataFrame: A pandas DataFrame containing the chipexo
                 allevents data
+
+    Raises:
+            AttributeError: If the chipexo table does not contain at least the
+                following columns: `chr`, `start`, `end`, `YPD_log2Fold`,
+                `YPD_log2P`. Note that the `start` column is the original
+                `coord` column from the yeastepigenome.org data and `end` is
+                simply `coord` + 1. It is in this format to make it somewhat
+                easier to input to other processes that accept bed-like files.
     """
     df = pd.read_csv(chipexo_data_path,
                      header=0,
                      index_col=False)
+
+    if not {'chr', 'start', 'end',
+            'YPD_log2Fold', 'YPD_log2P'}.issubset(df.columns):
+        raise AttributeError('The chipexo table must contain at least the '
+                             'following columns: `chr`, `start`, `end`, '
+                             '`YPD_log2Fold`, `YPD_log2P`. Note that the '
+                             '`start` column is the original `coord` column '
+                             'from the yeastepigenome.org data and `end` '
+                             'is simply `coord` + 1. It is in this format '
+                             'to make it somewhat easier to input to other '
+                             'processes that accept bed-like files.')
+
+    df.rename(columns={'start': 'chipexo_start',
+                       'end': 'chipexo_end'},
+              inplace=True)
 
     return relabel_chr_column(df,
                               chrmap_df,
@@ -110,7 +133,7 @@ def chipexo_promoter_sig(chipexo_data_path: str,
     return pd.merge(promoter_df, chipexo_df,
                     on='chr',
                     how='inner')\
-        .query('start <= coord <= end')\
+        .query('start <= chipexo_start <= end')\
         .groupby(['chr', 'start', 'end', 'name', 'strand'])\
         .agg(
         n_sig_peaks=pd.NamedAgg(column='chr',

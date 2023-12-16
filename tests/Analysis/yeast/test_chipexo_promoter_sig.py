@@ -1,17 +1,20 @@
 import argparse
 import os
+
 import pandas as pd
-from callingcardstools.Analysis.yeast.chipexo_promoter_sig \
-    import chipexo_promoter_sig
-from callingcardstools.Analysis.yeast.chipexo_promoter_sig \
-    import main as chipexo_main
+
+from callingcardstools.Analysis.yeast.chipexo_promoter_sig import \
+    chipexo_promoter_sig
+from callingcardstools.Analysis.yeast.chipexo_promoter_sig import \
+    main as chipexo_main
 
 
 def test_chipexo_promoter_sig(tmp_path):
     # Create DataFrames
     chipexo_df = pd.DataFrame({
         'chr': ['chr1'],
-        'coord': [150],
+        'start': [150],
+        'end': [151],
         'YPD_log2Fold': [2.0],
         'YPD_log2P': [0.05]
     })
@@ -61,22 +64,41 @@ def test_chipexo_data(tmpdir):
 
     assert os.path.isdir(test_data_directory) is True
 
+    # chipexo_data_path = os.path.join(test_data_directory,
+    #                                  'chipexo_10352.csv.gz')
+    # chrmap_data_path = os.path.join(test_data_directory,
+    #                                 'chrmap.csv.gz')
+    # promoter_data_path = os.path.join(test_data_directory,
+    #                                   'yiming_promoters.bed.gz')
+    
+    # output_path = os.path.join(tmpdir, 'chipexo_promoter_sig.csv')
+
     chipexo_data_path = os.path.join(test_data_directory,
-                                     'chipexo_10352.csv.gz')
+                                     'test_user_count0/binding/pugh_none/49.csv.gz')
     chrmap_data_path = os.path.join(test_data_directory,
-                                    'chrmap.csv.gz')
+                                    'test_user_count0/chrmap.csv')
     promoter_data_path = os.path.join(test_data_directory,
-                                      'yiming_promoters.bed.gz')
+                                      'test_user_count0/promotersets/yiming/33.bed.gz')
     
     output_path = os.path.join(tmpdir, 'chipexo_promoter_sig.csv')
 
+    # args = argparse.Namespace(
+    #     chipexo_data_path=chipexo_data_path,
+    #     chipexo_orig_chr_convention='chr',
+    #     unified_chr_convention='ucsc',
+    #     chrmap_data_path=chrmap_data_path,
+    #     promoter_data_path=promoter_data_path,
+    #     promoter_orig_chr_convention='id',
+    #     output_file=output_path,
+    #     compress=False)
+    
     args = argparse.Namespace(
         chipexo_data_path=chipexo_data_path,
-        chipexo_orig_chr_convention='chr',
+        chipexo_orig_chr_convention='ucsc',
         unified_chr_convention='ucsc',
         chrmap_data_path=chrmap_data_path,
         promoter_data_path=promoter_data_path,
-        promoter_orig_chr_convention='id',
+        promoter_orig_chr_convention='ucsc',
         output_file=output_path,
         compress=False)
 
