@@ -4,6 +4,13 @@
 
 ### Changes
 
+- Needed to keep `name` in the output of PeakCalling.yeast.call_peaks
+- adding Analysis and PeakCalling modules to the documentation API section
+
+## Version 1.5.0
+
+### Changes
+
 - overhaul of the PeakCalling/yeast module to address memory usage.
   adding pyranges as a depedency as a result. removed `consider_strand`
   and added a argument to deduplicate the experiment qbeds based on

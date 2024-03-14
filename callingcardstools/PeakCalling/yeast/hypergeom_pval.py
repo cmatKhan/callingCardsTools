@@ -1,7 +1,10 @@
 import logging
+import warnings
+
 from scipy.stats import hypergeom
 
 logger = logging.getLogger(__name__)
+
 
 def hypergeom_pval(total_background_hops: int,
                    total_experiment_hops: int,
@@ -21,6 +24,8 @@ def hypergeom_pval(total_background_hops: int,
     :return: The hypergeometric p-value.
     :rtype: float
     """
+    warnings.warn("This function is deprecated and will be removed in a future release. "
+                  "use the vectorized function instead")
     # check input
     if total_background_hops < 0 or not isinstance(total_background_hops, int):
         raise ValueError(('total_background_hops must '

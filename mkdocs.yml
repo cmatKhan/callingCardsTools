@@ -37,11 +37,52 @@ nav:
     - SummaryParser: 'API/Alignment/SummaryParser.md'
     - mammals:
       - Qbed: 'API/Alignment/mammals/Qbed.md'
+  - Analysis:
+    - yeast:
+      - rank_response:
+        - bin_by_binding_rank: 'API/Analysis/yeast/rank_response/bin_by_binding_rank.md'
+        - calculate_random_expectation: 'API/Analysis/yeast/rank_response/calculate_random_expectation.md'
+        - compute_rank_response: 'API/Analysis/yeast/rank_response/compute_rank_response.md'
+        - create_partitions: 'API/Analysis/yeast/rank_response/create_partitions.md'
+        - create_rank_response_table: 'API/Analysis/yeast/rank_response/create_rank_response_table.md'
+        - label_responsive_genes: 'API/Analysis/yeast/rank_response/label_responsive_genes.md'
+        - parse_binomtest_results: 'API/Analysis/yeast/rank_response/parse_binomtest_results.md'
+        - rank_response_ratio_summarize: 'API/Analysis/yeast/rank_response/rank_response_ratio_summarize.md'
+        - read_in_data: 'API/Analysis/yeast/rank_response/read_in_data.md'
+        - set_none_str_to_none: 'API/Analysis/yeast/rank_response/set_none_str_to_none.md'
+        - validate_config: 'API/Analysis/yeast/rank_response/validate_config.md'
+        - find_min_responsive:
+          - find_min_responsive: 'API/Analysis/yeast/rank_response/find_min_responsive/find_min_responsive.md'
+          - parse_args: 'API/Analysis/yeast/rank_response/find_min_responsive/parse_args.md'
+          - main: 'API/Analysis/yeast/rank_response/find_min_responsive/main.md'
+        - chipexo_promoter_sig:
+          - read_in_chipexo_data: 'API/Analysis/yeast/chipexo_promoter_sig/read_in_chipexo_data.md'
+          - chipexo_promoter_sig: 'API/Analysis/yeast/chipexo_promoter_sig/chipexo_promoter_sig.md'
+          - parse_args: 'API/Analysis/yeast/chipexo_promoter_sig/parse_args.md'
+          - main: 'API/Analysis/yeast/chipexo_promoter_sig/main.md'
   - BarcodeParser:
     - mammals:
       - BarcodeCounterQc: 'API/BarcodeParser/mammals/BarcodeCounterQc.md'
     - yeast:
       - BarcodeCounterQc: 'API/BarcodeParser/yeast/BarcodeCounterQc.md'
+  - PeakCalling:
+    - yeast:
+      - read_in_data:
+        - qbed_df_to_pyranges: "API/PeakCalling/yeast/read_in_data/qbed_df_to_pyranges.md"
+        - read_in_background_data: "API/PeakCalling/yeast/read_in_data/read_in_background_data.md"
+        - read_in_chrmap: "API/PeakCalling/yeast/read_in_data/read_in_chrmap.md"
+        - read_in_experiment_data: "API/PeakCalling/yeast/read_in_data/read_in_experiment_data.md"
+        - read_in_promoter_data: "API/PeakCalling/yeast/read_in_data/read_in_promoter_data.md"
+        - relabel_chr_column: "API/PeakCalling/yeast/read_in_data/relabel_chr_column.md"
+      - enrichment_vectorized: "API/PeakCalling/yeast/enrichment_vectorized.md"
+      - hypergeom_pval_vectorized: "API/PeakCalling/yeast/hypergeom_pval_vectorized.md"
+      - poisson_pval_vectorized: "API/PeakCalling/yeast/poisson_pval_vectorized.md"
+      - call_peaks:
+        - count_hops: 'API/PeakCalling/yeast/call_peaks/count_hops.md'
+        - add_metrics: 'API/PeakCalling/yeast/call_peaks/add_metrics.md'
+        - call_peaks: 'API/PeakCalling/yeast/call_peaks/call_peaks.md'
+        - parse_args: 'API/PeakCalling/yeast/call_peaks/parse_args.md'
+        - main: 'API/PeakCalling/yeast/call_peaks/main.md'
   - QC:
     - create_status_coder: 'API/QC/create_status_coder.md'
     - StatusFlags: 'API/QC/StatusFlags.md'

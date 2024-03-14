@@ -95,7 +95,7 @@ def test_count_hops():
     )
 
     result_stranded = (
-        promoter_df.set_index("name", drop=True)
+        promoter_df.set_index("name")
         .join(
             [
                 experiment_result_stranded.set_index("name", drop=True),
@@ -106,6 +106,19 @@ def test_count_hops():
         .reset_index()
         .fillna(0)
     )
+
+    assert (
+        result_stranded.columns
+        == [
+            "name",
+            "chr",
+            "start",
+            "end",
+            "strand",
+            "experiment_hops",
+            "background_hops",
+        ]
+    ).all()
 
     pd.testing.assert_frame_equal(
         result_stranded, expected_result_stranded, check_dtype=False
@@ -182,6 +195,24 @@ def test_with_data(tmpdir):
     experiment_df = pd.read_csv(args.experiment_data_path, sep="\t")
     background_df = pd.read_csv(args.background_data_path, sep="\t")
 
+    assert (
+        output_df.columns
+        == [
+            "name",
+            "chr",
+            "start",
+            "end",
+            "strand",
+            "experiment_hops",
+            "background_hops",
+            "background_total_hops",
+            "experiment_total_hops",
+            "callingcards_enrichment",
+            "poisson_pval",
+            "hypergeometric_pval",
+        ]
+    ).all()
+
     # check that the deduplication worked as expected
     assert (output_df["experiment_total_hops"] != experiment_df.shape[0]).all()
     assert (
@@ -198,7 +229,7 @@ def test_with_data(tmpdir):
     ]
     # do the same with the background_df
     background_df_subset = background_df[
-        (background_df["chr"] == 'chrII')
+        (background_df["chr"] == "chrII")
         & (background_df["start"] >= 36350)
         & (background_df["start"] <= 37050)
     ]
@@ -212,8 +243,8 @@ def test_with_data(tmpdir):
         & (output_df["end"] == 37050)
     ]
 
-    assert (output_df['background_total_hops'] == background_df.shape[0]).all()
-    assert (output_df_subset['background_hops'] == background_df_subset.shape[0]).all()
+    assert (output_df["background_total_hops"] == background_df.shape[0]).all()
+    assert (output_df_subset["background_hops"] == background_df_subset.shape[0]).all()
     assert (
         output_df_subset["experiment_hops"]
         == experiment_df_subset.drop_duplicates(subset=["chr", "start", "end"]).shape[0]
@@ -330,9 +361,9 @@ def test_combine_replicates(tmpdir):
     df3 = pd.read_csv(output_path3)
 
     combined_df = df1.merge(
-        df2, on=["chr", "start", "end", "score", "strand"], suffixes=("_1", "_2")
+        df2, on=["name", "chr", "start", "end", "strand"], suffixes=("_1", "_2")
     )
-    combined_df = combined_df.merge(df3, on=["chr", "start", "end", "score", "strand"])
+    combined_df = combined_df.merge(df3, on=["name", "chr", "start", "end", "strand"])
 
     assert (
         combined_df["experiment_hops_1"] + combined_df["experiment_hops_2"]

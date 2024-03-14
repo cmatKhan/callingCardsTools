@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,8 @@ def enrichment(total_background_hops: int,
     :return: The Calling Cards effect (enrichment) value.
     :rtype: float
     """
+    warnings.warn("This function is deprecated and will be removed in a future release. "
+                  "use the vectorized function instead")
 
     numerator = (experiment_hops / (total_experiment_hops + pseudocount))
     denominator = (background_hops / (total_background_hops + pseudocount))

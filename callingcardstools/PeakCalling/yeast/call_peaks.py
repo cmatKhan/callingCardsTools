@@ -106,8 +106,8 @@ def call_peaks(
     background_data_path: str,
     background_orig_chr_convention: str,
     chrmap_data_path: str,
-    deduplicate_experiment: bool = True,
     unified_chr_convention: str = "ucsc",
+    deduplicate_experiment: bool = True,
 ) -> pd.DataFrame:
     """
     Call peaks for the given Calling Cards data.
@@ -190,7 +190,9 @@ def call_peaks(
     ).set_index("name", drop=True)
 
     promoter_hops_df = (
-        promoter_df.set_index("name", drop=True)
+        promoter_df
+        .drop("score", axis=1)
+        .set_index("name")
         .join(
             [experiment_hops_df, background_hops_df],
             how="left",
@@ -209,6 +211,7 @@ def call_peaks(
                 "experiment_total_hops": "int64",
             }
         )
+        .reset_index()
     )
 
     start_time = time.time()
@@ -334,19 +337,19 @@ def parse_args(
         required=True,
     )
     parser.add_argument(
+        "--unified_chr_convention",
+        type=str,
+        help="the chromosome naming convention to use in the output " "DataFrame.",
+        required=False,
+        default="ucsc",
+    )
+    parser.add_argument(
         "--deduplicate_experiment",
         action="store_true",
         help="set this flag to deduplicate the experiment data based on `chr`, "
         "`start` and `end` such that if an insertion is found at the same "
         "coordinate on different strands, only one of those records will be "
         "retained.",
-    )
-    parser.add_argument(
-        "--unified_chr_convention",
-        type=str,
-        help="the chromosome naming convention to use in the output " "DataFrame.",
-        required=False,
-        default="ucsc",
     )
     parser.add_argument(
         "--output_path",
@@ -395,8 +398,8 @@ def main(args: argparse.Namespace) -> None:
         args.background_data_path,
         args.background_orig_chr_convention,
         args.chrmap_data_path,
-        args.deduplicate_experiment,
         args.unified_chr_convention,
+        args.deduplicate_experiment
     )
 
     result_df.to_csv(
