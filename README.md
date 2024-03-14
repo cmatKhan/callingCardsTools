@@ -1,7 +1,7 @@
 # callingCardsTools
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10042067.svg)](https://doi.org/10.5281/zenodo.10042067)
-[![Test workflow](https://github.com/cmatKhan/callingCardsTools/actions/workflows/codecov.yml/badge.svg)](https://github.com/cmatKhan/callingCardsTools/actions/workflows/codecov.yml)
+[![callingCardsTools Test Coverage](https://github.com/cmatKhan/callingCardsTools/actions/workflows/codecov.yml/badge.svg?branch=main)](https://github.com/cmatKhan/callingCardsTools/actions/workflows/codecov.yml)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/callingcardstools/README.html)
 
 ## Introduction
