@@ -1,10 +1,47 @@
 import os
 
 import pandas as pd
+import pyranges as pr
 
 
-def read_in_chrmap(chrmap_data_path: str,
-                   required_col_set: set) -> pd.DataFrame:
+def qbed_df_to_pyranges(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Convert a qbed dataframe to a pyranges dataframe.
+
+    :param df: The qbed dataframe.
+    :type df: pd.DataFrame
+    :return: The pyranges dataframe.
+    :rtype: pd.DataFrame
+
+    :Example:
+
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({'chr': ['chr1', 'chr1'],
+    ...                    'start': [1, 2],
+    ...                    'end': [2, 3],
+    ...                    'strand': ['+', '-'],
+    ...                    'depth': [1, 2]})
+    >>> pyranges_df = qbed_df_to_pyranges(df)
+    >>> list(pyranges_df.columns) == ['Chromosome', 'Start', 'End', 'Strand', 'depth']
+    True
+    """
+    # check input
+    if not isinstance(df, pd.DataFrame):
+        raise ValueError("df must be a DataFrame")
+    if not all(col in df.columns for col in ["chr", "start", "end", "strand", "depth"]):
+        raise ValueError(
+            "df must have columns `chr`, `start`, `end`, `strand`, " "and `depth`"
+        )
+
+    return pr.PyRanges(
+        df.rename(
+            {"chr": "Chromosome", "start": "Start", "end": "End", "strand": "Strand"},
+            axis=1,
+        )
+    )
+
+
+def read_in_chrmap(chrmap_data_path: str, required_col_set: set) -> pd.DataFrame:
     """
     Read in the chrmap data from the `chrmap_data_path` and check that the
     `required_col_set` is a subset of the columns in the chrmap dataframe.
@@ -44,9 +81,8 @@ def read_in_chrmap(chrmap_data_path: str,
     True
     """
     if not os.path.exists(chrmap_data_path):
-        raise ValueError(f'chrmap_data_path does '
-                         f'not exist: {chrmap_data_path}')
-    required_col_set.add('type')
+        raise ValueError(f"chrmap_data_path does " f"not exist: {chrmap_data_path}")
+    required_col_set.add("type")
     # read in the chr map
     chrmap_df = pd.read_csv(chrmap_data_path)
     # raise an error if the experiment_orig_chr_convention,
@@ -55,19 +91,23 @@ def read_in_chrmap(chrmap_data_path: str,
     # the chrmap_df columns
     missing_chr_cols = required_col_set.difference(chrmap_df.columns)
     if len(missing_chr_cols) > 0:
-        raise ValueError(f'The following chromosome columns are missing '
-                         f'from the chrmap file: {missing_chr_cols}')
+        raise ValueError(
+            f"The following chromosome columns are missing "
+            f"from the chrmap file: {missing_chr_cols}"
+        )
 
     # cast all columns to str
-    chrmap_df = chrmap_df.astype('str')
+    chrmap_df = chrmap_df.astype("str")
 
     return chrmap_df
 
 
-def relabel_chr_column(data_df: pd.DataFrame,
-                       chrmap_df: pd.DataFrame,
-                       curr_chr_name_convention: str,
-                       new_chr_name_convention: str) -> pd.DataFrame:
+def relabel_chr_column(
+    data_df: pd.DataFrame,
+    chrmap_df: pd.DataFrame,
+    curr_chr_name_convention: str,
+    new_chr_name_convention: str,
+) -> pd.DataFrame:
     """
     Given a `data_df` with column `chr`, a `curr_chr_name_convention` and
     a `new_chr_name_convention`, that are both columns of `chrmap_df`, join
@@ -106,51 +146,51 @@ def relabel_chr_column(data_df: pd.DataFrame,
     True
     """
     # check input
-    if 'chr_curr' in chrmap_df.columns:
-        raise ValueError('chr_curr cannot be a column in chrmap_df for the '
-                         'purposes of relabelling. rename that column in '
-                         'chrmap_df and resubmit')
+    if "chr_curr" in chrmap_df.columns:
+        raise ValueError(
+            "chr_curr cannot be a column in chrmap_df for the "
+            "purposes of relabelling. rename that column in "
+            "chrmap_df and resubmit"
+        )
     if curr_chr_name_convention not in chrmap_df.columns:
-        raise ValueError('curr_chr_name_convention '
-                         'must be a column in chrmap_df')
+        raise ValueError("curr_chr_name_convention " "must be a column in chrmap_df")
     if new_chr_name_convention not in chrmap_df.columns:
-        raise ValueError('new_chr_name_convention '
-                         'must be a column in chrmap_df')
-    
+        raise ValueError("new_chr_name_convention " "must be a column in chrmap_df")
+
     # rename the current chr column to chr_curr to avoid any errors in
     # joining, if the old/new format is called 'chr'
-    data_df = data_df\
-        .rename(columns={'chr': 'chr_curr'})
-    
+    data_df = data_df.rename(columns={"chr": "chr_curr"})
+
     if curr_chr_name_convention != new_chr_name_convention:
         # join a subset of chrmap_df -- only the columns we need -- to data_df
-        data_df = data_df\
-            .merge(chrmap_df[[curr_chr_name_convention,
-                              new_chr_name_convention,
-                              'type']],
-                   left_on='chr_curr',
-                   right_on=curr_chr_name_convention)
+        data_df = data_df.merge(
+            chrmap_df[[curr_chr_name_convention, new_chr_name_convention, "type"]],
+            left_on="chr_curr",
+            right_on=curr_chr_name_convention,
+        )
         # swap values in chr column
-        data_df['chr_curr'] = data_df[new_chr_name_convention]
+        data_df["chr_curr"] = data_df[new_chr_name_convention]
     else:
-        data_df = data_df\
-            .merge(chrmap_df[[curr_chr_name_convention, 'type']],
-                   left_on='chr_curr',
-                   right_on=curr_chr_name_convention)
+        data_df = data_df.merge(
+            chrmap_df[[curr_chr_name_convention, "type"]],
+            left_on="chr_curr",
+            right_on=curr_chr_name_convention,
+        )
 
     # TODO: add param to filter out chromosomes based on `type`
     # .query("type=='genomic'") \
-    return data_df\
-        .drop(columns=[new_chr_name_convention,
-                       curr_chr_name_convention,
-                       'type'])\
-        .rename(columns={'chr_curr': 'chr'})
+    return data_df.drop(
+        columns=[new_chr_name_convention, curr_chr_name_convention, "type"]
+    ).rename(columns={"chr_curr": "chr"})
 
 
-def read_in_experiment_data(experiment_data_path: str,
-                            curr_chr_name_convention: pd.DataFrame,
-                            new_chr_name_convention: pd.DataFrame,
-                            chrmap_df: str) -> pd.DataFrame:
+def read_in_experiment_data(
+    experiment_data_path: str,
+    curr_chr_name_convention: pd.DataFrame,
+    new_chr_name_convention: pd.DataFrame,
+    chrmap_df: str,
+    deduplicate: bool = True
+) -> pd.DataFrame:
     """
     Read in experiment (hops) data from a qbed file. The qbed file may be
     plain text or gzipped and may or may not have column headers. If the
@@ -171,7 +211,12 @@ def read_in_experiment_data(experiment_data_path: str,
     :type new_chr_name_convention: str
     :param chrmap_df: The chrmap dataframe.
     :type chrmap_df: pd.DataFrame
-    :return: The experiment data as a dataframe with the `chr` column 
+    :param deduplicate: Whether to deduplicate the experiment data based on
+        `chr`, `start`, `end` such that if an insertion occurs at the same
+        coordinate but on opposite strands, only one record is retained.
+    :type deduplicate: bool
+
+    :return: The experiment data as a dataframe with the `chr` column
         refactored to the `new_chr_name_convention`
     :rtype: pd.DataFrame
 
@@ -208,52 +253,58 @@ def read_in_experiment_data(experiment_data_path: str,
     """
     # check input
     if not os.path.exists(experiment_data_path):
-        raise ValueError('experiment_data_path must exist')
+        raise ValueError("experiment_data_path must exist")
     if not os.path.isfile(experiment_data_path):
-        raise ValueError('experiment_data_path must be a file')
+        raise ValueError("experiment_data_path must be a file")
 
     # check if data is gzipped
-    gzipped = str(experiment_data_path).endswith('.gz')
+    gzipped = str(experiment_data_path).endswith(".gz")
     # check if data has column headers
-    header = pd.read_csv(experiment_data_path,
-                         sep='\t',
-                         compression='gzip' if gzipped else None,
-                         nrows=0)
-    if header.columns.tolist() != ['chr', 'start', 'end', 'depth', 'strand']:
+    header = pd.read_csv(
+        experiment_data_path, sep="\t", compression="gzip" if gzipped else None, nrows=0
+    )
+    if header.columns.tolist() != ["chr", "start", "end", "depth", "strand"]:
         header = None
     else:
         header = 0
     # read in data
     try:
-        experiment_df = pd.read_csv(experiment_data_path,
-                                    sep='\t',
-                                    header=header,
-                                    names=['chr', 'start', 'end',
-                                           'depth', 'strand'],
-                                    dtype={'chr': str,
-                                           'start': int,
-                                           'end': int,
-                                           'depth': int,
-                                           'strand': str},
-                                    compression='gzip' if gzipped else None)
+        experiment_df = pd.read_csv(
+            experiment_data_path,
+            sep="\t",
+            header=header,
+            names=["chr", "start", "end", "depth", "strand"],
+            dtype={"chr": str, "start": int, "end": int, "depth": int, "strand": str},
+            compression="gzip" if gzipped else None,
+        )
     except ValueError as e:
-        raise ValueError('experiment_data_path must be a qbed file '
-                         'with columns `chr`, `start`, `end`, `strand`, '
-                         'and `depth`') from e
+        raise ValueError(
+            "experiment_data_path must be a qbed file "
+            "with columns `chr`, `start`, `end`, `strand`, "
+            "and `depth`"
+        ) from e
 
     # relabel chr column
-    experiment_df = relabel_chr_column(experiment_df,
-                                       chrmap_df,
-                                       curr_chr_name_convention,
-                                       new_chr_name_convention)
+    experiment_df = relabel_chr_column(
+        experiment_df, chrmap_df, curr_chr_name_convention, new_chr_name_convention
+    )
 
-    return experiment_df, len(experiment_df)
+    if deduplicate:
+        # deduplicate based on `chr`, `start`, `end` such that if an insertion occurs
+        # at the same coordinate but on opposite strands, only one record is retained
+        experiment_df.drop_duplicates(subset=["chr", "start", "end"], inplace=True)
+        # set strand to '*'
+        experiment_df["strand"] = "*"
+
+    return qbed_df_to_pyranges(experiment_df), len(experiment_df)
 
 
-def read_in_promoter_data(promoter_data_path: str,
-                          curr_chr_name_convention: pd.DataFrame,
-                          new_chr_name_convention: pd.DataFrame,
-                          chrmap_df: str) -> pd.DataFrame:
+def read_in_promoter_data(
+    promoter_data_path: str,
+    curr_chr_name_convention: pd.DataFrame,
+    new_chr_name_convention: pd.DataFrame,
+    chrmap_df: str,
+) -> pd.DataFrame:
     """
     Read in the promoter data. The promoter data should be a tsv with extension
     `.bed` or `.bed.gz` and should have the following columns:
@@ -267,7 +318,9 @@ def read_in_promoter_data(promoter_data_path: str,
     :type curr_chr_name_convention: str
     :param new_chr_name_convention: The new chromosome name convention.
     :type new_chr_name_convention: str
-    :return: The promoter data as a DataFrame with the `chr` column
+    :param chrmap_df: The chrmap dataframe.
+    :type chrmap_df: pd.DataFrame
+    :return: The promoter data as a dataframe with the `chr` column
         refactored to the `new_chr_name_convention`
     :rtype: pd.DataFrame
 
@@ -301,52 +354,58 @@ def read_in_promoter_data(promoter_data_path: str,
     """
     # check input
     if not os.path.exists(promoter_data_path):
-        raise ValueError('promoter_data_path must exist')
+        raise ValueError("promoter_data_path must exist")
     if not os.path.isfile(promoter_data_path):
-        raise ValueError('promoter_data_path must be a file')
+        raise ValueError("promoter_data_path must be a file")
 
     # check if data is gzipped
-    gzipped = str(promoter_data_path).endswith('.gz')
+    gzipped = str(promoter_data_path).endswith(".gz")
     # check if data has column headers
-    header = pd.read_csv(promoter_data_path,
-                         sep='\t',
-                         compression='gzip' if gzipped else None,
-                         nrows=0)
-    if header.columns.tolist() != ['chr', 'start', 'end', 'name',
-                                   'score', 'strand']:
+    header = pd.read_csv(
+        promoter_data_path, sep="\t", compression="gzip" if gzipped else None, nrows=0
+    )
+    if header.columns.tolist() != ["chr", "start", "end", "name", "score", "strand"]:
         header = None
     else:
         header = 0
     # read in data
     try:
-        promoter_df = pd.read_csv(promoter_data_path,
-                                  sep='\t',
-                                  header=header,
-                                  names=['chr', 'start', 'end', 'name',
-                                         'score', 'strand'],
-                                  dtype={'chr': str,
-                                         'start': int,
-                                         'end': int,
-                                         'name': str,
-                                         'score': float,
-                                         'strand': str},
-                                  compression='gzip' if gzipped else None)
+        promoter_df = pd.read_csv(
+            promoter_data_path,
+            sep="\t",
+            header=header,
+            names=["chr", "start", "end", "name", "score", "strand"],
+            dtype={
+                "chr": str,
+                "start": int,
+                "end": int,
+                "name": str,
+                "score": float,
+                "strand": str,
+            },
+            compression="gzip" if gzipped else None,
+        )
     except ValueError as e:
-        raise ValueError('promoter_data_path must be a bed file '
-                         'with columns `chr`, `start`, `end`, `name`, '
-                         '`score`, and `strand`') from e
+        raise ValueError(
+            "promoter_data_path must be a bed file "
+            "with columns `chr`, `start`, `end`, `name`, "
+            "`score`, and `strand`"
+        ) from e
 
     # relabel chr column
-    return relabel_chr_column(promoter_df,
-                              chrmap_df,
-                              curr_chr_name_convention,
-                              new_chr_name_convention)
+    chr_relabeled_promoter_df = relabel_chr_column(
+        promoter_df, chrmap_df, curr_chr_name_convention, new_chr_name_convention
+    )
+
+    return chr_relabeled_promoter_df
 
 
-def read_in_background_data(background_data_path: str,
-                            curr_chr_name_convention: pd.DataFrame,
-                            new_chr_name_convention: pd.DataFrame,
-                            chrmap_df: str) -> pd.DataFrame:
+def read_in_background_data(
+    background_data_path: str,
+    curr_chr_name_convention: pd.DataFrame,
+    new_chr_name_convention: pd.DataFrame,
+    chrmap_df: str,
+) -> pd.DataFrame:
     """
     Read in background (hops) data from a qbed file. The qbed file may be
     plain text or gzipped and may or may not have column headers. If the
@@ -356,7 +415,9 @@ def read_in_background_data(background_data_path: str,
     are checked but will not be coerced -- errors are raised if they do not
     match the expected datatypes. the `chr` column is relabeled from the
     `curr_chr_name_convention` to the `new_chr_name_convention` using the
-    `chrmap_df`.
+    `chrmap_df`. NOTE: unlike the experiment df, there is no option to deduplicate
+    as the background file is expected to be the combination of multiple experiments
+    at this point.
 
     :param background_data_path: Path to the background data qbed file, plain
         text or gzipped, with or without column headers
@@ -402,41 +463,45 @@ def read_in_background_data(background_data_path: str,
     """
     # check input
     if not os.path.exists(background_data_path):
-        raise ValueError('background_data_path must exist')
+        raise ValueError("background_data_path must exist")
     if not os.path.isfile(background_data_path):
-        raise ValueError('background_data_path must be a file')
+        raise ValueError("background_data_path must be a file")
 
     # check if data is gzipped
-    gzipped = str(background_data_path).endswith('.gz')
+    gzipped = str(background_data_path).endswith(".gz")
     # check if data has column headers
-    header = pd.read_csv(background_data_path, sep='\t', nrows=0)
-    if header.columns.tolist() != ['chr', 'start', 'end', 'depth', 'strand']:
+    header = pd.read_csv(background_data_path, sep="\t", nrows=0)
+    if header.columns.tolist() != ["chr", "start", "end", "depth", "strand"]:
         header = None
     else:
         header = 0
 
     # read in data
     try:
-        background_df = pd.read_csv(background_data_path,
-                                    sep='\t',
-                                    header=header,
-                                    names=['chr', 'start', 'end',
-                                           'depth', 'strand'],
-                                    dtype={'chr': str,
-                                           'start': int,
-                                           'end': int,
-                                           'depth': 'int64',
-                                           'strand': str},
-                                    compression='gzip' if gzipped else None)
+        background_df = pd.read_csv(
+            background_data_path,
+            sep="\t",
+            header=header,
+            names=["chr", "start", "end", "depth", "strand"],
+            dtype={
+                "chr": str,
+                "start": int,
+                "end": int,
+                "depth": "int64",
+                "strand": str,
+            },
+            compression="gzip" if gzipped else None,
+        )
     except ValueError as e:
-        raise ValueError('background_data_path must be a qbed file '
-                         'with columns `chr`, `start`, `end`, `depth`, '
-                         'and `strand`') from e
+        raise ValueError(
+            "background_data_path must be a qbed file "
+            "with columns `chr`, `start`, `end`, `depth`, "
+            "and `strand`"
+        ) from e
 
     # relabel chr column
-    background_df = relabel_chr_column(background_df,
-                                       chrmap_df,
-                                       curr_chr_name_convention,
-                                       new_chr_name_convention)
+    background_df = relabel_chr_column(
+        background_df, chrmap_df, curr_chr_name_convention, new_chr_name_convention
+    )
 
-    return background_df, len(background_df)
+    return qbed_df_to_pyranges(background_df), len(background_df)

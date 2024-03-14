@@ -1,7 +1,7 @@
 import logging
+
 from numpy.typing import NDArray
 from pandas import Series
-
 from scipy.stats import hypergeom
 
 logger = logging.getLogger(__name__)

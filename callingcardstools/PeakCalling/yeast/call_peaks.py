@@ -1,5 +1,5 @@
 """
-.. module:: callingcards_with_metrics
+.. module:: call_peaks
    :synopsis: Module for calling cards quantification functions.
 
 This module contains functions for calculating various statistical values
@@ -10,7 +10,8 @@ data from multiple sources to obtain these values.
 
 Functions
 ---------
-- callingcards_with_metrics
+- count_hops
+- call_peaks
 - add_metrics
 - parse_args
 - main
@@ -18,12 +19,14 @@ Functions
 .. author:: Chase Mateusiak
 .. date:: 2023-11-23
 """
+
 import argparse
 import logging
 import os
 import time
 
 import pandas as pd
+import pyranges as pr
 
 from callingcardstools.PeakCalling.yeast import (read_in_background_data,
                                                  read_in_chrmap,
@@ -36,93 +39,76 @@ from callingcardstools.PeakCalling.yeast.hypergeom_pval_vectorized import \
 from callingcardstools.PeakCalling.yeast.poisson_pval_vectorized import \
     poisson_pval_vectorized
 
+# from memory_profiler import profile
+
+
 logger = logging.getLogger(__name__)
 
 
-def count_hops(promoter_df: pd.DataFrame,
-               qbed_df: pd.DataFrame,
-               hop_colname: str,
-               consider_strand: bool) -> pd.DataFrame:
+def count_hops(
+    promoters_pr: pr.PyRanges,
+    qbed_pr: pr.PyRanges,
+    hops_colname: str,
+    **kwargs,
+) -> pd.DataFrame:
     """
-    Count the number of hops in the qbed_df for each promoter in the
-    promoter_df.
+    Use pyranges to join the promoter regions with the qbed data and count the
+        number of qbed records that overlap with each promoter.
 
-    :param promoter_df: a pandas DataFrame of promoter regions.
-    :type promoter_df: DataFrame
-    :param qbed_df: a pandas DataFrame of qbed data.
-    :type qbed_df: DataFrame
-    :param hop_colname: the name of the column in the output DataFrame
-        containing the number of hops.
-    :type hop_colname: str
-    :param consider_strand: whether to consider strand when counting hops.
-    :type consider_strand: bool
+    additional keyword arguments are passed to the join method of the
+      PyRanges object. Currently, the following are configured:
+      - slack: which defaults to 1
+      - suffix: which defaults to "_b"
+      - strandedness: which defaults to False
+
+    :param promoter_pr: a PyRanges of promoter regions.
+    :type promoter_df: pr.PyRanges
+    :param qbed_pr: a pandas DataFrame of qbed data from the
+        experiment.
+    :type qbed_pr: pr.PyRanges
+    :param hops_colname: the name of the column in the qbed_df that
+        contains the number of hops.
+
     :return: a pandas DataFrame of promoter regions with a column containing
         the number of hops in the qbed_df for each promoter.
     :rtype: DataFrame
-
-    :Example:
-
-    >>> import pandas as pd
-    >>> promoter_df = pd.DataFrame({
-    ...     'chr': ['chr1', 'chr1', 'chr1', 'chr1', 'chr1'],
-    ...     'start': [100, 200, 300, 400, 500],
-    ...     'end': [200, 300, 400, 500, 600],
-    ...     'strand': ['+', '-', '+', '-', '+']
-    ... })
-    >>> qbed_df = pd.DataFrame({
-    ...     'chr': ['chr1', 'chr1', 'chr1', 'chr1', 'chr1'],
-    ...     'start': [150, 250, 350, 450, 550],
-    ...     'end': [200, 300, 400, 500, 600],
-    ...     'depth': [1, 1, 1, 1, 1],
-    ...     'strand': ['+', '-', '+', '-', '+']
-    ... })
-    >>> count_hops(promoter_df, qbed_df, 'hops', True)
-         chr  start  end strand  hops
-    0   chr1    100  200      +     1
-    1   chr1    200  300      -     1
-    2   chr1    300  400      +     1
-    3   chr1    400  500      -     1
-    4   chr1    500  600      +     1
     """
-    if consider_strand:
-        query_str = '(start <= qbed_start <= end) and strand == qbed_strand'
-    else:
-        # if consider_strand is false, then combine rows with the same
-        # coordinates but different strand values and sum the depth. Set the
-        # strand to "*" for all rows
-        qbed_df = qbed_df\
-            .groupby(['chr', 'start', 'end'])\
-            .agg({'depth': 'sum'})\
-            .reset_index()\
-            .assign(strand='*')
-        query_str = 'start <= qbed_start <= end'
+    overlaps = promoters_pr.join(
+        qbed_pr,
+        how="left",
+        slack=kwargs.get("slack", 1),
+        suffix=kwargs.get("suffix", "_b"),
+        strandedness=kwargs.get("strandedness", False),
+    )
 
-    return promoter_df\
-        .merge(qbed_df.rename(columns={'start': 'qbed_start',
-                                       'end': 'qbed_end',
-                                       'depth': 'qbed_hops',
-                                       'strand': 'qbed_strand'}),
-               on=['chr'], how='inner')\
-        .query(query_str)\
-        .drop(columns=['qbed_start',
-                       'qbed_end',
-                       'qbed_strand'])\
-        .groupby(['chr', 'start', 'end', 'name', 'strand'])\
-        .agg({'qbed_hops': 'count'})\
-        .reset_index()\
-        .rename(columns={'qbed_hops': hop_colname})
+    # Group by 'name' and count the number of records in each group
+    # `observed` set to true b/c grouping is over categorical variable. This is default
+    # in pandas 2.0. Without this set, memory usage skyrockets.
+    # Setting "Start_b >= 0" to remove rows where there is no overlap, which are
+    # represented by -1 in the _b columns by pyranges.
+    overlap_counts = (
+        overlaps.df.query("Start_b >= 0")
+        .groupby("name", observed=True)
+        .size()
+        .reset_index(name="Count")
+        .rename(columns={"Count": hops_colname})
+    )
+
+    return overlap_counts
 
 
+# @profile
 def call_peaks(
-        experiment_data_path: str,
-        experiment_orig_chr_convention: str,
-        promoter_data_path: str,
-        promoter_orig_chr_convention: str,
-        background_data_path: str,
-        background_orig_chr_convention: str,
-        chrmap_data_path: str,
-        consider_strand: bool,
-        unified_chr_convention: str = 'ucsc') -> pd.DataFrame:
+    experiment_data_path: str,
+    experiment_orig_chr_convention: str,
+    promoter_data_path: str,
+    promoter_orig_chr_convention: str,
+    background_data_path: str,
+    background_orig_chr_convention: str,
+    chrmap_data_path: str,
+    deduplicate_experiment: bool = True,
+    unified_chr_convention: str = "ucsc",
+) -> pd.DataFrame:
     """
     Call peaks for the given Calling Cards data.
 
@@ -143,11 +129,15 @@ def call_peaks(
     :type background_orig_chr_convention: str
     :param chrmap_data_path: path to the chromosome map file.
     :type chrmap_data_path: str
-    :param consider_strand: whether to consider strand when counting hops.
-    :type consider_strand: bool
+    :param deduplicate_experiment: If this is true, the experiment data will be
+        deduplicated based on `chr`, `start` and `end` such that if an insertion
+        is found at the same coordinate on different strands, only one of those records
+        will be retained. see `read_in_experiment_data` for more details.
+    :type deduplicate_experiment: bool
     :param unified_chr_convention: the chromosome naming convention
         to use in the output DataFrame.
     :type unified_chr_convention: str
+
     :return: a pandas DataFrame of promoter regions with Calling Cards
         metrics.
     :rtype: DataFrame
@@ -155,59 +145,84 @@ def call_peaks(
     # read in the chr map
     chrmap_df = read_in_chrmap(
         chrmap_data_path,
-        {experiment_orig_chr_convention,
-         promoter_orig_chr_convention,
-         background_orig_chr_convention,
-         unified_chr_convention})
+        {
+            experiment_orig_chr_convention,
+            promoter_orig_chr_convention,
+            background_orig_chr_convention,
+            unified_chr_convention,
+        },
+    )
 
     # read in the experiment, promoter and background data
-    experiment_df, experiment_total_hops = read_in_experiment_data(
+    promoter_df = read_in_promoter_data(
+        promoter_data_path,
+        promoter_orig_chr_convention,
+        unified_chr_convention,
+        chrmap_df,
+    )
+    experiment_pr, experiment_total_hops = read_in_experiment_data(
         experiment_data_path,
         experiment_orig_chr_convention,
         unified_chr_convention,
-        chrmap_df)
-    promoter_df = read_in_promoter_data(promoter_data_path,
-                                        promoter_orig_chr_convention,
-                                        unified_chr_convention,
-                                        chrmap_df)
-    background_df, background_total_hops = read_in_background_data(
+        chrmap_df,
+        deduplicate_experiment
+    )
+    background_pr, background_total_hops = read_in_background_data(
         background_data_path,
         background_orig_chr_convention,
         unified_chr_convention,
-        chrmap_df)
+        chrmap_df,
+    )
 
-    background_hops_df = count_hops(promoter_df,
-                                    background_df,
-                                    'background_hops',
-                                    consider_strand)
-    experiment_hops_df = count_hops(promoter_df,
-                                    experiment_df,
-                                    'experiment_hops',
-                                    consider_strand)
+    promoters_pr = pr.PyRanges(
+        promoter_df.rename(
+            {"chr": "Chromosome", "start": "Start", "end": "End", "strand": "Strand"},
+            axis=1,
+        )
+    )
 
-    promoter_hops_df = experiment_hops_df\
-        .merge(background_hops_df, on=['chr',
-                                       'start',
-                                       'end',
-                                       'strand',
-                                       'name'], how='left')\
-        .fillna(0)\
-        .assign(background_total_hops=background_total_hops,
-                experiment_total_hops=experiment_total_hops)
+    experiment_hops_df = count_hops(
+        promoters_pr, experiment_pr, "experiment_hops"
+    ).set_index("name", drop=True)
 
-    promoter_hops_df['background_hops'] = \
-        promoter_hops_df['background_hops'].astype('int64')
+    background_hops_df = count_hops(
+        promoters_pr, background_pr, "background_hops"
+    ).set_index("name", drop=True)
+
+    promoter_hops_df = (
+        promoter_df.set_index("name", drop=True)
+        .join(
+            [experiment_hops_df, background_hops_df],
+            how="left",
+            validate="one_to_one",
+        )
+        .fillna(0)
+        .assign(
+            background_total_hops=background_total_hops,
+            experiment_total_hops=experiment_total_hops,
+        )
+        .astype(
+            {
+                "background_hops": "int64",
+                "experiment_hops": "int64",
+                "background_total_hops": "int64",
+                "experiment_total_hops": "int64",
+            }
+        )
+    )
 
     start_time = time.time()
     result_df = add_metrics(promoter_hops_df)
-    logger.info("Time taken to process %s promoters: %s seconds",
-                len(promoter_hops_df), time.time() - start_time)
+    logger.info(
+        "Time taken to process %s promoters: %s seconds",
+        len(promoter_hops_df),
+        time.time() - start_time,
+    )
 
     return result_df
 
 
-def add_metrics(dataframe: pd.DataFrame,
-                pseudocount: float = 0.2) -> pd.DataFrame:
+def add_metrics(dataframe: pd.DataFrame, pseudocount: float = 0.2) -> pd.DataFrame:
     """
     Add Calling Cards metrics to the given DataFrame.
 
@@ -220,36 +235,37 @@ def add_metrics(dataframe: pd.DataFrame,
         metrics.
     :rtype: DataFrame
     """
-    dataframe['callingcards_enrichment'] = enrichment_vectorized(
-        dataframe['background_total_hops'],
-        dataframe['experiment_total_hops'],
-        dataframe['background_hops'],
-        dataframe['experiment_hops'],
-        pseudocount
+    dataframe["callingcards_enrichment"] = enrichment_vectorized(
+        dataframe["background_total_hops"],
+        dataframe["experiment_total_hops"],
+        dataframe["background_hops"],
+        dataframe["experiment_hops"],
+        pseudocount,
     )
 
-    dataframe['poisson_pval'] = poisson_pval_vectorized(
-        dataframe['background_total_hops'],
-        dataframe['experiment_total_hops'],
-        dataframe['background_hops'],
-        dataframe['experiment_hops'],
-        pseudocount
+    dataframe["poisson_pval"] = poisson_pval_vectorized(
+        dataframe["background_total_hops"],
+        dataframe["experiment_total_hops"],
+        dataframe["background_hops"],
+        dataframe["experiment_hops"],
+        pseudocount,
     )
 
-    dataframe['hypergeometric_pval'] = hypergeom_pval_vectorized(
-        dataframe['background_total_hops'],
-        dataframe['experiment_total_hops'],
-        dataframe['background_hops'],
-        dataframe['experiment_hops']
+    dataframe["hypergeometric_pval"] = hypergeom_pval_vectorized(
+        dataframe["background_total_hops"],
+        dataframe["experiment_total_hops"],
+        dataframe["background_hops"],
+        dataframe["experiment_hops"],
     )
 
     return dataframe
 
 
 def parse_args(
-        subparser: argparse.ArgumentParser,
-        script_desc: str,
-        common_args: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    subparser: argparse.ArgumentParser,
+    script_desc: str,
+    common_args: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
     """
     Parse the command line arguments.
 
@@ -264,92 +280,91 @@ def parse_args(
     """
 
     parser = subparser.add_parser(
-        'yeast_call_peaks',
+        "yeast_call_peaks",
         help=script_desc,
-        prog='yeast_call_peaks',
-        parents=[common_args]
+        prog="yeast_call_peaks",
+        parents=[common_args],
     )
 
     parser.set_defaults(func=main)
 
     parser.add_argument(
-        '--experiment_data_path',
+        "--experiment_data_path",
         type=str,
-        help='path to the experiment data file.',
-        required=True
+        help="path to the experiment data file.",
+        required=True,
     )
     parser.add_argument(
-        '--experiment_orig_chr_convention',
+        "--experiment_orig_chr_convention",
         type=str,
-        help='the chromosome naming convention used in the experiment data '
-             'file.',
-        required=True
+        help="the chromosome naming convention used in the experiment data " "file.",
+        required=True,
     )
     parser.add_argument(
-        '--promoter_data_path',
+        "--promoter_data_path",
         type=str,
-        help='path to the promoter data file.',
-        required=True
+        help="path to the promoter data file.",
+        required=True,
     )
     parser.add_argument(
-        '--promoter_orig_chr_convention',
+        "--promoter_orig_chr_convention",
         type=str,
-        help='the chromosome naming convention used in the promoter data '
-             'file.',
-        required=True
+        help="the chromosome naming convention used in the promoter data " "file.",
+        required=True,
     )
     parser.add_argument(
-        '--background_data_path',
+        "--background_data_path",
         type=str,
-        help='path to the background data file.',
-        required=True
+        help="path to the background data file.",
+        required=True,
     )
     parser.add_argument(
-        '--background_orig_chr_convention',
+        "--background_orig_chr_convention",
         type=str,
-        help='the chromosome naming convention used in the background data '
-             'file.',
-        required=True
+        help="the chromosome naming convention used in the background data " "file.",
+        required=True,
     )
     parser.add_argument(
-        '--chrmap_data_path',
+        "--chrmap_data_path",
         type=str,
         help="path to the chromosome map file. this must include the data "
         "files' current naming conventions, the desired naming, and a column "
         "`type` that indicates whether the chromosome is 'genomic' or "
         "something else, eg 'mitochondrial' or 'plasmid'.",
-        required=True
+        required=True,
     )
     parser.add_argument(
-        '--consider_strand',
-        action='store_true',
-        help='whether to consider strand when counting hops.'
+        "--deduplicate_experiment",
+        action="store_true",
+        help="set this flag to deduplicate the experiment data based on `chr`, "
+        "`start` and `end` such that if an insertion is found at the same "
+        "coordinate on different strands, only one of those records will be "
+        "retained.",
     )
     parser.add_argument(
-        '--unified_chr_convention',
+        "--unified_chr_convention",
         type=str,
-        help='the chromosome naming convention to use in the output '
-             'DataFrame.',
+        help="the chromosome naming convention to use in the output " "DataFrame.",
         required=False,
-        default='ucsc'
+        default="ucsc",
     )
     parser.add_argument(
-        '--output_path',
-        default='sig_results.csv',
+        "--output_path",
+        default="sig_results.csv",
         type=str,
-        help='path to the output file.'
+        help="path to the output file.",
     )
     parser.add_argument(
-        '--pseudocount',
+        "--pseudocount",
         type=float,
-        help='pseudocount to use when calculating Calling Cards metrics.',
+        help="pseudocount to use when calculating Calling Cards metrics.",
         required=False,
-        default=0.2
+        default=0.2,
     )
     parser.add_argument(
-        '--compress_output',
-        action='store_true',
-        help='set this flag to gzip the output csv file.'
+        "--compress_output",
+        action="store_true",
+        help="set this flag to gzip the output csv file.",
     )
 
     return subparser
@@ -362,14 +377,15 @@ def main(args: argparse.Namespace) -> None:
     :param args: the command line arguments.
     :type args: Namespace
     """
-    check_files = [args.experiment_data_path,
-                   args.promoter_data_path,
-                   args.background_data_path,
-                   args.chrmap_data_path]
+    check_files = [
+        args.experiment_data_path,
+        args.promoter_data_path,
+        args.background_data_path,
+        args.chrmap_data_path,
+    ]
     for file in check_files:
         if not os.path.isfile(file):
-            raise FileNotFoundError('The following path '
-                                    f'does not exist: {file}')
+            raise FileNotFoundError("The following path " f"does not exist: {file}")
 
     result_df = call_peaks(
         args.experiment_data_path,
@@ -379,10 +395,12 @@ def main(args: argparse.Namespace) -> None:
         args.background_data_path,
         args.background_orig_chr_convention,
         args.chrmap_data_path,
-        args.consider_strand,
-        args.unified_chr_convention
+        args.deduplicate_experiment,
+        args.unified_chr_convention,
     )
 
-    result_df.to_csv(args.output_path,
-                     compression='gzip' if args.compress_output else None,
-                     index=False)
+    result_df.to_csv(
+        args.output_path,
+        compression="gzip" if args.compress_output else None,
+        index=False,
+    )

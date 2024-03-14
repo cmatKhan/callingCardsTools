@@ -64,34 +64,15 @@ def test_chipexo_data(tmpdir):
 
     assert os.path.isdir(test_data_directory) is True
 
-    # chipexo_data_path = os.path.join(test_data_directory,
-    #                                  'chipexo_10352.csv.gz')
-    # chrmap_data_path = os.path.join(test_data_directory,
-    #                                 'chrmap.csv.gz')
-    # promoter_data_path = os.path.join(test_data_directory,
-    #                                   'yiming_promoters.bed.gz')
-    
-    # output_path = os.path.join(tmpdir, 'chipexo_promoter_sig.csv')
-
     chipexo_data_path = os.path.join(test_data_directory,
-                                     'test_user_count0/binding/pugh_none/49.csv.gz')
+                                     'chipexo_10352.csv.gz')
     chrmap_data_path = os.path.join(test_data_directory,
-                                    'test_user_count0/chrmap.csv')
+                                    'chrmap.csv.gz')
     promoter_data_path = os.path.join(test_data_directory,
-                                      'test_user_count0/promotersets/yiming/33.bed.gz')
+                                      'yiming_promoters.bed.gz')
     
     output_path = os.path.join(tmpdir, 'chipexo_promoter_sig.csv')
 
-    # args = argparse.Namespace(
-    #     chipexo_data_path=chipexo_data_path,
-    #     chipexo_orig_chr_convention='chr',
-    #     unified_chr_convention='ucsc',
-    #     chrmap_data_path=chrmap_data_path,
-    #     promoter_data_path=promoter_data_path,
-    #     promoter_orig_chr_convention='id',
-    #     output_file=output_path,
-    #     compress=False)
-    
     args = argparse.Namespace(
         chipexo_data_path=chipexo_data_path,
         chipexo_orig_chr_convention='ucsc',

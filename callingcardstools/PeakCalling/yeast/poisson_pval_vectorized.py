@@ -1,6 +1,7 @@
 import logging
-from pandas import Series
+
 from numpy import int64
+from pandas import Series
 from scipy.stats import poisson
 
 logger = logging.getLogger(__name__)

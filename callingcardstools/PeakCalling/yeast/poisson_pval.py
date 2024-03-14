@@ -1,7 +1,9 @@
 import logging
+
 from scipy.stats import poisson
 
 logger = logging.getLogger(__name__)
+
 
 def poisson_pval(total_background_hops: int,
                  total_experiment_hops: int,
