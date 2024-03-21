@@ -4,9 +4,9 @@ import os
 import pandas as pd
 import pyranges as pr
 
-from callingcardstools.PeakCalling.yeast.call_peaks import count_hops
-from callingcardstools.PeakCalling.yeast.call_peaks import \
-    main as call_peaks_main
+from callingcardstools.PeakCalling.yeast.call_peaks import count_hops, promoter_pyranges
+from callingcardstools.PeakCalling.yeast.call_peaks import main as call_peaks_main
+from callingcardstools.PeakCalling.yeast.call_peaks import promoter_pyranges
 
 
 def test_count_hops():
@@ -20,17 +20,13 @@ def test_count_hops():
             "name": ["prom1", "prom2"],
         }
     )
+    
+    pyranges_rename_dict = {"chr": "Chromosome", "start": "Start", "end": "End", "strand": "Strand"}
 
-    promoter_pr = pr.PyRanges(
-        promoter_df.copy().rename(
-            columns={
-                "chr": "Chromosome",
-                "start": "Start",
-                "end": "End",
-                "strand": "Strand",
-            }
-        )
-    )
+    promoter_pr = promoter_pyranges(promoter_df, pyranges_rename_dict)
+
+    assert (promoter_pr.df.End == [201, 401]).all()
+
 
     # the first and last overlap the two promoter regions respectively on the same
     # strand, the second overlaps the first promoter region on the opposite strand

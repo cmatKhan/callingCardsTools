@@ -1,5 +1,17 @@
 # Change Log
 
+## Version 1.5.2
+
+### Changes
+
+- added kwargs arguments to PeakCalling.yeast.call_peaks to allow user
+  to pass in validation method on pyranges join, background_total_hops and
+  experiment_total_hops.
+- moved promoters_df to promoters_pr conversion in PealCalling.yeast.call_peaks
+  from call_peaks to external function. Also corrected the `slack` in the join method
+  where the overlaps are counted. Now in the conversion method, the End is incremented
+  by 1 to allow hops on the right endpoint, whatever that is, to be counted.
+
 ## Version 1.5.1
 
 ### Changes

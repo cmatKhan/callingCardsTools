@@ -28,16 +28,21 @@ import time
 import pandas as pd
 import pyranges as pr
 
-from callingcardstools.PeakCalling.yeast import (read_in_background_data,
-                                                 read_in_chrmap,
-                                                 read_in_experiment_data,
-                                                 read_in_promoter_data)
-from callingcardstools.PeakCalling.yeast.enrichment_vectorized import \
-    enrichment_vectorized
-from callingcardstools.PeakCalling.yeast.hypergeom_pval_vectorized import \
-    hypergeom_pval_vectorized
-from callingcardstools.PeakCalling.yeast.poisson_pval_vectorized import \
-    poisson_pval_vectorized
+from callingcardstools.PeakCalling.yeast import (
+    read_in_background_data,
+    read_in_chrmap,
+    read_in_experiment_data,
+    read_in_promoter_data,
+)
+from callingcardstools.PeakCalling.yeast.enrichment_vectorized import (
+    enrichment_vectorized,
+)
+from callingcardstools.PeakCalling.yeast.hypergeom_pval_vectorized import (
+    hypergeom_pval_vectorized,
+)
+from callingcardstools.PeakCalling.yeast.poisson_pval_vectorized import (
+    poisson_pval_vectorized,
+)
 
 # from memory_profiler import profile
 
@@ -57,7 +62,7 @@ def count_hops(
 
     additional keyword arguments are passed to the join method of the
       PyRanges object. Currently, the following are configured:
-      - slack: which defaults to 1
+      - slack: which defaults to 0
       - suffix: which defaults to "_b"
       - strandedness: which defaults to False
 
@@ -76,7 +81,7 @@ def count_hops(
     overlaps = promoters_pr.join(
         qbed_pr,
         how="left",
-        slack=kwargs.get("slack", 1),
+        slack=kwargs.get("slack", 0),
         suffix=kwargs.get("suffix", "_b"),
         strandedness=kwargs.get("strandedness", False),
     )
@@ -97,6 +102,38 @@ def count_hops(
     return overlap_counts
 
 
+def promoter_pyranges(
+    promoter_df: pd.DataFrame,
+    pyranges_rename_dict: dict = {
+        "chr": "Chromosome",
+        "start": "Start",
+        "end": "End",
+        "strand": "Strand",
+    },
+) -> pr.PyRanges:
+    """
+    Create a PyRanges object from the given promoter DataFrame.
+
+    :param promoter_df: a pandas DataFrame of promoter regions.
+    :type promoter_df: DataFrame
+    :param pyranges_rename_dict: a dictionary that maps the column names in the
+        promoter data to the column names in the PyRanges object. This is used
+        to rename the columns in the PyRanges object after the promoter data
+        is read in. The default is {"chr": "Chromosome", "start": "Start",
+        "end": "End", "strand": "Strand"}.
+    :return: a PyRanges object of promoter regions.
+    :rtype: pr.PyRanges
+    """
+    promoters_pr = pr.PyRanges(
+        promoter_df.rename(
+            pyranges_rename_dict,
+            axis=1,
+        )
+    )
+    # extend the End by 1 bp to entries that start on the endpoint to be counted
+    return promoters_pr.apply(lambda df: df.assign(End=df.End + 1))
+
+
 # @profile
 def call_peaks(
     experiment_data_path: str,
@@ -108,9 +145,27 @@ def call_peaks(
     chrmap_data_path: str,
     unified_chr_convention: str = "ucsc",
     deduplicate_experiment: bool = True,
+    **kwargs,
 ) -> pd.DataFrame:
     """
     Call peaks for the given Calling Cards data.
+
+    The kwargs parameter is used to pass additional arguments into underlying
+    functions. Currently, the following are configured:
+    - pranges_rename_dict: a dictionary that maps the column names in the
+        promoter data to the column names in the PyRanges object. This is used
+        to rename the columns in the PyRanges object after the promoter data
+        is read in. The default is {"chr": "Chromosome", "start": "Start",
+        "end": "End", "strand": "Strand"}.
+    - join_validate: the validation method to use when joining the promoter
+        data with the experiment and background data. The default is
+        "one_to_one".
+    - background_total_hops: the total number of hops in the background data.
+        The default is the number of hops in the background data, calculated from
+        the input background data file
+    - experiment_total_hops: the total number of hops in the experiment data.
+        The default is the number of hops in the experiment data, calculated from
+        the input experiment data file
 
     :param experiment_data_path: path to the experiment data file.
     :type experiment_data_path: str
@@ -165,7 +220,7 @@ def call_peaks(
         experiment_orig_chr_convention,
         unified_chr_convention,
         chrmap_df,
-        deduplicate_experiment
+        deduplicate_experiment,
     )
     background_pr, background_total_hops = read_in_background_data(
         background_data_path,
@@ -174,12 +229,12 @@ def call_peaks(
         chrmap_df,
     )
 
-    promoters_pr = pr.PyRanges(
-        promoter_df.rename(
-            {"chr": "Chromosome", "start": "Start", "end": "End", "strand": "Strand"},
-            axis=1,
-        )
+    pyranges_rename_dict = kwargs.get(
+        "pranges_rename_dict",
+        {"chr": "Chromosome", "start": "Start", "end": "End", "strand": "Strand"},
     )
+
+    promoters_pr = promoter_pyranges(promoter_df, pyranges_rename_dict)
 
     experiment_hops_df = count_hops(
         promoters_pr, experiment_pr, "experiment_hops"
@@ -190,18 +245,21 @@ def call_peaks(
     ).set_index("name", drop=True)
 
     promoter_hops_df = (
-        promoter_df
-        .drop("score", axis=1)
+        promoter_df.drop("score", axis=1)
         .set_index("name")
         .join(
             [experiment_hops_df, background_hops_df],
             how="left",
-            validate="one_to_one",
+            validate=kwargs.get("join_validate", "one_to_one"),
         )
         .fillna(0)
         .assign(
-            background_total_hops=background_total_hops,
-            experiment_total_hops=experiment_total_hops,
+            background_total_hops=kwargs.get(
+                "background_total_hops", background_total_hops
+            ),
+            experiment_total_hops=kwargs.get(
+                "experiment_total_hops", experiment_total_hops
+            ),
         )
         .astype(
             {
@@ -399,7 +457,7 @@ def main(args: argparse.Namespace) -> None:
         args.background_orig_chr_convention,
         args.chrmap_data_path,
         args.unified_chr_convention,
-        args.deduplicate_experiment
+        args.deduplicate_experiment,
     )
 
     result_df.to_csv(
