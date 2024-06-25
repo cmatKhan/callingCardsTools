@@ -4,19 +4,17 @@
 
 ### Changes
 
-- enrichment_vectorized has been significantly restructured such that the pseudocunt
-  is removed from the final calculation of the denominator. If the denominator is
-  0, enrichment is now set to -1, which signifies no enrichment (enrichment cannot
-  be negative, so should clue a user into the fact that they should check
-  documentation on the meaning).
-- poisson_pvalue has been significantly restructured such that now no pseudocount is
-  used in a calculation where the poisson is defined. Where the poisson is not defined,
-  the pvalue is set to 1. This is consistent with the hypergeometric pvalue.
-- Additional input checking:
+- enrichment_vectorized has been re-written such that the pseudocount is only applied 
+  to the background in a given promoter region.
+- poisson_pvalue has been re-written to remove the pseudocount from the experiment_hops
+  in the promoter regions
+- adding a significant amount of error handling and input/output validity checks to
+  the metric calculations in yeast Peak Calling
     1. chrmap nrow must be > 0 and ncol > 1
     1. background data (hops) must have at least one hop. Will error if not.
     1. experiment data (hops) must have at least one hop. Will error if not.
     1. promoter set files must have at least 1 promoter region
+    1. enrichment input and output is checked for type expectations
 - Old un-vectorized enrichment, poisson and hypergeometric code files removed
 
 # #Version 1.5.2
