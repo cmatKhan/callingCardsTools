@@ -166,6 +166,14 @@ def call_peaks(
     - experiment_total_hops: the total number of hops in the experiment data.
         The default is the number of hops in the experiment data, calculated from
         the input experiment data file
+    - genomic_only: set this flag to include only genomic chromosomes in the
+        experiment and background. See read_in_<experiment/background>_data for
+        more details. Passed in kwargs so that if none is passed to add_metrics,
+        the default in enrichment_vectorized() and poisson_pval_vectorized() is used.
+    - pseudocount: pseudocount to use when calculating enrichment and poisson
+        pvalue. See either function for more documentation. Passed through
+        kwargs so that if none is passed to add_metrics, the default in
+        enrichment_vectorized() and poisson_pval_vectorized() is used.
 
     :param experiment_data_path: path to the experiment data file.
     :type experiment_data_path: str
@@ -215,18 +223,25 @@ def call_peaks(
         unified_chr_convention,
         chrmap_df,
     )
+
+    read_in_data_kwargs = {}
+    if "genomic_only" in kwargs:
+        read_in_data_kwargs["genomic_only"] = kwargs["genomic_only"]
+
     experiment_pr, experiment_total_hops = read_in_experiment_data(
         experiment_data_path,
         experiment_orig_chr_convention,
         unified_chr_convention,
         chrmap_df,
         deduplicate_experiment,
+        **read_in_data_kwargs,
     )
     background_pr, background_total_hops = read_in_background_data(
         background_data_path,
         background_orig_chr_convention,
         unified_chr_convention,
         chrmap_df,
+        **read_in_data_kwargs,
     )
 
     pyranges_rename_dict = kwargs.get(
@@ -272,9 +287,14 @@ def call_peaks(
         .reset_index()
     )
 
+    # extract the add_metric kwargs if they are present
+    add_metric_kwargs = {}
+    if "pseudocount" in kwargs:
+        add_metric_kwargs["pseudocount"] = kwargs["pseudocount"]
+
     start_time = time.time()
-    result_df = add_metrics(promoter_hops_df)
-    logger.info(
+    result_df = add_metrics(promoter_hops_df, **add_metric_kwargs)
+    logger.debug(
         "Time taken to process %s promoters: %s seconds",
         len(promoter_hops_df),
         time.time() - start_time,
@@ -283,15 +303,20 @@ def call_peaks(
     return result_df
 
 
-def add_metrics(dataframe: pd.DataFrame, pseudocount: float = 0.2) -> pd.DataFrame:
+def add_metrics(dataframe: pd.DataFrame, **kwargs) -> pd.DataFrame:
     """
     Add Calling Cards metrics to the given DataFrame.
 
+    The kwargs parameter is used to pass additional arguments into underlying
+    functions. Currently, the following are configured:
+    - pseudocount: pseudocount to use when calculating both the enrichment and
+        poisson pvalue. See either function for more documentation. Passed through
+        kwargs so that if none is passed to add_metrics, the default in
+        enrichment_vectorized() and poisson_pval_vectorized() is used.
+
     :param dataframe: a pandas DataFrame of promoter regions.
     :type dataframe: DataFrame
-    :param pseudocount: pseudocount to use when calculating Calling Cards
-        metrics.
-    :type pseudocount: float
+
     :return: a pandas DataFrame of promoter regions with Calling Cards
         metrics.
     :rtype: DataFrame
@@ -301,7 +326,7 @@ def add_metrics(dataframe: pd.DataFrame, pseudocount: float = 0.2) -> pd.DataFra
         dataframe["experiment_total_hops"],
         dataframe["background_hops"],
         dataframe["experiment_hops"],
-        pseudocount,
+        **kwargs,
     )
 
     dataframe["poisson_pval"] = poisson_pval_vectorized(
@@ -309,7 +334,7 @@ def add_metrics(dataframe: pd.DataFrame, pseudocount: float = 0.2) -> pd.DataFra
         dataframe["experiment_total_hops"],
         dataframe["background_hops"],
         dataframe["experiment_hops"],
-        pseudocount,
+        **kwargs,
     )
 
     dataframe["hypergeometric_pval"] = hypergeom_pval_vectorized(
@@ -410,6 +435,12 @@ def parse_args(
         "retained.",
     )
     parser.add_argument(
+        "--genomic_only",
+        action="store_true",
+        help="set this flag to include only genomic chromosomes in the "
+        "experiment and background.",
+    )
+    parser.add_argument(
         "--output_path",
         default="sig_results.csv",
         type=str,
@@ -418,9 +449,12 @@ def parse_args(
     parser.add_argument(
         "--pseudocount",
         type=float,
-        help="pseudocount to use when calculating Calling Cards metrics.",
+        help=(
+            "pseudocount to use when calculating poisson pvalue. Note that ",
+            "this is used only when the background hops are 0 for a given promoter.",
+        ),
         required=False,
-        default=0.2,
+        default=0.1,
     )
     parser.add_argument(
         "--compress_output",
@@ -448,20 +482,32 @@ def main(args: argparse.Namespace) -> None:
         if not os.path.isfile(file):
             raise FileNotFoundError("The following path " f"does not exist: {file}")
 
-    result_df = call_peaks(
-        args.experiment_data_path,
-        args.experiment_orig_chr_convention,
-        args.promoter_data_path,
-        args.promoter_orig_chr_convention,
-        args.background_data_path,
-        args.background_orig_chr_convention,
-        args.chrmap_data_path,
-        args.unified_chr_convention,
-        args.deduplicate_experiment,
-    )
+    # If the peak calling fails, catch the error, log it, and print an error
+    # message to the console
+    try:
+        result_df = call_peaks(
+            args.experiment_data_path,
+            args.experiment_orig_chr_convention,
+            args.promoter_data_path,
+            args.promoter_orig_chr_convention,
+            args.background_data_path,
+            args.background_orig_chr_convention,
+            args.chrmap_data_path,
+            args.unified_chr_convention,
+            args.deduplicate_experiment,
+            genomic_only=args.genomic_only,
+            pseudocount=args.pseudocount,
+        )
 
-    result_df.to_csv(
-        args.output_path,
-        compression="gzip" if args.compress_output else None,
-        index=False,
-    )
+        result_df.to_csv(
+            args.output_path,
+            compression="gzip" if args.compress_output else None,
+            index=False,
+        )
+    except Exception as e:
+        logger.error(
+            "Error processing experiment file: %s. Error: %s",
+            args.experiment_data_path,
+            e,
+        )
+        raise

@@ -6,7 +6,6 @@ import pyranges as pr
 
 from callingcardstools.PeakCalling.yeast.call_peaks import count_hops, promoter_pyranges
 from callingcardstools.PeakCalling.yeast.call_peaks import main as call_peaks_main
-from callingcardstools.PeakCalling.yeast.call_peaks import promoter_pyranges
 
 
 def test_count_hops():
@@ -20,13 +19,17 @@ def test_count_hops():
             "name": ["prom1", "prom2"],
         }
     )
-    
-    pyranges_rename_dict = {"chr": "Chromosome", "start": "Start", "end": "End", "strand": "Strand"}
+
+    pyranges_rename_dict = {
+        "chr": "Chromosome",
+        "start": "Start",
+        "end": "End",
+        "strand": "Strand",
+    }
 
     promoter_pr = promoter_pyranges(promoter_df, pyranges_rename_dict)
 
     assert (promoter_pr.df.End == [201, 401]).all()
-
 
     # the first and last overlap the two promoter regions respectively on the same
     # strand, the second overlaps the first promoter region on the opposite strand
@@ -181,6 +184,7 @@ def test_with_data(tmpdir):
         deduplicate_experiment=True,
         pseudocount=0.2,
         compress_output=False,
+        genomic_only=True,
     )
 
     call_peaks_main(args)
@@ -209,12 +213,14 @@ def test_with_data(tmpdir):
         ]
     ).all()
 
+    chrmap_df = pd.read_csv(args.chrmap_data_path)
+    genomic_chrs = chrmap_df.loc[chrmap_df["type"] == "genomic", "id"]
+    filtered_experiment_df = experiment_df[
+        experiment_df["chr"].isin(genomic_chrs)
+    ].drop_duplicates(subset=["chr", "start", "end"])
+
     # check that the deduplication worked as expected
-    assert (output_df["experiment_total_hops"] != experiment_df.shape[0]).all()
-    assert (
-        output_df["experiment_total_hops"]
-        == experiment_df.drop_duplicates(subset=["chr", "start", "end"]).shape[0]
-    ).all()
+    assert (output_df["experiment_total_hops"] == filtered_experiment_df.shape[0]).all()
 
     # filter experiment_df to only include rows where chr==2 and the start is
     # between 36350 and 37050 inclusive
@@ -282,6 +288,7 @@ def test_combine_replicates(tmpdir):
         deduplicate_experiment=True,
         pseudocount=0.2,
         compress_output=False,
+        genomic_only=True,
     )
 
     call_peaks_main(args)
@@ -305,6 +312,7 @@ def test_combine_replicates(tmpdir):
         deduplicate_experiment=True,
         pseudocount=0.2,
         compress_output=False,
+        genomic_only=True,
     )
 
     call_peaks_main(args)
@@ -340,6 +348,7 @@ def test_combine_replicates(tmpdir):
         deduplicate_experiment=False,
         pseudocount=0.2,
         compress_output=False,
+        genomic_only=True,
     )
 
     call_peaks_main(args)

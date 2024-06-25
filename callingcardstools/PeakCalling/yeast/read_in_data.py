@@ -85,6 +85,18 @@ def read_in_chrmap(chrmap_data_path: str, required_col_set: set) -> pd.DataFrame
     required_col_set.add("type")
     # read in the chr map
     chrmap_df = pd.read_csv(chrmap_data_path)
+
+    # raise an error if the nrow of the chrmap is 0
+    if chrmap_df.shape[0] == 0:
+        raise ValueError("The chrmap file is empty")
+    # raise an error if the ncol of the chrmap is less than 2
+    if chrmap_df.shape[1] < 1:
+        raise ValueError(
+            "The chrmap file must have at least two column, ",
+            "one for the original chromosome name and one for ",
+            "the new chromosome name",
+        )
+
     # raise an error if the experiment_orig_chr_convention,
     # promoter_orig_chr_convention,
     # background_orig_chr_convention and unified_chr_convention are not in
@@ -107,6 +119,7 @@ def relabel_chr_column(
     chrmap_df: pd.DataFrame,
     curr_chr_name_convention: str,
     new_chr_name_convention: str,
+    genomic_only: bool = True,
 ) -> pd.DataFrame:
     """
     Given a `data_df` with column `chr`, a `curr_chr_name_convention` and
@@ -114,7 +127,8 @@ def relabel_chr_column(
     the `chrmap` to the `data_df` based on the `curr_chr_name_convention` and
     swap the values in the `chr` column to the `new_chr_name_convention`.
     relabel the `new_chr_name_convention` to `chr` and return the dataframe
-    with columns in the same order as the input dataframe.
+    with columns in the same order as the input dataframe. If `geonmic_only` is
+    set to `True`, only those chromosomes with type == 'genomic' are returned.
 
     :param df: The dataframe to relabel.
     :type df: pd.DataFrame
@@ -122,6 +136,9 @@ def relabel_chr_column(
     :type curr_chr_name_convention: str
     :param new_chr_name_convention: The new chromosome name convention.
     :type new_chr_name_convention: str
+    :param genomic_only: Whether to return only records with type == "genomic".
+    :type genomic_only: bool
+
     :return: The relabeled dataframe.
     :rtype: pd.DataFrame
 
@@ -177,8 +194,9 @@ def relabel_chr_column(
             right_on=curr_chr_name_convention,
         )
 
-    # TODO: add param to filter out chromosomes based on `type`
-    # .query("type=='genomic'") \
+    if genomic_only:
+        data_df = data_df.query("type=='genomic'")
+
     return data_df.drop(
         columns=[new_chr_name_convention, curr_chr_name_convention, "type"]
     ).rename(columns={"chr_curr": "chr"})
@@ -189,7 +207,8 @@ def read_in_experiment_data(
     curr_chr_name_convention: pd.DataFrame,
     new_chr_name_convention: pd.DataFrame,
     chrmap_df: str,
-    deduplicate: bool = True
+    deduplicate: bool = True,
+    **kwargs,
 ) -> pd.DataFrame:
     """
     Read in experiment (hops) data from a qbed file. The qbed file may be
@@ -201,6 +220,10 @@ def read_in_experiment_data(
     match the expected datatypes. the `chr` column is relabeled from the
     `curr_chr_name_convention` to the `new_chr_name_convention` using the
     `chrmap_df`.
+
+    Additional keyword arguments:
+        - genomic_only (bool): Whether to return only records with type == "genomic".
+            See `relabel_chr_column` for more information. Defaults to True.
 
     :param experiment_data_path: Path to the qbed file, plain text or gzipped,
         with or without column headers
@@ -284,9 +307,19 @@ def read_in_experiment_data(
             "and `depth`"
         ) from e
 
+    # if the file is empty, raise an error. This needs to be handled in an outer
+    # function in order to exit gracefully if there is no actual data to do
+    # calculations on
+    if experiment_df.shape[0] == 0:
+        raise ValueError("The experiment file is empty -- no data to process")
+
     # relabel chr column
     experiment_df = relabel_chr_column(
-        experiment_df, chrmap_df, curr_chr_name_convention, new_chr_name_convention
+        experiment_df,
+        chrmap_df,
+        curr_chr_name_convention,
+        new_chr_name_convention,
+        kwargs.get("genomic_only", True),
     )
 
     if deduplicate:
@@ -392,6 +425,10 @@ def read_in_promoter_data(
             "`score`, and `strand`"
         ) from e
 
+    # if the file is empty, raise an error.
+    if promoter_df.shape[0] == 0:
+        raise ValueError("The promoter file is empty -- no data to process")
+
     # relabel chr column
     chr_relabeled_promoter_df = relabel_chr_column(
         promoter_df, chrmap_df, curr_chr_name_convention, new_chr_name_convention
@@ -405,6 +442,7 @@ def read_in_background_data(
     curr_chr_name_convention: pd.DataFrame,
     new_chr_name_convention: pd.DataFrame,
     chrmap_df: str,
+    **kwargs,
 ) -> pd.DataFrame:
     """
     Read in background (hops) data from a qbed file. The qbed file may be
@@ -418,6 +456,10 @@ def read_in_background_data(
     `chrmap_df`. NOTE: unlike the experiment df, there is no option to deduplicate
     as the background file is expected to be the combination of multiple experiments
     at this point.
+
+    Additional keyword arguments:
+        - genomic_only (bool): Whether to return only records with type == "genomic".
+            See `relabel_chr_column` for more information. Defaults to True.
 
     :param background_data_path: Path to the background data qbed file, plain
         text or gzipped, with or without column headers
@@ -499,9 +541,17 @@ def read_in_background_data(
             "and `strand`"
         ) from e
 
+    # if the file is empty, raise an error. Background data should never be empty
+    if background_df.shape[0] == 0:
+        raise ValueError("The background file is empty -- no data to process")
+
     # relabel chr column
     background_df = relabel_chr_column(
-        background_df, chrmap_df, curr_chr_name_convention, new_chr_name_convention
+        background_df,
+        chrmap_df,
+        curr_chr_name_convention,
+        new_chr_name_convention,
+        kwargs.get("genomic_only", True),
     )
 
     return qbed_df_to_pyranges(background_df), len(background_df)

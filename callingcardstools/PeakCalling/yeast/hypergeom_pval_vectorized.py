@@ -7,10 +7,12 @@ from scipy.stats import hypergeom
 logger = logging.getLogger(__name__)
 
 
-def hypergeom_pval_vectorized(total_background_hops: Series,
-                              total_experiment_hops: Series,
-                              background_hops: Series,
-                              experiment_hops: Series) -> NDArray:
+def hypergeom_pval_vectorized(
+    total_background_hops: Series,
+    total_experiment_hops: Series,
+    background_hops: Series,
+    experiment_hops: Series,
+) -> NDArray:
     """
     Compute the hypergeometric p-value for the given hops counts.
 
@@ -36,7 +38,7 @@ def hypergeom_pval_vectorized(total_background_hops: Series,
         pandas Series (columns of dataframes) to compute the
         hypergeometric p-value for each row.
 
-    :raises ValueError: If any of the input Series contain negative values, 
+    :raises ValueError: If any of the input Series contain negative values,
         are not dtype int64 or the input Series are not all the same length.
 
     :Example:
@@ -57,21 +59,21 @@ def hypergeom_pval_vectorized(total_background_hops: Series,
     dtype: float64
     """
     # check input
-    if not len(total_background_hops) == len(total_experiment_hops) == \
-            len(background_hops) == len(experiment_hops):
-        raise ValueError('All input Series must be the same length.')
-    if total_background_hops.min() < 0 \
-            or total_background_hops.dtype != 'int64':
-        raise ValueError(('total_background_hops must '
-                          'be a non-negative integer.'))
-    if total_experiment_hops.min() < 0 \
-            or total_background_hops.dtype != 'int64':
-        raise ValueError(('total_experiment_hops must '
-                          'be a non-negative integer'))
-    if background_hops.min() < 0 or background_hops.dtype != 'int64':
-        raise ValueError('background_hops must be a non-negative integer')
-    if experiment_hops.min() < 0 or experiment_hops.dtype != 'int64':
-        raise ValueError('experiment_hops must be a non-negative integer')
+    if (
+        not len(total_background_hops)
+        == len(total_experiment_hops)
+        == len(background_hops)
+        == len(experiment_hops)
+    ):
+        raise ValueError("All input Series must be the same length.")
+    if total_background_hops.min() < 0 or total_background_hops.dtype != "int64":
+        raise ValueError(("total_background_hops must " "be a non-negative integer."))
+    if total_experiment_hops.min() < 0 or total_background_hops.dtype != "int64":
+        raise ValueError(("total_experiment_hops must " "be a non-negative integer"))
+    if background_hops.min() < 0 or background_hops.dtype != "int64":
+        raise ValueError("background_hops must be a non-negative integer")
+    if experiment_hops.min() < 0 or experiment_hops.dtype != "int64":
+        raise ValueError("experiment_hops must be a non-negative integer")
 
     # calculate hypergeometric p-values
     M = total_background_hops + total_experiment_hops
