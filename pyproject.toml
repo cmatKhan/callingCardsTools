@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "callingCardsTools"
-version = "1.7.0"
+version = "1.7.1"
 description = "A collection of objects and functions to work with calling cards sequencing tools"
 authors = ["chase mateusiak <chase.mateusiak@gmail.com>"]
 license = "MIT"
