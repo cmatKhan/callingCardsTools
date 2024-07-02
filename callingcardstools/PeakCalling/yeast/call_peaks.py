@@ -216,10 +216,10 @@ def call_peaks(
         )
     if len(experiment_data_paths) > 1:
         logger.info(
-            "Multiple experiment data files provided. These will be concatenated. ",
-            "The concatenated data will not be deduplicated, but each file within ",
-            "the concatenated data will be deduplicated if the `deduplicate` ",
-            "flag is set to `True`.",
+            "Multiple experiment data files provided. These will be concatenated. "
+            "The concatenated data will not be deduplicated, but each file within "
+            "the concatenated data will be deduplicated if the `deduplicate` "
+            "flag is set to `True`."
         )
     # Read in the chr map
     chrmap_df = read_in_chrmap(
