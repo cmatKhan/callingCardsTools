@@ -170,7 +170,9 @@ def test_with_data(tmpdir):
     output_path = os.path.join(tmpdir, "test_call_peaks_output.csv")
 
     args = argparse.Namespace(
-        experiment_data_path=os.path.join(test_data_directory, "hap5_expr17.qbed.gz"),
+        experiment_data_paths=[
+            os.path.join(test_data_directory, "hap5_expr17.qbed.gz")
+        ],
         experiment_orig_chr_convention="id",
         promoter_data_path=os.path.join(test_data_directory, "yiming_promoters.bed.gz"),
         promoter_orig_chr_convention="id",
@@ -192,7 +194,7 @@ def test_with_data(tmpdir):
     assert os.path.exists(output_path) is True
 
     output_df = pd.read_csv(output_path)
-    experiment_df = pd.read_csv(args.experiment_data_path, sep="\t")
+    experiment_df = pd.read_csv(args.experiment_data_paths[0], sep="\t")
     background_df = pd.read_csv(args.background_data_path, sep="\t")
 
     assert (
@@ -274,7 +276,7 @@ def test_combine_replicates(tmpdir):
     output_path1 = os.path.join(tmpdir, "peaks_rep1.csv")
 
     args = argparse.Namespace(
-        experiment_data_path=cc_rep1,
+        experiment_data_paths=[cc_rep1],
         experiment_orig_chr_convention="ucsc",
         promoter_data_path=os.path.join(test_data_directory, "yiming_promoters.bed.gz"),
         promoter_orig_chr_convention="id",
@@ -298,7 +300,7 @@ def test_combine_replicates(tmpdir):
     output_path2 = os.path.join(tmpdir, "peaks_rep2.csv")
 
     args = argparse.Namespace(
-        experiment_data_path=cc_rep2,
+        experiment_data_paths=[cc_rep2],
         experiment_orig_chr_convention="ucsc",
         promoter_data_path=os.path.join(test_data_directory, "yiming_promoters.bed.gz"),
         promoter_orig_chr_convention="id",
@@ -334,7 +336,7 @@ def test_combine_replicates(tmpdir):
     output_path3 = os.path.join(tmpdir, "peaks_combined.csv")
 
     args = argparse.Namespace(
-        experiment_data_path=combined_qbed_path,
+        experiment_data_paths=[cc_rep1, cc_rep2],
         experiment_orig_chr_convention="ucsc",
         promoter_data_path=os.path.join(test_data_directory, "yiming_promoters.bed.gz"),
         promoter_orig_chr_convention="id",
@@ -345,7 +347,7 @@ def test_combine_replicates(tmpdir):
         chrmap_data_path=os.path.join(test_data_directory, "chrmap.csv.gz"),
         unified_chr_convention="ucsc",
         output_path=output_path3,
-        deduplicate_experiment=False,
+        deduplicate_experiment=True,
         pseudocount=0.2,
         compress_output=False,
         genomic_only=True,

@@ -136,7 +136,7 @@ def promoter_pyranges(
 
 # @profile
 def call_peaks(
-    experiment_data_path: str,
+    experiment_data_paths: list,
     experiment_orig_chr_convention: str,
     promoter_data_path: str,
     promoter_orig_chr_convention: str,
@@ -175,8 +175,13 @@ def call_peaks(
         kwargs so that if none is passed to add_metrics, the default in
         enrichment_vectorized() and poisson_pval_vectorized() is used.
 
-    :param experiment_data_path: path to the experiment data file.
-    :type experiment_data_path: str
+    :param experiment_data_path: path(s) to the hops (experiment) data file(s). If
+        multiple paths are provided, they will be concatenated, according to the
+        `deduplicate` and `genomic_only` flags, prior to processing. On the
+        concatenated data, however, the `deduplicated` flag is set to `False`, since
+        within each file file the data was deduplicated, if it was set to `True`, and
+        in the concatenated data, multiple hops at the same location is meaningful.
+    :type experiment_data_path: list
     :param experiment_orig_chr_convention: the chromosome naming convention
         used in the experiment data file.
     :type experiment_orig_chr_convention: str
@@ -205,7 +210,18 @@ def call_peaks(
         metrics.
     :rtype: DataFrame
     """
-    # read in the chr map
+    if not isinstance(experiment_data_paths, list):
+        raise ValueError(
+            "experiment_data_paths must be a list of paths to the experiment data files."
+        )
+    if len(experiment_data_paths) > 1:
+        logger.info(
+            "Multiple experiment data files provided. These will be concatenated. ",
+            "The concatenated data will not be deduplicated, but each file within ",
+            "the concatenated data will be deduplicated if the `deduplicate` ",
+            "flag is set to `True`.",
+        )
+    # Read in the chr map
     chrmap_df = read_in_chrmap(
         chrmap_data_path,
         {
@@ -216,7 +232,7 @@ def call_peaks(
         },
     )
 
-    # read in the experiment, promoter and background data
+    # Read in the promoter and background data
     promoter_df = read_in_promoter_data(
         promoter_data_path,
         promoter_orig_chr_convention,
@@ -228,14 +244,27 @@ def call_peaks(
     if "genomic_only" in kwargs:
         read_in_data_kwargs["genomic_only"] = kwargs["genomic_only"]
 
-    experiment_pr, experiment_total_hops = read_in_experiment_data(
-        experiment_data_path,
-        experiment_orig_chr_convention,
-        unified_chr_convention,
-        chrmap_df,
-        deduplicate_experiment,
-        **read_in_data_kwargs,
-    )
+    # Initialize containers for experiment data
+    all_experiment_pr = []
+    all_experiment_total_hops = 0
+
+    # Process each experiment data file
+    for experiment_data_path in experiment_data_paths:
+        experiment_pr, experiment_total_hops = read_in_experiment_data(
+            experiment_data_path,
+            experiment_orig_chr_convention,
+            unified_chr_convention,
+            chrmap_df,
+            deduplicate_experiment,
+            **read_in_data_kwargs,
+        )
+        all_experiment_pr.append(experiment_pr)
+        all_experiment_total_hops += experiment_total_hops
+
+    # Concatenate all experiment data
+    concatenated_experiment_pr = pr.concat(all_experiment_pr)
+
+    # Read and process the background data
     background_pr, background_total_hops = read_in_background_data(
         background_data_path,
         background_orig_chr_convention,
@@ -252,7 +281,7 @@ def call_peaks(
     promoters_pr = promoter_pyranges(promoter_df, pyranges_rename_dict)
 
     experiment_hops_df = count_hops(
-        promoters_pr, experiment_pr, "experiment_hops"
+        promoters_pr, concatenated_experiment_pr, "experiment_hops"
     ).set_index("name", drop=True)
 
     background_hops_df = count_hops(
@@ -273,7 +302,7 @@ def call_peaks(
                 "background_total_hops", background_total_hops
             ),
             experiment_total_hops=kwargs.get(
-                "experiment_total_hops", experiment_total_hops
+                "experiment_total_hops", all_experiment_total_hops
             ),
         )
         .astype(
@@ -287,7 +316,7 @@ def call_peaks(
         .reset_index()
     )
 
-    # extract the add_metric kwargs if they are present
+    # Extract the add_metric kwargs if they are present
     add_metric_kwargs = {}
     if "pseudocount" in kwargs:
         add_metric_kwargs["pseudocount"] = kwargs["pseudocount"]
@@ -375,9 +404,10 @@ def parse_args(
     parser.set_defaults(func=main)
 
     parser.add_argument(
-        "--experiment_data_path",
+        "--experiment_data_paths",
         type=str,
-        help="path to the experiment data file.",
+        nargs="+",
+        help="paths to the experiment data files.",
         required=True,
     )
     parser.add_argument(
@@ -468,25 +498,21 @@ def parse_args(
 def main(args: argparse.Namespace) -> None:
     """
     Call peaks for the given Calling Cards data.
-
-    :param args: the command line arguments.
-    :type args: Namespace
     """
+    # note the * -- unpack the list of paths
     check_files = [
-        args.experiment_data_path,
+        *args.experiment_data_paths,
         args.promoter_data_path,
         args.background_data_path,
         args.chrmap_data_path,
     ]
     for file in check_files:
         if not os.path.isfile(file):
-            raise FileNotFoundError("The following path " f"does not exist: {file}")
+            raise FileNotFoundError(f"The following path does not exist: {file}")
 
-    # If the peak calling fails, catch the error, log it, and print an error
-    # message to the console
     try:
         result_df = call_peaks(
-            args.experiment_data_path,
+            args.experiment_data_paths,
             args.experiment_orig_chr_convention,
             args.promoter_data_path,
             args.promoter_orig_chr_convention,
@@ -506,8 +532,8 @@ def main(args: argparse.Namespace) -> None:
         )
     except Exception as e:
         logger.error(
-            "Error processing experiment file: %s. Error: %s",
-            args.experiment_data_path,
+            "Error processing experiment files: %s. Error: %s",
+            args.experiment_data_paths,
             e,
         )
         raise
