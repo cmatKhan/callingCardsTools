@@ -75,6 +75,7 @@ def enrichment_vectorized(
 
     # Add a small pseudocount to background_hops to avoid division by zero in the
     # enrichment calculation below
+    # Consider a `min` where the minimum value is 0.1/total_background_hops
     denominator = (background_hops + pseudocount) / total_background_hops
 
     enrichment = numerator / denominator

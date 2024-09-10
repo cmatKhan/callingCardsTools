@@ -1,19 +1,23 @@
 import logging
+
 import pandas as pd
-from .label_responsive_genes import label_responsive_genes
-from .calculate_random_expectation import calculate_random_expectation
+
 from .bin_by_binding_rank import bin_by_binding_rank
+from .calculate_random_expectation import calculate_random_expectation
 from .compute_rank_response import compute_rank_response
+from .label_responsive_genes import label_responsive_genes
 
 logger = logging.getLogger(__name__)
 
 
 def rank_response_ratio_summarize(
-        df: pd.DataFrame,
-        effect_expression_thres: float = 0,
-        p_expression_thres: float = 0.05,
-        normalize: bool = False,
-        bin_size: int = 5) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
+    df: pd.DataFrame,
+    effect_expression_thres: float = 0,
+    p_expression_thres: float = 0.05,
+    normalize: bool = False,
+    bin_size: int = 5,
+    rank_by_binding_effect: bool = False,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Processes a DataFrame to compute and summarize rank response ratios.
 
@@ -54,22 +58,27 @@ def rank_response_ratio_summarize(
         (a, b)  # a and b depend on the structure of rank response calculations
     """
     df_expression_labeled = label_responsive_genes(
-        df,
-        effect_expression_thres,
-        p_expression_thres, normalize)
+        df, effect_expression_thres, p_expression_thres, normalize
+    )
 
     random_expectation_df = calculate_random_expectation(df_expression_labeled)
 
-    df_expression_labeled_binding_ranked = \
-        bin_by_binding_rank(df_expression_labeled, bin_size)
+    df_expression_labeled_binding_ranked = bin_by_binding_rank(
+        df_expression_labeled, bin_size, rank_by_binding_effect
+    )
 
-    df_expression_labeled_binding_ranked_with_random = \
-        df_expression_labeled_binding_ranked\
-        .assign(random=float(random_expectation_df['random']))
+    df_expression_labeled_binding_ranked_with_random = (
+        df_expression_labeled_binding_ranked.assign(
+            random=float(random_expectation_df["random"])
+        )
+    )
 
     rank_response_df = compute_rank_response(
-        df_expression_labeled_binding_ranked_with_random)
+        df_expression_labeled_binding_ranked_with_random
+    )
 
-    return (df_expression_labeled_binding_ranked_with_random,
-            random_expectation_df,
-            rank_response_df)
+    return (
+        df_expression_labeled_binding_ranked_with_random,
+        random_expectation_df,
+        rank_response_df,
+    )

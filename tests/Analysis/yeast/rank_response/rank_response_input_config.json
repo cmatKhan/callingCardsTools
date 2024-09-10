@@ -3,7 +3,7 @@
   "binding_identifier_col": "identifier_column_name",
   "binding_effect_col": "effect_column_name_or_none",
   "binding_pvalue_col": "pvalue_column_name_or_none",
-  "rank_by_effect": false,
+  "rank_by_binding_effect": false,
   "expression_data_path": "path/to/expression/data",
   "expression_identifier_col": "identifier_column_name",
   "expression_effect_col": "effect_column_name_or_none",

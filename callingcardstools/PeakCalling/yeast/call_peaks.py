@@ -175,13 +175,13 @@ def call_peaks(
         kwargs so that if none is passed to add_metrics, the default in
         enrichment_vectorized() and poisson_pval_vectorized() is used.
 
-    :param experiment_data_path: path(s) to the hops (experiment) data file(s). If
+    :param experiment_data_paths: path(s) to the hops (experiment) data file(s). If
         multiple paths are provided, they will be concatenated, according to the
         `deduplicate` and `genomic_only` flags, prior to processing. On the
         concatenated data, however, the `deduplicated` flag is set to `False`, since
         within each file file the data was deduplicated, if it was set to `True`, and
         in the concatenated data, multiple hops at the same location is meaningful.
-    :type experiment_data_path: list
+    :type experiment_data_paths: list
     :param experiment_orig_chr_convention: the chromosome naming convention
         used in the experiment data file.
     :type experiment_orig_chr_convention: str
@@ -479,10 +479,8 @@ def parse_args(
     parser.add_argument(
         "--pseudocount",
         type=float,
-        help=(
-            "pseudocount to use when calculating poisson pvalue. Note that ",
-            "this is used only when the background hops are 0 for a given promoter.",
-        ),
+        help="pseudocount to use when calculating poisson pvalue. Note that "
+        "this is used only when the background hops are 0 for a given promoter.",
         required=False,
         default=0.1,
     )
