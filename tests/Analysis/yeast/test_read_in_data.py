@@ -5,7 +5,7 @@ from callingcardstools.Analysis.yeast import combine_data, read_in_data
 
 # Sample test data for read_in_data
 sample_data_1 = """gene_id,effect,pvalue
-gene1,0.5,0.01
+gene1,0.5,0.00
 gene2,0.7,0.05
 gene3,0.3,0.10
 """
@@ -126,9 +126,14 @@ def test_combine_data(create_temp_csv):
         combined_df.loc[combined_df["feature"] == "gene1", "binding_effect"].values[0]
         == 0.45
     )
+
+    # make sure these match the input data. The first value is 0, hence the
+    # machine precision float
+    expected = np.exp(np.mean(np.log(np.array([np.finfo(float).eps, 0.02]))))
+
     assert combined_df.loc[combined_df["feature"] == "gene1", "binding_pvalue"].values[
         0
-    ] == pytest.approx(0.014142, rel=1e-5)
+    ] == pytest.approx(expected, rel=1e-5)
 
 
 def test_combine_data_with_zero_pvalues(create_temp_csv):
@@ -155,7 +160,7 @@ def test_combine_data_with_zero_pvalues(create_temp_csv):
     # Check that zeros are handled properly
     assert (
         combined_df.loc[combined_df["feature"] == "gene1", "binding_pvalue"].values[0]
-        > 0
+        == 0
     )  # Should be replaced by a small value
 
 

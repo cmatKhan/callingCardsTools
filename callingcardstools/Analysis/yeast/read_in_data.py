@@ -90,11 +90,34 @@ def read_in_data(
         # Check for NA values in the pval_colname
         if pd.isna(df[pval_colname]).any():
             raise AttributeError(
-                f"NA values found in column {pval_colname}. " "This must not be."
+                f"NA values found in column {pval_colname}. This must not be."
             )
+
+        # Check for 'inf' values in the pval column
+        if np.isinf(df[pval_colname]).any():
+            # Remove inf values and check the largest remaining value
+            non_inf_pvals = df[pval_colname].replace([np.inf, -np.inf], np.nan).dropna()
+
+            # if the largest remaining p-value is 0, and there exists at least 1
+            # negative value, then the pvalue column is logged.
+            # convert positive infinity to negative infinity (this is for the raw
+            # chipexo data)
+            if (
+                not non_inf_pvals.empty
+                and non_inf_pvals.max() <= 0
+                and non_inf_pvals.min() < 0
+            ):
+                # Convert positive infinity (resulting from log(0)) to negative infinity
+                logger.warning(
+                    "The pvalue column is logged, but there exist "
+                    "positive infinity values. This is assumed to be an error. "
+                    "Converting positive infinity to negative infinity."
+                )
+                df[pval_colname].replace(np.inf, -np.inf, inplace=True)
+
     except KeyError as exc:
         raise KeyError(
-            f"Column {pval_col} is not `none` and " "does not exist in {data_path}"
+            f"Column {pval_col} is not `none` and does not exist in {data_path}"
         ) from exc
 
     source_colname = data_type + "_source"
@@ -105,6 +128,46 @@ def read_in_data(
     return df[["feature", effect_colname, pval_colname, source_colname]]
 
 
+def combine_pvals_detect_logged(pvals: pd.Series) -> float:
+    """
+    Detects if p-values are logged. If they are, converts them to linear scale,
+    combines them using geometric mean, and then converts back to log scale.
+
+    Args:
+        pvals (pd.Series): Series of p-values, potentially logged.
+
+    Returns:
+        float: Combined p-value, logged if the original data was logged.
+    """
+    # check that pvals is a pandas Series
+    if not isinstance(pvals, pd.Series):
+        raise TypeError("pvals must be a pandas Series")
+    # if pvals are ints, convert to floats
+    if pvals.dtype == int:
+        pvals = pvals.astype(float)
+    # Detect if p-values are logged (log10 scale typically results in negative values)
+    if pvals.max() <= 0:
+        # If the p-values are likely log-scaled (log10 or log_e)
+        logger.warning(
+            "Detected log-scaled p-values, converting to linear scale to combine. "
+            "They will be converted back to log scale after combination."
+        )
+        linear_pvals = 10**pvals  # Assuming log10, convert to linear scale
+        combined_linear_pval = np.exp(
+            np.mean(
+                np.log(np.where(linear_pvals == 0, np.finfo(float).eps, linear_pvals))
+            )
+        )
+        # Convert back to log scale after combination
+        return np.log10(combined_linear_pval)
+    else:
+        # If p-values are already in linear scale, use the standard geometric mean
+        combined_pval = np.exp(
+            np.mean(np.log(np.where(pvals == 0, np.finfo(float).eps, pvals)))
+        )
+        return combined_pval
+
+
 def combine_data(
     data_paths: List[str],
     identifier_col: str,
@@ -113,9 +176,7 @@ def combine_data(
     source: str,
     data_type: Literal["binding", "expression"],
     combine_effect_func: Callable[[pd.Series], float] = np.mean,
-    combine_pval_func: Callable[[pd.Series], float] = lambda pvals: np.exp(
-        np.mean(np.log(np.where(pvals == 0, np.finfo(float).eps, pvals)))
-    ),
+    combine_pval_func: Callable[[pd.Series], float] = combine_pvals_detect_logged,
 ) -> pd.DataFrame:
     """
     Read in multiple data files and combine the effect and pvalue columns
@@ -135,6 +196,7 @@ def combine_data(
     Returns:
         pd.DataFrame: Combined dataframe with averaged effect and pvalue
     """
+    logger.info("combining data for data type {data_type} from {data_paths}")
     all_dfs = []
 
     for data_path in data_paths:
@@ -150,7 +212,7 @@ def combine_data(
 
     combined_df = (
         pd.concat(all_dfs)
-        .groupby("feature")
+        .groupby(["feature", f"{data_type}_source"])
         .agg(
             {
                 f"{data_type}_effect": combine_effect_func,
