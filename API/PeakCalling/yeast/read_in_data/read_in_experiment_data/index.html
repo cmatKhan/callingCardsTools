@@ -1,0 +1,2035 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A collection of objects and functions to work with calling cards sequencing tools">
+      
+      
+        <meta name="author" content="Chase Mateusiak">
+      
+      
+        <link rel="canonical" href="https://cmatkhan.github.io/callingCardsTools/API/PeakCalling/yeast/read_in_data/read_in_experiment_data/">
+      
+      <link rel="icon" href="../../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-8.5.10">
+    
+    
+      
+        <title>read_in_experiment_data - callingCardsTools Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.975780f9.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.2505c338.min.css">
+        
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="None" data-md-color-accent="None">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#callingcardstools.PeakCalling.yeast.read_in_data.read_in_experiment_data" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../../.." title="callingCardsTools Documentation" class="md-header__button md-logo" aria-label="callingCardsTools Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            callingCardsTools Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              read_in_experiment_data
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/cmatKhan/callingCardsTools" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    callingCardsTools
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../../.." title="callingCardsTools Documentation" class="md-nav__button md-logo" aria-label="callingCardsTools Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    callingCardsTools Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/cmatKhan/callingCardsTools" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    callingCardsTools
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_1" type="checkbox" id="__nav_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_1">
+          Home
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Home" data-md-level="1">
+        <label class="md-nav__title" for="__nav_1">
+          <span class="md-nav__icon md-icon"></span>
+          Home
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../.." class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../home/changelog/" class="md-nav__link">
+        Changelog
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../home/contributing/" class="md-nav__link">
+        Contributing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../home/license/" class="md-nav__link">
+        License
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          File Format Specs
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="File Format Specs" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          File Format Specs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../file_format_specs/barcode_details/" class="md-nav__link">
+        barcode_details
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../file_format_specs/qbed/" class="md-nav__link">
+        qBed
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../file_format_specs/yeast_rank_response/" class="md-nav__link">
+        yeast_rank_response
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          API
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="API" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          API
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_1" type="checkbox" id="__nav_3_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_1">
+          Alignment
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Alignment" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_1">
+          <span class="md-nav__icon md-icon"></span>
+          Alignment
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Alignment/AlignmentTagger/" class="md-nav__link">
+        AlignmentTagger
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Alignment/SummaryParser/" class="md-nav__link">
+        SummaryParser
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_1_3" type="checkbox" id="__nav_3_1_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_1_3">
+          mammals
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="mammals" data-md-level="3">
+        <label class="md-nav__title" for="__nav_3_1_3">
+          <span class="md-nav__icon md-icon"></span>
+          mammals
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Alignment/mammals/Qbed/" class="md-nav__link">
+        Qbed
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2" type="checkbox" id="__nav_3_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_2">
+          Analysis
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Analysis" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_2">
+          <span class="md-nav__icon md-icon"></span>
+          Analysis
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2_1" type="checkbox" id="__nav_3_2_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_1">
+          yeast
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="yeast" data-md-level="3">
+        <label class="md-nav__title" for="__nav_3_2_1">
+          <span class="md-nav__icon md-icon"></span>
+          yeast
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2_1_1" type="checkbox" id="__nav_3_2_1_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_1_1">
+          read_in_data
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="read_in_data" data-md-level="4">
+        <label class="md-nav__title" for="__nav_3_2_1_1">
+          <span class="md-nav__icon md-icon"></span>
+          read_in_data
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Analysis/yeast/read_in_data/read_in_data/" class="md-nav__link">
+        read_in_data
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Analysis/yeast/read_in_data/combine_data/" class="md-nav__link">
+        combine_data
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2_1_2" type="checkbox" id="__nav_3_2_1_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_1_2">
+          rank_response
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="rank_response" data-md-level="4">
+        <label class="md-nav__title" for="__nav_3_2_1_2">
+          <span class="md-nav__icon md-icon"></span>
+          rank_response
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Analysis/yeast/rank_response/bin_by_binding_rank/" class="md-nav__link">
+        bin_by_binding_rank
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Analysis/yeast/rank_response/compute_rank_response/" class="md-nav__link">
+        compute_rank_response
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Analysis/yeast/rank_response/create_partitions/" class="md-nav__link">
+        create_partitions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Analysis/yeast/rank_response/create_rank_response_table/" class="md-nav__link">
+        create_rank_response_table
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Analysis/yeast/rank_response/label_responsive_genes/" class="md-nav__link">
+        label_responsive_genes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Analysis/yeast/rank_response/parse_binomtest_results/" class="md-nav__link">
+        parse_binomtest_results
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Analysis/yeast/rank_response/validate_config/" class="md-nav__link">
+        validate_config
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2_1_3" type="checkbox" id="__nav_3_2_1_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_1_3">
+          find_min_responsive
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="find_min_responsive" data-md-level="4">
+        <label class="md-nav__title" for="__nav_3_2_1_3">
+          <span class="md-nav__icon md-icon"></span>
+          find_min_responsive
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Analysis/yeast/find_min_responsive/find_min_responsive/" class="md-nav__link">
+        find_min_responsive
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2_1_4" type="checkbox" id="__nav_3_2_1_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_1_4">
+          chipexo_promoter_sig
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="chipexo_promoter_sig" data-md-level="4">
+        <label class="md-nav__title" for="__nav_3_2_1_4">
+          <span class="md-nav__icon md-icon"></span>
+          chipexo_promoter_sig
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Analysis/yeast/chipexo_promoter_sig/read_in_chipexo_data/" class="md-nav__link">
+        read_in_chipexo_data
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Analysis/yeast/chipexo_promoter_sig/chipexo_promoter_sig/" class="md-nav__link">
+        chipexo_promoter_sig
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_3" type="checkbox" id="__nav_3_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_3">
+          BarcodeParser
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="BarcodeParser" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          BarcodeParser
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_3_1" type="checkbox" id="__nav_3_3_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_3_1">
+          mammals
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="mammals" data-md-level="3">
+        <label class="md-nav__title" for="__nav_3_3_1">
+          <span class="md-nav__icon md-icon"></span>
+          mammals
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../BarcodeParser/mammals/BarcodeCounterQc/" class="md-nav__link">
+        BarcodeCounterQc
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_3_2" type="checkbox" id="__nav_3_3_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_3_2">
+          yeast
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="yeast" data-md-level="3">
+        <label class="md-nav__title" for="__nav_3_3_2">
+          <span class="md-nav__icon md-icon"></span>
+          yeast
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../BarcodeParser/yeast/BarcodeCounterQc/" class="md-nav__link">
+        BarcodeCounterQc
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_4" type="checkbox" id="__nav_3_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_4">
+          PeakCalling
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="PeakCalling" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_4">
+          <span class="md-nav__icon md-icon"></span>
+          PeakCalling
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_4_1" type="checkbox" id="__nav_3_4_1" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_4_1">
+          yeast
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="yeast" data-md-level="3">
+        <label class="md-nav__title" for="__nav_3_4_1">
+          <span class="md-nav__icon md-icon"></span>
+          yeast
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_4_1_1" type="checkbox" id="__nav_3_4_1_1" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_4_1_1">
+          read_in_data
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="read_in_data" data-md-level="4">
+        <label class="md-nav__title" for="__nav_3_4_1_1">
+          <span class="md-nav__icon md-icon"></span>
+          read_in_data
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../qbed_df_to_pyranges/" class="md-nav__link">
+        qbed_df_to_pyranges
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../read_in_background_data/" class="md-nav__link">
+        read_in_background_data
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../read_in_chrmap/" class="md-nav__link">
+        read_in_chrmap
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          read_in_experiment_data
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        read_in_experiment_data
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#callingcardstools.PeakCalling.yeast.read_in_data.read_in_experiment_data" class="md-nav__link">
+    read_in_experiment_data
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#callingcardstools.PeakCalling.yeast.read_in_data.read_in_experiment_data--create-a-temporary-chrmap-file" class="md-nav__link">
+    create a temporary chrmap file
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#callingcardstools.PeakCalling.yeast.read_in_data.read_in_experiment_data--read-in-the-data" class="md-nav__link">
+    read in the data
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../read_in_promoter_data/" class="md-nav__link">
+        read_in_promoter_data
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../relabel_chr_column/" class="md-nav__link">
+        relabel_chr_column
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../enrichment_vectorized/" class="md-nav__link">
+        enrichment_vectorized
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../hypergeom_pval_vectorized/" class="md-nav__link">
+        hypergeom_pval_vectorized
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../poisson_pval_vectorized/" class="md-nav__link">
+        poisson_pval_vectorized
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_4_1_5" type="checkbox" id="__nav_3_4_1_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_4_1_5">
+          call_peaks
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="call_peaks" data-md-level="4">
+        <label class="md-nav__title" for="__nav_3_4_1_5">
+          <span class="md-nav__icon md-icon"></span>
+          call_peaks
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../call_peaks/count_hops/" class="md-nav__link">
+        count_hops
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../call_peaks/add_metrics/" class="md-nav__link">
+        add_metrics
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../call_peaks/call_peaks/" class="md-nav__link">
+        call_peaks
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../call_peaks/parse_args/" class="md-nav__link">
+        parse_args
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../call_peaks/main/" class="md-nav__link">
+        main
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_5" type="checkbox" id="__nav_3_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_5">
+          QC
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="QC" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_5">
+          <span class="md-nav__icon md-icon"></span>
+          QC
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../QC/create_status_coder/" class="md-nav__link">
+        create_status_coder
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../QC/StatusFlags/" class="md-nav__link">
+        StatusFlags
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_6" type="checkbox" id="__nav_3_6" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_6">
+          Reads
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reads" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_6">
+          <span class="md-nav__icon md-icon"></span>
+          Reads
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Reads/ReadParser/" class="md-nav__link">
+        ReadParser
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_7" type="checkbox" id="__nav_3_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_7">
+          Resources
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resources" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_7">
+          <span class="md-nav__icon md-icon"></span>
+          Resources
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../Resources/Resources/" class="md-nav__link">
+        Resources
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#callingcardstools.PeakCalling.yeast.read_in_data.read_in_experiment_data" class="md-nav__link">
+    read_in_experiment_data
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#callingcardstools.PeakCalling.yeast.read_in_data.read_in_experiment_data--create-a-temporary-chrmap-file" class="md-nav__link">
+    create a temporary chrmap file
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#callingcardstools.PeakCalling.yeast.read_in_data.read_in_experiment_data--read-in-the-data" class="md-nav__link">
+    read in the data
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  <a href="https://github.com/cmatKhan/callingCardsTools/edit/master/docs/API/PeakCalling/yeast/read_in_data/read_in_experiment_data.md" title="Edit this page" class="md-content__button md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+  <h1>read_in_experiment_data</h1>
+
+<div class="doc doc-object doc-function">
+
+
+
+<a id="callingcardstools.PeakCalling.yeast.read_in_data.read_in_experiment_data"></a>
+  <div class="doc doc-contents first">
+  
+      <p>Read in experiment (hops) data from a qbed file. The qbed file may be
+plain text or gzipped and may or may not have column headers. If the
+column headers are present, they must be in the following order:
+<code>chr</code>, <code>start</code>, <code>end</code>, <code>strand</code>, <code>depth</code>. If the column headers are
+not present, the columns must be in same order and number. Datatypes
+are checked but will not be coerced &ndash; errors are raised if they do not
+match the expected datatypes. the <code>chr</code> column is relabeled from the
+<code>curr_chr_name_convention</code> to the <code>new_chr_name_convention</code> using the
+<code>chrmap_df</code>.</p>
+
+<details class="additional-keyword-arguments" open>
+  <summary>Additional keyword arguments</summary>
+  <ul>
+<li>genomic_only (bool): Whether to return only records with type == &ldquo;genomic&rdquo;.
+    See <code>relabel_chr_column</code> for more information. Defaults to True.</li>
+</ul>
+</details>      <p>:param experiment_data_path: Path to the qbed file, plain text or gzipped,
+    with or without column headers
+:type experiment_data_path: str
+:param curr_chr_name_convention: The current chromosome name convention.
+:type curr_chr_name_convention: str
+:param new_chr_name_convention: The new chromosome name convention.
+:type new_chr_name_convention: str
+:param chrmap_df: The chrmap dataframe.
+:type chrmap_df: pd.DataFrame
+:param deduplicate: Whether to deduplicate the experiment data based on
+    <code>chr</code>, <code>start</code>, <code>end</code> such that if an insertion occurs at the same
+    coordinate but on opposite strands, only one record is retained.
+:type deduplicate: bool</p>
+<p>:return: The experiment data as a dataframe with the <code>chr</code> column
+    refactored to the <code>new_chr_name_convention</code>
+:rtype: pd.DataFrame</p>
+<p>:raises ValueError: If the <code>experiment_data_path</code> does not exist or
+    is not a file; if the column headers exist but do not match expectation
+    or if the datatypes do not match expectation.</p>
+<p>:Example:</p>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>import pandas as pd
+import os
+import tempfile
+tmp_qbed = tempfile.NamedTemporaryFile(suffix=&rsquo;.qbed&rsquo;).name
+with open(tmp_qbed, &lsquo;w&rsquo;) as f:
+&hellip;    _ = f.write(&lsquo;chr\tstart\tend\tstrand\tdepth\n&rsquo;)
+&hellip;    _ = f.write(&lsquo;chr1\t1\t2\t+\t1\n&rsquo;)</p>
+<h2 id="callingcardstools.PeakCalling.yeast.read_in_data.read_in_experiment_data--create-a-temporary-chrmap-file">create a temporary chrmap file<a class="headerlink" href="#callingcardstools.PeakCalling.yeast.read_in_data.read_in_experiment_data--create-a-temporary-chrmap-file" title="Permanent link">&para;</a></h2>
+<p>tmp_chrmap = tempfile.NamedTemporaryFile(suffix=&rsquo;.csv&rsquo;).name
+chrmap_df = pd.DataFrame({&lsquo;curr_chr_name_convention&rsquo;:
+&hellip;                            [&lsquo;chr1&rsquo;, &lsquo;chr2&rsquo;, &lsquo;chr3&rsquo;],
+&hellip;                           &lsquo;new_chr_name_convention&rsquo;:
+&hellip;                            [&lsquo;chrI&rsquo;, &lsquo;chrII&rsquo;, &lsquo;chrIII&rsquo;]})</p>
+<h2 id="callingcardstools.PeakCalling.yeast.read_in_data.read_in_experiment_data--read-in-the-data">read in the data<a class="headerlink" href="#callingcardstools.PeakCalling.yeast.read_in_data.read_in_experiment_data--read-in-the-data" title="Permanent link">&para;</a></h2>
+<p>experiment_df, experiment_total_hops = read_in_experiment_data(
+&hellip;   tmp_qbed,
+&hellip;   &lsquo;curr_chr_name_convention&rsquo;,
+&hellip;   &lsquo;new_chr_name_convention&rsquo;,
+&hellip;    chrmap_df)
+list(experiment_df.columns) == [&lsquo;chr&rsquo;, &lsquo;start&rsquo;, &lsquo;end&rsquo;, &lsquo;depth&rsquo;,
+&hellip;                                 &lsquo;strand&rsquo;]
+True
+experiment_total_hops
+1</p>
+</blockquote>
+</blockquote>
+</blockquote>
+
+          <details class="quote">
+            <summary>Source code in <code>callingcardstools/PeakCalling/yeast/read_in_data.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">read_in_experiment_data</span><span class="p">(</span>
+    <span class="n">experiment_data_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">curr_chr_name_convention</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">new_chr_name_convention</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">chrmap_df</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">deduplicate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Read in experiment (hops) data from a qbed file. The qbed file may be</span>
+<span class="sd">    plain text or gzipped and may or may not have column headers. If the</span>
+<span class="sd">    column headers are present, they must be in the following order:</span>
+<span class="sd">    `chr`, `start`, `end`, `strand`, `depth`. If the column headers are</span>
+<span class="sd">    not present, the columns must be in same order and number. Datatypes</span>
+<span class="sd">    are checked but will not be coerced -- errors are raised if they do not</span>
+<span class="sd">    match the expected datatypes. the `chr` column is relabeled from the</span>
+<span class="sd">    `curr_chr_name_convention` to the `new_chr_name_convention` using the</span>
+<span class="sd">    `chrmap_df`.</span>
+
+<span class="sd">    Additional keyword arguments:</span>
+<span class="sd">        - genomic_only (bool): Whether to return only records with type == &quot;genomic&quot;.</span>
+<span class="sd">            See `relabel_chr_column` for more information. Defaults to True.</span>
+
+<span class="sd">    :param experiment_data_path: Path to the qbed file, plain text or gzipped,</span>
+<span class="sd">        with or without column headers</span>
+<span class="sd">    :type experiment_data_path: str</span>
+<span class="sd">    :param curr_chr_name_convention: The current chromosome name convention.</span>
+<span class="sd">    :type curr_chr_name_convention: str</span>
+<span class="sd">    :param new_chr_name_convention: The new chromosome name convention.</span>
+<span class="sd">    :type new_chr_name_convention: str</span>
+<span class="sd">    :param chrmap_df: The chrmap dataframe.</span>
+<span class="sd">    :type chrmap_df: pd.DataFrame</span>
+<span class="sd">    :param deduplicate: Whether to deduplicate the experiment data based on</span>
+<span class="sd">        `chr`, `start`, `end` such that if an insertion occurs at the same</span>
+<span class="sd">        coordinate but on opposite strands, only one record is retained.</span>
+<span class="sd">    :type deduplicate: bool</span>
+
+<span class="sd">    :return: The experiment data as a dataframe with the `chr` column</span>
+<span class="sd">        refactored to the `new_chr_name_convention`</span>
+<span class="sd">    :rtype: pd.DataFrame</span>
+
+<span class="sd">    :raises ValueError: If the `experiment_data_path` does not exist or</span>
+<span class="sd">        is not a file; if the column headers exist but do not match expectation</span>
+<span class="sd">        or if the datatypes do not match expectation.</span>
+
+<span class="sd">    :Example:</span>
+
+<span class="sd">    &gt;&gt;&gt; import pandas as pd</span>
+<span class="sd">    &gt;&gt;&gt; import os</span>
+<span class="sd">    &gt;&gt;&gt; import tempfile</span>
+<span class="sd">    &gt;&gt;&gt; tmp_qbed = tempfile.NamedTemporaryFile(suffix=&#39;.qbed&#39;).name</span>
+<span class="sd">    &gt;&gt;&gt; with open(tmp_qbed, &#39;w&#39;) as f:</span>
+<span class="sd">    ...    _ = f.write(&#39;chr\\tstart\\tend\\tstrand\\tdepth\\n&#39;)</span>
+<span class="sd">    ...    _ = f.write(&#39;chr1\\t1\\t2\\t+\\t1\\n&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; # create a temporary chrmap file</span>
+<span class="sd">    &gt;&gt;&gt; tmp_chrmap = tempfile.NamedTemporaryFile(suffix=&#39;.csv&#39;).name</span>
+<span class="sd">    &gt;&gt;&gt; chrmap_df = pd.DataFrame({&#39;curr_chr_name_convention&#39;:</span>
+<span class="sd">    ...                            [&#39;chr1&#39;, &#39;chr2&#39;, &#39;chr3&#39;],</span>
+<span class="sd">    ...                           &#39;new_chr_name_convention&#39;:</span>
+<span class="sd">    ...                            [&#39;chrI&#39;, &#39;chrII&#39;, &#39;chrIII&#39;]})</span>
+<span class="sd">    &gt;&gt;&gt; # read in the data</span>
+<span class="sd">    &gt;&gt;&gt; experiment_df, experiment_total_hops = read_in_experiment_data(</span>
+<span class="sd">    ...   tmp_qbed,</span>
+<span class="sd">    ...   &#39;curr_chr_name_convention&#39;,</span>
+<span class="sd">    ...   &#39;new_chr_name_convention&#39;,</span>
+<span class="sd">    ...    chrmap_df)</span>
+<span class="sd">    &gt;&gt;&gt; list(experiment_df.columns) == [&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;, &#39;depth&#39;,</span>
+<span class="sd">    ...                                 &#39;strand&#39;]</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; experiment_total_hops</span>
+<span class="sd">    1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># check input</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">experiment_data_path</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;experiment_data_path must exist&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">experiment_data_path</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;experiment_data_path must be a file&quot;</span><span class="p">)</span>
+
+    <span class="c1"># check if data is gzipped</span>
+    <span class="n">gzipped</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">experiment_data_path</span><span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.gz&quot;</span><span class="p">)</span>
+    <span class="c1"># check if data has column headers</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+        <span class="n">experiment_data_path</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s2">&quot;gzip&quot;</span> <span class="k">if</span> <span class="n">gzipped</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">nrows</span><span class="o">=</span><span class="mi">0</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">header</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">!=</span> <span class="p">[</span><span class="s2">&quot;chr&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">,</span> <span class="s2">&quot;depth&quot;</span><span class="p">,</span> <span class="s2">&quot;strand&quot;</span><span class="p">]:</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1"># read in data</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">experiment_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+            <span class="n">experiment_data_path</span><span class="p">,</span>
+            <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">header</span><span class="o">=</span><span class="n">header</span><span class="p">,</span>
+            <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;chr&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">,</span> <span class="s2">&quot;depth&quot;</span><span class="p">,</span> <span class="s2">&quot;strand&quot;</span><span class="p">],</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;chr&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="s2">&quot;depth&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="s2">&quot;strand&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">},</span>
+            <span class="n">compression</span><span class="o">=</span><span class="s2">&quot;gzip&quot;</span> <span class="k">if</span> <span class="n">gzipped</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;experiment_data_path must be a qbed file &quot;</span>
+            <span class="s2">&quot;with columns `chr`, `start`, `end`, `strand`, &quot;</span>
+            <span class="s2">&quot;and `depth`&quot;</span>
+        <span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+    <span class="c1"># if the file is empty, raise an error. This needs to be handled in an outer</span>
+    <span class="c1"># function in order to exit gracefully if there is no actual data to do</span>
+    <span class="c1"># calculations on</span>
+    <span class="k">if</span> <span class="n">experiment_df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The experiment file is empty -- no data to process&quot;</span><span class="p">)</span>
+
+    <span class="c1"># relabel chr column</span>
+    <span class="n">experiment_df</span> <span class="o">=</span> <span class="n">relabel_chr_column</span><span class="p">(</span>
+        <span class="n">experiment_df</span><span class="p">,</span>
+        <span class="n">chrmap_df</span><span class="p">,</span>
+        <span class="n">curr_chr_name_convention</span><span class="p">,</span>
+        <span class="n">new_chr_name_convention</span><span class="p">,</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;genomic_only&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">deduplicate</span><span class="p">:</span>
+        <span class="c1"># deduplicate based on `chr`, `start`, `end` such that if an insertion occurs</span>
+        <span class="c1"># at the same coordinate but on opposite strands, only one record is retained</span>
+        <span class="n">experiment_df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;chr&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># set strand to &#39;*&#39;</span>
+        <span class="n">experiment_df</span><span class="p">[</span><span class="s2">&quot;strand&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;*&quot;</span>
+
+    <span class="k">return</span> <span class="n">qbed_df_to_pyranges</span><span class="p">(</span><span class="n">experiment_df</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiment_df</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="../read_in_chrmap/" class="md-footer__link md-footer__link--prev" aria-label="Previous: read_in_chrmap" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              read_in_chrmap
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../read_in_promoter_data/" class="md-footer__link md-footer__link--next" aria-label="Next: read_in_promoter_data" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              read_in_promoter_data
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../../../../..", "features": [], "search": "../../../../../assets/javascripts/workers/search.16e2a7d4.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../../../../assets/javascripts/bundle.5a2dcb6a.min.js"></script>
+      
+    
+    
+  </body>
+</html>
