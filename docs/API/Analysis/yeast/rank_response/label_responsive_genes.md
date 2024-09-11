@@ -1,2 +1,2 @@
-::: callingcardstools.Analysis.yeast.rank_response.label_responsive_genes.label_responsive_genes
+::: callingcardstools.Analysis.yeast.rank_response.label_responsive_genes
     handler: python

@@ -6,15 +6,14 @@ import numpy as np
 import pandas as pd
 from scipy.stats import binomtest
 
-from callingcardstools.Analysis.yeast.rank_response import (
+from callingcardstools.Analysis.yeast import (
     bin_by_binding_rank,
-    calculate_random_expectation,
     compute_rank_response,
     create_partitions,
+    create_rank_response_table,
     label_responsive_genes,
     parse_binomtest_results,
     rank_response_main,
-    rank_response_ratio_summarize,
     read_in_data,
     validate_config,
 )
@@ -113,21 +112,6 @@ def test_label_responsive_genes():
     ), "Failed test with normalization"
 
 
-def test_calculate_random_expectation():
-    df = pd.DataFrame({"responsive": [True, False, True, False, True]})
-
-    # Call the function
-    result_df = calculate_random_expectation(df)
-
-    # Expected result
-    expected_df = pd.DataFrame(
-        {"unresponsive": [2], "responsive": [3], "random": [3 / 5]}
-    )
-
-    # Assert the result is as expected
-    pd.testing.assert_frame_equal(result_df, expected_df)
-
-
 def test_calculate_rank_response():
     df = pd.DataFrame(
         {
@@ -210,33 +194,6 @@ def test_parse_binomtest_results():
     assert actual == (0.5, 1.0, 0.01257911709367899, 0.987420882906321)
 
 
-def test_rank_response_ratio_summarize():
-    # Create a mock DataFrame as an example input
-    test_df = pd.DataFrame(
-        {
-            "feature": ["gene1", "gene2", "gene3"],
-            "expression_effect": [0.5, -0.7, 1.2],
-            "expression_pvalue": [0.5, 0.007, 0.12],
-            "binding_effect": [1.04, 3.07, 2.01],
-            "binding_pvalue": [0.1, 0.02, 1.0],
-        }
-    )
-
-    # Call the function
-    df, random_expectation_df, rank_response_df = rank_response_ratio_summarize(
-        test_df, bin_size=2
-    )
-
-    # Perform assertions
-    assert isinstance(df, pd.DataFrame), "Returned df is not a DataFrame"
-    assert isinstance(
-        random_expectation_df, pd.DataFrame
-    ), "Returned random_expectation_df is not a DataFrame"
-    assert isinstance(
-        rank_response_df, pd.DataFrame
-    ), "Returned rank_response_df is not a DataFrame"
-
-
 def test_validate_config(tmpdir):
     config_path = tmpdir.join("config.json")
 
@@ -248,17 +205,19 @@ def test_validate_config(tmpdir):
     assert os.path.isdir(test_data_directory) is True
 
     config = {
-        "binding_data_path": os.path.join(
-            test_data_directory, "hap5_exprid_17_yiming_adh1_promoter_sig.csv.gz"
-        ),
+        "binding_data_path": [
+            os.path.join(
+                test_data_directory, "hap5_exprid_17_yiming_adh1_promoter_sig.csv.gz"
+            )
+        ],
         "binding_source": "cc_17",
         "binding_identifier_col": "target_gene_id",
         "binding_effect_col": "callingcards_enrichment",
         "binding_pvalue_col": "poisson_pval",
         "rank_by_binding_effect": False,
-        "expression_data_path": os.path.join(
-            test_data_directory, "hap5_15min_mcisaac.csv.gz"
-        ),
+        "expression_data_path": [
+            os.path.join(test_data_directory, "hap5_15min_mcisaac.csv.gz")
+        ],
         "expression_source": "mcisaac_hap5_15",
         "expression_identifier_col": "gene_id",
         "expression_effect_col": "log2_shrunken_timecourses",
@@ -266,9 +225,7 @@ def test_validate_config(tmpdir):
         "expression_pvalue_col": None,
         "expression_pvalue_thres": None,
         "rank_bin_size": 5,
-        "normalize": False,
-        "output_file": str(tmpdir.join("rank_response.csv")),
-        "compress": False,
+        "normalization_cutoff": -1,
     }
 
     # Write to the config file
@@ -285,11 +242,15 @@ def test_validate_config(tmpdir):
 
     assert isinstance(actual, dict)
 
-    # rank_response_df = create_rank_response_table(actual)
+    rank_response_df, _, _ = create_rank_response_table(actual)
 
-    # assert isinstance(rank_response_df, pd.DataFrame)
+    assert isinstance(rank_response_df, pd.DataFrame)
 
-    args = argparse.Namespace(config=config_path)
+    args = argparse.Namespace(
+        config=config_path,
+        output_file=str(tmpdir.join("rank_response.csv")),
+        compress=False,
+    )
 
     rank_response_main(args)
 

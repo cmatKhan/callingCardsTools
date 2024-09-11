@@ -1,2 +1,2 @@
-::: callingcardstools.Analysis.yeast.rank_response.create_partitions.create_partitions
+::: callingcardstools.Analysis.yeast.rank_response.create_partitions
     handler: python

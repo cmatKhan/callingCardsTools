@@ -39,27 +39,22 @@ nav:
       - Qbed: 'API/Alignment/mammals/Qbed.md'
   - Analysis:
     - yeast:
+      - read_in_data:
+        - read_in_data: 'API/Analysis/yeast/read_in_data/read_in_data.md'
+        - combine_data: 'API/Analysis/yeast/read_in_data/combine_data.md'
       - rank_response:
         - bin_by_binding_rank: 'API/Analysis/yeast/rank_response/bin_by_binding_rank.md'
-        - calculate_random_expectation: 'API/Analysis/yeast/rank_response/calculate_random_expectation.md'
         - compute_rank_response: 'API/Analysis/yeast/rank_response/compute_rank_response.md'
         - create_partitions: 'API/Analysis/yeast/rank_response/create_partitions.md'
         - create_rank_response_table: 'API/Analysis/yeast/rank_response/create_rank_response_table.md'
         - label_responsive_genes: 'API/Analysis/yeast/rank_response/label_responsive_genes.md'
         - parse_binomtest_results: 'API/Analysis/yeast/rank_response/parse_binomtest_results.md'
-        - rank_response_ratio_summarize: 'API/Analysis/yeast/rank_response/rank_response_ratio_summarize.md'
-        - read_in_data: 'API/Analysis/yeast/rank_response/read_in_data.md'
-        - set_none_str_to_none: 'API/Analysis/yeast/rank_response/set_none_str_to_none.md'
         - validate_config: 'API/Analysis/yeast/rank_response/validate_config.md'
-        - find_min_responsive:
-          - find_min_responsive: 'API/Analysis/yeast/rank_response/find_min_responsive/find_min_responsive.md'
-          - parse_args: 'API/Analysis/yeast/rank_response/find_min_responsive/parse_args.md'
-          - main: 'API/Analysis/yeast/rank_response/find_min_responsive/main.md'
-        - chipexo_promoter_sig:
-          - read_in_chipexo_data: 'API/Analysis/yeast/chipexo_promoter_sig/read_in_chipexo_data.md'
-          - chipexo_promoter_sig: 'API/Analysis/yeast/chipexo_promoter_sig/chipexo_promoter_sig.md'
-          - parse_args: 'API/Analysis/yeast/chipexo_promoter_sig/parse_args.md'
-          - main: 'API/Analysis/yeast/chipexo_promoter_sig/main.md'
+      - find_min_responsive:
+        - find_min_responsive: 'API/Analysis/yeast/find_min_responsive/find_min_responsive.md'
+      - chipexo_promoter_sig:
+        - read_in_chipexo_data: 'API/Analysis/yeast/chipexo_promoter_sig/read_in_chipexo_data.md'
+        - chipexo_promoter_sig: 'API/Analysis/yeast/chipexo_promoter_sig/chipexo_promoter_sig.md'
   - BarcodeParser:
     - mammals:
       - BarcodeCounterQc: 'API/BarcodeParser/mammals/BarcodeCounterQc.md'
