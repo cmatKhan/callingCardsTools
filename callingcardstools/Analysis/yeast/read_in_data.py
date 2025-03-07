@@ -76,11 +76,11 @@ def read_in_data(
         # Check for NA values in the effect_colname
         if pd.isna(df[effect_colname]).any():
             raise AttributeError(
-                f"NA values found in column {effect_colname}." " This must not be."
+                f"NA values found in column {effect_colname}. This must not be."
             )
     except KeyError as exc:
         raise KeyError(
-            f"Column {effect_col} is not `none` and " "does not exist in {data_path}"
+            f"Column {effect_col} is not `none` and does not exist in {data_path}"
         ) from exc
 
     try:
