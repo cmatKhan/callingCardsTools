@@ -22,7 +22,7 @@ def test_poisson_pval_vectorized():
     mu = ((background_hops + pseudocount) * hop_ratio).astype("float")
     x = experiment_hops.astype("float")
 
-    expected_pval = pd.Series(1 - poisson.cdf(x, mu))
+    expected_pval = pd.Series(1 - poisson.cdf(x, mu)) + poisson.pmf(x, mu)
 
     # Call the function
     result = poisson_pval_vectorized(
