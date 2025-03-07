@@ -1,5 +1,11 @@
 # Change Log
 
+# version 1.8.1
+
+### Changes
+
+- Fixing an inaccuracy in the poisson pvalue contribution. See issue #16
+
 # version 1.6.0
 
 ### Changes
