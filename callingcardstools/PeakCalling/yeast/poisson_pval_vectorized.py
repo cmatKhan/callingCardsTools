@@ -87,5 +87,14 @@ def poisson_pval_vectorized(
     # at minimum 0
     x = experiment_hops.astype("float")
 
-    # return the p-value
-    return Series(1 - poisson.cdf(x, mu))
+    # 20250306: The p-value is calculated as the probability of observing x or more
+    # hops given the expected number of hops. This is equal to 1 - the cumulative
+    # distribution function (CDF) of the Poisson distribution at x, plus the
+    # probability mass function (PMF) at x. This is a change from Rob's original code
+    # and the code in callingCardsTools
+    # the resolution in the CDF is very low, so this ends up being the PMF value.
+    # However, by inspection, the values after `x` are an order of magnitude or more
+    # smaller, so the pvalue is dominated by the first term.
+    pval = (1 - poisson.cdf(x, mu)) + poisson.pmf(x, mu)
+    # return the pvalue as a pandas Series
+    return Series(pval)
