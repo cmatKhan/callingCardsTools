@@ -1,3 +1,9 @@
+**Archieved**
+
+The grant that funded the development of the yeast Transcription Factor dataset has ended. The data is described in a [paper](https://www.biorxiv.org/content/10.64898/2026.01.19.700460v1) that is out for review currently, and pending release on GEO at [GSE327153](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE327153).  
+
+I do not plan to make any updates or revisions to this repo.
+
 # callingCardsTools
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10042067.svg)](https://doi.org/10.5281/zenodo.10042067)
